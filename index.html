@@ -1091,6 +1091,12 @@ async function exportWebm() {
     }
   }
 
+  // Check if MediaRecorder is supported
+  if (!window.MediaRecorder) {
+    setStatus('WebM export not supported in this browser');
+    return;
+  }
+
   setStatus('Exporting WebM... 0%');
   const fps = Math.round(1000 / state.animDelay);
   const tempCanvas = document.createElement('canvas');
@@ -1099,19 +1105,46 @@ async function exportWebm() {
   const tctx = tempCanvas.getContext('2d');
   
   const stream = tempCanvas.captureStream(fps);
-  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  
+  // Try different codecs if VP9 fails
+  let mimeType = 'video/webm;codecs=vp9';
+  if (!MediaRecorder.isTypeSupported(mimeType)) {
+    mimeType = 'video/webm;codecs=vp8';
+    if (!MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = 'video/webm';
+    }
+  }
+  
+  const recorder = new MediaRecorder(stream, { mimeType });
   const chunks = [];
   
   recorder.ondataavailable = e => chunks.push(e.data);
   recorder.onstop = () => {
-    const blob = new Blob(chunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `glitch-loom-${Date.now()}.webm`;
-    a.click();
-    URL.revokeObjectURL(url);
-    setStatus('WebM exported ✓');
+    if (chunks.length === 0) {
+      setStatus('WebM export failed: no data recorded');
+      return;
+    }
+    
+    try {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `glitch-loom-${Date.now()}.webm`;
+      document.body.appendChild(a); // Required for Firefox
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setStatus('WebM exported ✓ - Download started');
+    } catch (err) {
+      setStatus(`WebM export error: ${err.message}`);
+      console.error('WebM export error:', err);
+    }
+  };
+  
+  recorder.onerror = (e) => {
+    setStatus(`WebM recording error: ${e.error.name}`);
+    console.error('MediaRecorder error:', e.error);
   };
   
   recorder.start();
@@ -1175,9 +1208,12 @@ async function exportGif() {
   const blob=new Blob([bytes],{type:'image/gif'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; a.download='glitch-loom.gif'; a.click();
+  a.href=url; a.download='glitch-loom.gif';
+  document.body.appendChild(a); // Required for Firefox
+  a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  setStatus('GIF exported ✓');
+  setStatus('GIF exported ✓ - Download started');
   setTimeout(()=>setProgress(0),800);
 }
 
@@ -1354,7 +1390,10 @@ function exportPng() {
   const link=document.createElement('a');
   link.download='glitch-loom.png';
   link.href=mainCanvas.toDataURL('image/png');
+  document.body.appendChild(link); // Required for Firefox
   link.click();
+  document.body.removeChild(link);
+  setStatus('PNG exported ✓ - Download started');
 }
 
 // ─── EVENT WIRING ─────────────────────────────────────
