@@ -118,9 +118,8 @@ select option{background:#111}
   <div id="header-actions">
     <button class="btn btn-sm" id="btn-randomize">🎲 Random</button>
     <button class="btn btn-sm btn-success" id="btn-export-png">⬇ PNG</button>
-    <button class="btn btn-sm btn-success" id="btn-export-gif">⬇ GIF</button>
-    <button class="btn btn-sm btn-success" id="btn-export-webm">⬇ WebM</button>
-    <button class="btn btn-sm btn-success" id="btn-export-webm">⬇ WebM</button>
+    <button class="btn btn-sm btn-success" id="btn-export-gif">⬇ GIF (Static)</button>
+    <button class="btn btn-sm btn-success" id="btn-export-webm">⬇ WebM (Static)</button>
   </div>
 </header>
 
@@ -319,9 +318,8 @@ select option{background:#111}
       </div>
       <div class="btn-row">
         <button class="btn btn-sm" id="btn-preview-anim" style="flex:1">▶ Preview</button>
-        <button class="btn btn-sm btn-success" id="btn-export-gif2" style="flex:1">⬇ GIF</button>
-        <button class="btn btn-sm btn-success" id="btn-export-webm2" style="flex:1">⬇ WebM</button>
-        <button class="btn btn-sm btn-success" id="btn-export-webm2" style="flex:1">⬇ WebM</button>
+        <button class="btn btn-sm btn-success" id="btn-export-gif2" style="flex:1">⬇ GIF (Animated)</button>
+        <button class="btn btn-sm btn-success" id="btn-export-webm2" style="flex:1">⬇ WebM (Animated)</button>
       </div>
       <div id="anim-status" style="font-size:11px;color:var(--muted);text-align:center"></div>
     </div>
@@ -1439,11 +1437,9 @@ function init() {
   // Export
   $('btn-export-png').addEventListener('click',exportPng);
   $('btn-export-png-m').addEventListener('click',exportPng);
-    $('btn-export-gif').addEventListener('click',exportGif);
-  if($('btn-export-webm')) $('btn-export-webm').addEventListener('click',exportWebm);
-  $('btn-export-gif2').addEventListener('click',exportGif);
-  if($('btn-export-webm2')) $('btn-export-webm2').addEventListener('click',exportWebm);
+  $('btn-export-gif').addEventListener('click',exportGif);
   $('btn-export-webm').addEventListener('click',exportWebm);
+  $('btn-export-gif2').addEventListener('click',exportGif);
   $('btn-export-webm2').addEventListener('click',exportWebm);
 
   // Animation
