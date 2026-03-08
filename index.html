@@ -119,6 +119,8 @@ select option{background:#111}
     <button class="btn btn-sm" id="btn-randomize">🎲 Random</button>
     <button class="btn btn-sm btn-success" id="btn-export-png">⬇ PNG</button>
     <button class="btn btn-sm btn-success" id="btn-export-gif">⬇ GIF</button>
+    <button class="btn btn-sm btn-success" id="btn-export-webm">⬇ WebM</button>
+    <button class="btn btn-sm btn-success" id="btn-export-webm">⬇ WebM</button>
   </div>
 </header>
 
@@ -139,6 +141,10 @@ select option{background:#111}
       <button class="btn btn-sm" id="btn-procedural" style="flex:1">✦ Generate</button>
       <select id="proc-type" style="flex:1;padding:5px 6px;font-size:11px">
         <option value="gradient">Gradient</option>
+        <option value="nebula">Nebula</option>
+        <option value="grid">Grid</option>
+        <option value="waves">Waves</option>
+        <option value="organic">Organic</option>
         <option value="noise">Noise</option>
         <option value="geometric">Geometric</option>
         <option value="plasma">Plasma</option>
@@ -275,13 +281,13 @@ select option{background:#111}
       <div style="height:2px"></div>
       <div class="ctrl-row">
         <span class="ctrl-label">Frames</span>
-        <input type="range" id="anim-frames" min="2" max="24" value="8">
-        <span class="ctrl-value" id="anim-frames-val">8</span>
+        <input type="range" id="anim-frames" min="2" max="60" value="15">
+        <span class="ctrl-value" id="anim-frames-val">15</span>
       </div>
       <div class="ctrl-row">
         <span class="ctrl-label">Delay (ms)</span>
-        <input type="range" id="anim-delay" min="50" max="500" value="120">
-        <span class="ctrl-value" id="anim-delay-val">120</span>
+        <input type="range" id="anim-delay" min="20" max="1000" value="100">
+        <span class="ctrl-value" id="anim-delay-val">100</span>
       </div>
       <div class="ctrl-row">
         <span class="ctrl-label">Evolve</span>
@@ -289,6 +295,18 @@ select option{background:#111}
           <div class="toggle-btn active" data-val="sort">Sort</div>
           <div class="toggle-btn" data-val="mosh">Mosh</div>
           <div class="toggle-btn" data-val="both">Both</div>
+          <div class="toggle-btn" data-val="weave">Weave</div>
+        </div>
+          <div class="toggle-btn" data-val="mosh">Mosh</div>
+          <div class="toggle-btn" data-val="both">Both</div>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Timing</span>
+        <div class="toggle-group" style="flex:1" id="anim-timing-group">
+          <div class="toggle-btn active" data-val="linear">Linear</div>
+          <div class="toggle-btn" data-val="ease">Ease</div>
+          <div class="toggle-btn" data-val="bounce">Bounce</div>
         </div>
       </div>
       <div class="ctrl-row">
@@ -302,6 +320,8 @@ select option{background:#111}
       <div class="btn-row">
         <button class="btn btn-sm" id="btn-preview-anim" style="flex:1">▶ Preview</button>
         <button class="btn btn-sm btn-success" id="btn-export-gif2" style="flex:1">⬇ GIF</button>
+        <button class="btn btn-sm btn-success" id="btn-export-webm2" style="flex:1">⬇ WebM</button>
+        <button class="btn btn-sm btn-success" id="btn-export-webm2" style="flex:1">⬇ WebM</button>
       </div>
       <div id="anim-status" style="font-size:11px;color:var(--muted);text-align:center"></div>
     </div>
@@ -368,10 +388,11 @@ const state = {
   moshShiftX: 0,
   moshShiftY: 0,
   moshChaos: 0.5,
-  animFrames: 8,
-  animDelay: 120,
+  animFrames: 15,
+  animDelay: 100,
   animEvolve: 'sort',
   animMode: 'forward',
+  animTiming: 'linear',
   palette: ['#ff00aa','#00f0ff','#00ff88','#ffd700','#ff6600'],
   procType: 'gradient',
 };
@@ -441,6 +462,12 @@ const PALETTE_COLORS = [
   ['#ff0000','#ff6600','#ffcc00','#ff3300','#cc0000'],
   ['#00ff88','#00f0ff','#0055ff','#6600ff','#00ffaa'],
   ['#ffffff','#888888','#ff0000','#000000','#444444'],
+  ['#2b0f4c','#591c87','#8b5cf6','#c4b5fd','#f3e8ff'],
+  ['#052e16','#15803d','#22c55e','#86efac','#f0fdf4'],
+  ['#4a044e','#9d174d','#be123c','#f43f5e','#ffe4e6'],
+  ['#0c4a6e','#0369a1','#0ea5e9','#7dd3fc','#f0f9ff'],
+  ['#451a03','#92400e','#d97706','#fcd34d','#fef3c7'],
+  ['#000000','#333333','#666666','#999999','#cccccc']
 ];
 
 function hexToRgb(hex) {
@@ -460,6 +487,56 @@ function generateProcedural(type, palette, width, height) {
   const colors = palette.map(hexToRgb);
 
   switch(type) {
+    case 'nebula': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const nx=x/width*2, ny=y/height*2;
+        let v = Math.sin(nx*3+ny*2)*0.5+0.5;
+        v += Math.cos(nx*5-ny*4)*0.25+0.25;
+        v += Math.sin(Math.sqrt(nx*nx+ny*ny)*10)*0.125+0.125;
+        v = (v/1.875) * 1.5;
+        const i = Math.min(Math.floor(v*(colors.length-1)), colors.length-2);
+        const [r,g,b] = lerpRgb(colors[i],colors[i+1],v*(colors.length-1)-i);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'grid': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const cellSize = width / 16;
+        const sx = Math.floor(x/cellSize);
+        const sy = Math.floor(y/cellSize);
+        const isBorder = (x%cellSize < 2) || (y%cellSize < 2);
+        const [r,g,b] = isBorder ? colors[0] : colors[(sx+sy)%colors.length];
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'waves': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        let v = Math.sin(x/width*10 + Math.sin(y/height*5)*2);
+        v = v*0.5+0.5;
+        const i = Math.min(Math.floor(v*(colors.length-1)), colors.length-2);
+        const [r,g,b] = lerpRgb(colors[i],colors[i+1],v*(colors.length-1)-i);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'organic': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const nx=x/width, ny=y/height;
+        let v = Math.sin(nx*20) * Math.cos(ny*20) + Math.sin(Math.sqrt((nx-0.5)**2 + (ny-0.5)**2)*50);
+        v = (v/3)+0.5;
+        v = Math.max(0, Math.min(1, v));
+        const i = Math.min(Math.floor(v*(colors.length-1)), colors.length-2);
+        const [r,g,b] = lerpRgb(colors[i],colors[i+1],v*(colors.length-1)-i);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
     case 'gradient': {
       for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
         const t = (x/width + y/height) / 2;
@@ -1006,6 +1083,69 @@ class GifEncoder {
   }
 }
 
+async function exportWebm() {
+  if (animFrames.length === 0) {
+    if (state.animFrames > 0 && currentImageData) {
+      await generateFrames();
+    } else {
+      setStatus('No frames to export');
+      return;
+    }
+  }
+
+  setStatus('Exporting WebM... 0%');
+  const fps = Math.round(1000 / state.animDelay);
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = mainCanvas.width;
+  tempCanvas.height = mainCanvas.height;
+  const tctx = tempCanvas.getContext('2d');
+  
+  const stream = tempCanvas.captureStream(fps);
+  const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+  const chunks = [];
+  
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => {
+    const blob = new Blob(chunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `glitch-loom-${Date.now()}.webm`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setStatus('WebM exported ✓');
+  };
+  
+  recorder.start();
+  
+  // Create animation playback for recorder
+  let frameIndex = 0;
+  let totalFrames = animFrames.length;
+  if(state.animMode === 'pingpong') totalFrames = animFrames.length * 2 - 2;
+  
+  let seq = 0;
+  const drawFrame = () => {
+    if (seq >= totalFrames) {
+      recorder.stop();
+      return;
+    }
+    
+    let fIdx = seq;
+    if (state.animMode === 'pingpong') {
+      fIdx = seq < animFrames.length ? seq : animFrames.length * 2 - 2 - seq;
+    } else if (state.animMode === 'random') {
+      fIdx = Math.floor(Math.random() * animFrames.length);
+    }
+    
+    tctx.putImageData(animFrames[fIdx], 0, 0);
+    setStatus(`Exporting WebM... ${Math.floor((seq/totalFrames)*100)}%`);
+    seq++;
+    setTimeout(drawFrame, state.animDelay);
+  };
+  
+  drawFrame();
+}
+
 async function exportGif() {
   if (!animFrames.length) {
     setStatus('Generating frames first...');
@@ -1299,8 +1439,12 @@ function init() {
   // Export
   $('btn-export-png').addEventListener('click',exportPng);
   $('btn-export-png-m').addEventListener('click',exportPng);
-  $('btn-export-gif').addEventListener('click',exportGif);
+    $('btn-export-gif').addEventListener('click',exportGif);
+  if($('btn-export-webm')) $('btn-export-webm').addEventListener('click',exportWebm);
   $('btn-export-gif2').addEventListener('click',exportGif);
+  if($('btn-export-webm2')) $('btn-export-webm2').addEventListener('click',exportWebm);
+  $('btn-export-webm').addEventListener('click',exportWebm);
+  $('btn-export-webm2').addEventListener('click',exportWebm);
 
   // Animation
   $('btn-preview-anim').addEventListener('click',previewAnimation);
