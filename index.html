@@ -33,13 +33,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 
 /* ─── SIDEBAR ─── */
 #sidebar{padding:12px 0 12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
-@media(min-width:860px){#sidebar{padding:16px 16px 16px 0;border-right:1px solid var(--border)}}
+@media(min-width:860px){#sidebar{padding:16px 16px 16px 0;border-right:1px solid var(--border);grid-column:1;grid-row:2}}
 
 /* ─── CANVAS ZONE ─── */
 #canvas-zone{display:flex;flex-direction:column;gap:10px;padding:12px 0}
-@media(min-width:860px){#canvas-zone{padding:16px 0 16px 16px}}
+@media(min-width:860px){#canvas-zone{padding:16px 0 16px 16px;height:100%;grid-column:2;grid-row:2}}
 #canvas-wrap{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;border:1px solid var(--border);box-shadow:0 0 40px rgba(0,240,255,.06);flex:1;min-height:300px;max-height:600px;aspect-ratio:1/1}
-@media(min-width:860px){#canvas-wrap{aspect-ratio:unset;max-height:unset}}
+@media(min-width:860px){#canvas-wrap{aspect-ratio:unset;max-height:unset;width:100%;height:100%;}}
 #main-canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 #overlay-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.6}
 #canvas-status{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--muted);pointer-events:none;white-space:nowrap;transition:.3s}
@@ -431,6 +431,90 @@ const PRESETS = [
              sortMetric:'red', sortIntensity:.9, sortThreshold:40, sortDirection:'both', sortReverse:false,
              moshType:'block', moshIntensity:.6, moshBlock:10, moshShiftX:15, moshShiftY:5, moshChaos:.9,
              palette:['#ff0000','#ff6600','#ffcc00','#ff3300','#cc0000'] }
+  },
+  {
+    name: 'Ocean Depths',
+    state: { weavePattern:'satin', warpSize:20, weftSize:4, warpRatio:.3, weaveBlend:.8,
+             sortMetric:'blue', sortIntensity:.7, sortThreshold:70, sortDirection:'vertical', sortReverse:true,
+             moshType:'feedback', moshIntensity:.4, moshBlock:25, moshShiftX:5, moshShiftY:15, moshChaos:.5,
+             palette:['#003366','#0066cc','#00aaff','#33ccff','#66ffff'] }
+  },
+  {
+    name: 'Forest Canopy',
+    state: { weavePattern:'herringbone', warpSize:8, weftSize:12, warpRatio:.5, weaveBlend:.75,
+             sortMetric:'green', sortIntensity:.6, sortThreshold:90, sortDirection:'both', sortReverse:false,
+             moshType:'channel', moshIntensity:.3, moshBlock:15, moshShiftX:10, moshShiftY:-5, moshChaos:.4,
+             palette:['#004400','#008800','#00cc00','#88ff88','#ccffcc'] }
+  },
+  {
+    name: 'Neon Grid',
+    state: { weavePattern:'plain', warpSize:4, weftSize:4, warpRatio:.5, weaveBlend:1,
+             sortMetric:'brightness', sortIntensity:.9, sortThreshold:20, sortDirection:'horizontal', sortReverse:false,
+             moshType:'block', moshIntensity:.8, moshBlock:6, moshShiftX:30, moshShiftY:30, moshChaos:.9,
+             palette:['#ff00ff','#00ffff','#ffff00','#ff0088','#00ff88'] }
+  },
+  {
+    name: 'Solar Flare',
+    state: { weavePattern:'twill', warpSize:15, weftSize:3, warpRatio:.8, weaveBlend:.9,
+             sortMetric:'red', sortIntensity:1, sortThreshold:50, sortDirection:'vertical', sortReverse:false,
+             moshType:'repeat', moshIntensity:.7, moshBlock:8, moshShiftX:0, moshShiftY:20, moshChaos:.8,
+             palette:['#ff3300','#ff6600','#ff9900','#ffcc00','#ffff00'] }
+  },
+  {
+    name: 'Arctic Ice',
+    state: { weavePattern:'satin', warpSize:12, weftSize:6, warpRatio:.4, weaveBlend:.6,
+             sortMetric:'saturation', sortIntensity:.4, sortThreshold:120, sortDirection:'horizontal', sortReverse:true,
+             moshType:'channel', moshIntensity:.2, moshBlock:30, moshShiftX:15, moshShiftY:0, moshChaos:.3,
+             palette:['#ffffff','#e6f7ff','#cceeff','#99ddff','#66ccff'] }
+  },
+  {
+    name: 'Cyber Grid',
+    state: { weavePattern:'plain', warpSize:6, weftSize:6, warpRatio:.5, weaveBlend:.85,
+             sortMetric:'brightness', sortIntensity:.7, sortThreshold:40, sortDirection:'both', sortReverse:false,
+             moshType:'block', moshIntensity:.5, moshBlock:10, moshShiftX:25, moshShiftY:25, moshChaos:.7,
+             palette:['#00ff00','#00ccff','#ff00cc','#ffff00','#ff6600'] }
+  },
+  {
+    name: 'Mystic Fog',
+    state: { weavePattern:'herringbone', warpSize:10, weftSize:10, warpRatio:.5, weaveBlend:.7,
+             sortMetric:'hue', sortIntensity:.5, sortThreshold:80, sortDirection:'vertical', sortReverse:true,
+             moshType:'feedback', moshIntensity:.3, moshBlock:20, moshShiftX:5, moshShiftY:5, moshChaos:.4,
+             palette:['#9966ff','#cc99ff','#ffccff','#99ccff','#66ccff'] }
+  },
+  {
+    name: 'Lava Flow',
+    state: { weavePattern:'twill', warpSize:8, weftSize:8, warpRatio:.6, weaveBlend:.95,
+             sortMetric:'red', sortIntensity:.8, sortThreshold:60, sortDirection:'horizontal', sortReverse:false,
+             moshType:'repeat', moshIntensity:.6, moshBlock:12, moshShiftX:10, moshShiftY:0, moshChaos:.8,
+             palette:['#330000','#660000','#990000','#cc0000','#ff3300'] }
+  },
+  {
+    name: 'Electric Storm',
+    state: { weavePattern:'satin', warpSize:5, weftSize:15, warpRatio:.2, weaveBlend:.9,
+             sortMetric:'blue', sortIntensity:.9, sortThreshold:30, sortDirection:'vertical', sortReverse:false,
+             moshType:'channel', moshIntensity:.8, moshBlock:6, moshShiftX:40, moshShiftY:0, moshChaos:.9,
+             palette:['#0000ff','#6600ff','#cc00ff','#ff00ff','#ffffff'] }
+  },
+  {
+    name: 'Desert Sunset',
+    state: { weavePattern:'plain', warpSize:14, weftSize:4, warpRatio:.7, weaveBlend:.8,
+             sortMetric:'hue', sortIntensity:.6, sortThreshold:100, sortDirection:'horizontal', sortReverse:true,
+             moshType:'feedback', moshIntensity:.4, moshBlock:18, moshShiftX:0, moshShiftY:10, moshChaos:.5,
+             palette:['#ff6600','#ff9900','#ffcc00','#cc6600','#993300'] }
+  },
+  {
+    name: 'Crystal Cave',
+    state: { weavePattern:'herringbone', warpSize:12, weftSize:8, warpRatio:.5, weaveBlend:.75,
+             sortMetric:'saturation', sortIntensity:.7, sortThreshold:60, sortDirection:'both', sortReverse:false,
+             moshType:'repeat', moshIntensity:.5, moshBlock:14, moshShiftX:15, moshShiftY:15, moshChaos:.6,
+             palette:['#00ffff','#88ffff','#ccffff','#ffffff','#aaddff'] }
+  },
+  {
+    name: 'Retro Arcade',
+    state: { weavePattern:'twill', warpSize:6, weftSize:10, warpRatio:.4, weaveBlend:.85,
+             sortMetric:'brightness', sortIntensity:.8, sortThreshold:50, sortDirection:'horizontal', sortReverse:false,
+             moshType:'block', moshIntensity:.7, moshBlock:8, moshShiftX:20, moshShiftY:10, moshChaos:.8,
+             palette:['#ff0000','#00ff00','#0000ff','#ffff00','#ff00ff'] }
   },
 ];
 

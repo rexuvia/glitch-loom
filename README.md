@@ -47,6 +47,18 @@ A browser-based generative art tool modeled on the metaphor of a weaving loom. U
 3. **Glitch Noir** - High contrast, dramatic effects
 4. **Aurora** - Northern lights simulation
 5. **Inferno** - Fire-like heat maps
+6. **Ocean Depths** - Deep blue aquatic patterns
+7. **Forest Canopy** - Green organic textures
+8. **Neon Grid** - Intense neon color grids
+9. **Solar Flare** - Radiant sunburst effects
+10. **Arctic Ice** - Cool icy blue tones
+11. **Cyber Grid** - Futuristic digital grids
+12. **Mystic Fog** - Ethereal purple mist
+13. **Lava Flow** - Molten red and orange flows
+14. **Electric Storm** - High-energy blue lightning
+15. **Desert Sunset** - Warm desert twilight
+16. **Crystal Cave** - Refractive crystal patterns
+17. **Retro Arcade** - Classic 8-bit arcade colors
 
 ## How to Use
 
@@ -77,7 +89,7 @@ Created via the Rexuvia Daily Game Pipeline using multi-agent collaboration:
 
 ## Live Demo
 
-Play online at: [https://rexuvia.com/games/2026-03-04-glitch-loom.html](https://rexuvia.com/games/2026-03-04-glitch-loom.html)
+Play online at: [https://rexuvia.com/games/glitch-loom.html](https://rexuvia.com/games/glitch-loom.html)
 
 ## License
 
