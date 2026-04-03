@@ -171,6 +171,7 @@ button:hover { background: #333; border-color: var(--cyan); }
       <label>Share State String:</label>
       <input type="text" id="state-string" readonly>
       <button id="btn-copy-state" style="width:100%; margin-top: 4px;">Copy State</button>
+      <button id="btn-share-link" class="btn-primary" style="width:100%; margin-top: 4px;">🔗 Share Link</button>
     </div>
     <div style="margin-top: 5px;">
       <label>Load State:</label>
@@ -207,6 +208,7 @@ const uiElements = {
 };
 
 // Encode state to string (simple base36 encoding of values)
+// Also updates the URL hash so the link is always shareable
 function encodeState() {
   const parts = [
     state.speed.toString(36).padStart(2, '0'),
@@ -217,6 +219,8 @@ function encodeState() {
   ];
   const str = parts.join('');
   uiElements.stateString.value = str;
+  // Keep URL hash in sync (replaceState to avoid polluting browser history)
+  history.replaceState(null, '', '#' + str);
   return str;
 }
 
@@ -271,6 +275,29 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
 document.getElementById('btn-copy-state').addEventListener('click', () => {
   uiElements.stateString.select();
   document.execCommand('copy');
+});
+
+document.getElementById('btn-share-link').addEventListener('click', () => {
+  const stateStr = encodeState();
+  const url = window.location.origin + window.location.pathname + '#' + stateStr;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('btn-share-link');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('btn-share-link');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
 });
 
 document.getElementById('btn-load-state').addEventListener('click', () => {
@@ -349,9 +376,27 @@ function render() {
   requestAnimationFrame(render);
 }
 
+// Load state from URL hash if present
+// Returns true if state was loaded from hash, false otherwise
+function loadFromURL() {
+  const hash = window.location.hash.slice(1); // remove '#'
+  if (hash && hash.length === 9) {
+    if (decodeState(hash)) return true; // successfully loaded
+  }
+  return false;
+}
+
+// Listen for hash changes (allows sharing to work even if page is already open)
+window.addEventListener('hashchange', () => {
+  loadFromURL();
+});
+
 // Init
-updateStateFromUI();
-encodeState();
+const loadedFromHash = loadFromURL();
+if (!loadedFromHash) {
+  updateUIFromState();
+  encodeState();
+}
 render();
 
 </script>
