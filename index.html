@@ -162,6 +162,11 @@ button:hover { background: #333; border-color: var(--cyan); }
         <option value="1">Grid</option>
         <option value="2">Spiral</option>
         <option value="3">Noise</option>
+        <option value="4">Pulse</option>
+        <option value="5">Vortex</option>
+        <option value="6">Matrix</option>
+        <option value="7">Fractal</option>
+        <option value="8">Circuit</option>
       </select>
     </div>
 
@@ -268,7 +273,7 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.density.value = Math.floor(Math.random() * 190) + 10;
   uiElements.colorShift.value = Math.floor(Math.random() * 360);
   uiElements.glitchIntensity.value = Math.floor(Math.random() * 100);
-  uiElements.pattern.value = Math.floor(Math.random() * 4);
+  uiElements.pattern.value = Math.floor(Math.random() * 9);
   updateStateFromUI();
 });
 
@@ -353,8 +358,31 @@ function render() {
         let angle = Math.atan2(dy, dx);
         let dist = Math.sqrt(dx*dx + dy*dy);
         val = Math.sin(angle * 5 + dist * 20 - time * 2);
-      } else { // Noise (approximate)
+      } else if (state.pattern === 3) { // Noise (approximate)
         val = Math.sin(px * 50 + time) * Math.cos(py * 50 + time * 1.5) * Math.sin((px+py)*30 - time);
+      } else if (state.pattern === 4) { // Pulse
+        let dist = Math.sqrt((px-0.5)**2 + (py-0.5)**2);
+        val = Math.sin(dist * 50 - time * 5) * Math.cos(px * 10);
+      } else if (state.pattern === 5) { // Vortex
+        let dx = px - 0.5; let dy = py - 0.5;
+        let angle = Math.atan2(dy, dx);
+        let dist = Math.sqrt(dx*dx + dy*dy);
+        val = Math.sin(angle * 10 + dist * 50 - time * 3) * Math.cos(angle * 2 + time);
+      } else if (state.pattern === 6) { // Matrix
+        val = (Math.sin(px * 30) * Math.cos(py * 30 - time * 2) > 0.5) ? 1 : -1;
+      } else if (state.pattern === 7) { // Fractal
+        let zx = px * 4 - 2; let zy = py * 4 - 2;
+        let cx = Math.sin(time * 0.5); let cy = Math.cos(time * 0.5);
+        let iter = 0;
+        while(zx*zx + zy*zy < 4 && iter < 10) {
+          let xt = zx*zx - zy*zy + cx;
+          zy = 2*zx*zy + cy;
+          zx = xt;
+          iter++;
+        }
+        val = iter / 10;
+      } else { // Circuit
+        val = Math.sin((px * 20) ^ (py * 20) + time) > 0.5 ? 1 : 0;
       }
       
       // Glitch effect
