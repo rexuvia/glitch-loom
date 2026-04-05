@@ -156,6 +156,15 @@ button:hover { background: #333; border-color: var(--cyan); }
     </div>
 
     <div class="ctrl-group">
+      <label>Scale</label>
+      <input type="range" id="scale-mod" min="1" max="100" value="50">
+    </div>
+    <div class="ctrl-group">
+      <label>Jitter</label>
+      <input type="range" id="jitter-mod" min="0" max="100" value="0">
+    </div>
+
+    <div class="ctrl-group">
       <label>Pattern Type</label>
       <select id="pattern-type" style="width: 100%; padding: 4px; background: #222; color: white; border: 1px solid #444;">
         <option value="0">Wave</option>
@@ -196,7 +205,9 @@ const state = {
   density: 50,
   colorShift: 0,
   glitchIntensity: 20,
-  pattern: 0
+  pattern: 0,
+  scaleMod: 50,
+  jitterMod: 0
 };
 
 // UI Elements
@@ -206,6 +217,8 @@ const uiElements = {
   colorShift: document.getElementById('color-shift'),
   glitchIntensity: document.getElementById('glitch-intensity'),
   pattern: document.getElementById('pattern-type'),
+  scaleMod: document.getElementById('scale-mod'),
+  jitterMod: document.getElementById('jitter-mod'),
   stateString: document.getElementById('state-string'),
   loadString: document.getElementById('load-string'),
   panel: document.getElementById('controls-panel'),
@@ -220,7 +233,9 @@ function encodeState() {
     state.density.toString(36).padStart(2, '0'),
     state.colorShift.toString(36).padStart(2, '0'),
     state.glitchIntensity.toString(36).padStart(2, '0'),
-    state.pattern.toString(36).padStart(1, '0')
+    state.pattern.toString(36).padStart(1, '0'),
+    state.scaleMod.toString(36).padStart(2, '0'),
+    state.jitterMod.toString(36).padStart(2, '0')
   ];
   const str = parts.join('');
   uiElements.stateString.value = str;
@@ -231,13 +246,20 @@ function encodeState() {
 
 // Decode state from string
 function decodeState(str) {
-  if (str.length !== 9) return false;
+  if (str.length !== 9 && str.length !== 13) return false;
   try {
     state.speed = parseInt(str.substr(0, 2), 36);
     state.density = parseInt(str.substr(2, 2), 36);
     state.colorShift = parseInt(str.substr(4, 2), 36);
     state.glitchIntensity = parseInt(str.substr(6, 2), 36);
     state.pattern = parseInt(str.substr(8, 1), 36);
+    if (str.length === 13) {
+      state.scaleMod = parseInt(str.substr(9, 2), 36);
+      state.jitterMod = parseInt(str.substr(11, 2), 36);
+    } else {
+      state.scaleMod = 50;
+      state.jitterMod = 0;
+    }
     updateUIFromState();
     return true;
   } catch(e) {
@@ -251,6 +273,8 @@ function updateUIFromState() {
   uiElements.colorShift.value = state.colorShift;
   uiElements.glitchIntensity.value = state.glitchIntensity;
   uiElements.pattern.value = state.pattern;
+  uiElements.scaleMod.value = state.scaleMod;
+  uiElements.jitterMod.value = state.jitterMod;
   encodeState();
 }
 
@@ -260,11 +284,13 @@ function updateStateFromUI() {
   state.colorShift = parseInt(uiElements.colorShift.value);
   state.glitchIntensity = parseInt(uiElements.glitchIntensity.value);
   state.pattern = parseInt(uiElements.pattern.value);
+  state.scaleMod = parseInt(uiElements.scaleMod.value);
+  state.jitterMod = parseInt(uiElements.jitterMod.value);
   encodeState();
 }
 
 // Event Listeners
-['speed', 'density', 'colorShift', 'glitchIntensity', 'pattern'].forEach(key => {
+['speed', 'density', 'colorShift', 'glitchIntensity', 'pattern', 'scaleMod', 'jitterMod'].forEach(key => {
   uiElements[key].addEventListener('input', updateStateFromUI);
 });
 
@@ -274,6 +300,8 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.colorShift.value = Math.floor(Math.random() * 360);
   uiElements.glitchIntensity.value = Math.floor(Math.random() * 100);
   uiElements.pattern.value = Math.floor(Math.random() * 9);
+  uiElements.scaleMod.value = Math.floor(Math.random() * 100) + 1;
+  uiElements.jitterMod.value = Math.floor(Math.random() * 100);
   updateStateFromUI();
 });
 
@@ -392,11 +420,13 @@ function render() {
         cx += (Math.random() - 0.5) * cellW * 5;
         cy += (Math.random() - 0.5) * cellH * 5;
       }
+      cx += (Math.random() - 0.5) * state.jitterMod * 0.5;
+      cy += (Math.random() - 0.5) * state.jitterMod * 0.5;
       
       if (val > 0) {
         let hue = (state.colorShift + (val * 180) + (x/cells)*90 + time*10) % 360;
         ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.8)`;
-        ctx.fillRect(cx, cy, cellW * (0.5 + val), cellH * (0.5 + val));
+        ctx.fillRect(cx, cy, cellW * (0.5 + val) * (state.scaleMod / 50), cellH * (0.5 + val) * (state.scaleMod / 50));
       }
     }
   }
@@ -408,7 +438,7 @@ function render() {
 // Returns true if state was loaded from hash, false otherwise
 function loadFromURL() {
   const hash = window.location.hash.slice(1); // remove '#'
-  if (hash && hash.length === 9) {
+  if (hash && (hash.length === 9 || hash.length === 13)) {
     if (decodeState(hash)) return true; // successfully loaded
   }
   return false;
