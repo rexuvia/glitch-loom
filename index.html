@@ -40,7 +40,7 @@ body, html {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
   z-index: 10;
-  pointer-events: none; /* Let clicks pass through to canvas if needed, though canvas has no interaction yet */
+  pointer-events: none;
 }
 
 .panel {
@@ -123,6 +123,24 @@ button:hover { background: #333; border-color: var(--cyan); }
   border-radius: 4px;
 }
 
+select {
+  background: #222;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 4px;
+}
+
+select optgroup {
+  background: #111;
+  color: var(--cyan);
+  font-size: 11px;
+}
+
+select option {
+  background: #1a1a2e;
+  color: white;
+}
+
 </style>
 </head>
 <body>
@@ -166,16 +184,72 @@ button:hover { background: #333; border-color: var(--cyan); }
 
     <div class="ctrl-group">
       <label>Pattern Type</label>
-      <select id="pattern-type" style="width: 100%; padding: 4px; background: #222; color: white; border: 1px solid #444;">
-        <option value="0">Wave</option>
-        <option value="1">Grid</option>
-        <option value="2">Spiral</option>
-        <option value="3">Noise</option>
-        <option value="4">Pulse</option>
-        <option value="5">Vortex</option>
-        <option value="6">Matrix</option>
-        <option value="7">Fractal</option>
-        <option value="8">Circuit</option>
+      <select id="pattern-type" style="width: 100%; padding: 4px;">
+        <optgroup label="── Originals ──">
+          <option value="0">Wave</option>
+          <option value="1">Grid</option>
+          <option value="2">Spiral</option>
+          <option value="3">Noise</option>
+          <option value="4">Pulse</option>
+          <option value="5">Vortex</option>
+          <option value="6">Matrix</option>
+          <option value="7">Fractal (Julia)</option>
+          <option value="8">Circuit</option>
+        </optgroup>
+        <optgroup label="── Wave Variants ──">
+          <option value="9">Double Wave</option>
+          <option value="10">Cross Wave</option>
+          <option value="11">Standing Wave</option>
+          <option value="12">Wave Interference</option>
+        </optgroup>
+        <optgroup label="── Grid Variants ──">
+          <option value="13">Checker Pulse</option>
+          <option value="14">Hex Grid</option>
+          <option value="15">Diagonal Grid</option>
+        </optgroup>
+        <optgroup label="── Spiral Variants ──">
+          <option value="16">Multi-Arm Spiral</option>
+          <option value="17">Inverted Spiral</option>
+          <option value="18">Spiral Web</option>
+        </optgroup>
+        <optgroup label="── Fractal Variants ──">
+          <option value="19">Burning Julia</option>
+          <option value="20">Mandelbrot Zoom</option>
+          <option value="21">Newton Basin</option>
+        </optgroup>
+        <optgroup label="── New: Geometric ──">
+          <option value="22">Voronoi</option>
+          <option value="23">Diamond Lattice</option>
+          <option value="24">Hypnotic Rings</option>
+          <option value="25">Kaleidoscope</option>
+          <option value="26">Starfield</option>
+          <option value="27">Tunnel</option>
+        </optgroup>
+        <optgroup label="── New: Organic ──">
+          <option value="28">Reaction Diffusion</option>
+          <option value="29">Moire</option>
+          <option value="30">Lissajous Web</option>
+          <option value="31">Plasma</option>
+          <option value="32">Lightning</option>
+        </optgroup>
+        <optgroup label="── New: Digital ──">
+          <option value="33">Data Stream</option>
+          <option value="34">Glitch Bars</option>
+          <option value="35">Bit Shift</option>
+          <option value="36">Scanlines</option>
+          <option value="37">Pixel Sort</option>
+        </optgroup>
+        <optgroup label="── New: Mathematical ──">
+          <option value="38">Lemniscate</option>
+          <option value="39">Hyperbolic Tiling</option>
+          <option value="40">Strange Attractor</option>
+          <option value="41">Clifford Attractor</option>
+        </optgroup>
+        <optgroup label="── New: Space ──">
+          <option value="42">Nebula</option>
+          <option value="43">Aurora</option>
+          <option value="44">Event Horizon</option>
+        </optgroup>
       </select>
     </div>
 
@@ -199,6 +273,8 @@ button:hover { background: #333; border-color: var(--cyan); }
 <button id="toggle-ui" class="toggle-ui-btn">Hide UI</button>
 
 <script>
+const PATTERN_COUNT = 45;
+
 // Compact state representation
 const state = {
   speed: 50,
@@ -225,40 +301,57 @@ const uiElements = {
   toggleBtn: document.getElementById('toggle-ui')
 };
 
-// Encode state to string (simple base36 encoding of values)
-// Also updates the URL hash so the link is always shareable
+// Encode state to string
+// pattern can now be >35 so we use 2 chars for it
 function encodeState() {
   const parts = [
     state.speed.toString(36).padStart(2, '0'),
     state.density.toString(36).padStart(2, '0'),
     state.colorShift.toString(36).padStart(2, '0'),
     state.glitchIntensity.toString(36).padStart(2, '0'),
-    state.pattern.toString(36).padStart(1, '0'),
+    state.pattern.toString(36).padStart(2, '0'),   // now 2 chars (was 1)
     state.scaleMod.toString(36).padStart(2, '0'),
     state.jitterMod.toString(36).padStart(2, '0')
   ];
   const str = parts.join('');
   uiElements.stateString.value = str;
-  // Keep URL hash in sync (replaceState to avoid polluting browser history)
   history.replaceState(null, '', '#' + str);
   return str;
 }
 
 // Decode state from string
+// Supports legacy 9/13-char formats (single-char pattern) and new 14-char format
 function decodeState(str) {
-  if (str.length !== 9 && str.length !== 13) return false;
   try {
-    state.speed = parseInt(str.substr(0, 2), 36);
-    state.density = parseInt(str.substr(2, 2), 36);
-    state.colorShift = parseInt(str.substr(4, 2), 36);
-    state.glitchIntensity = parseInt(str.substr(6, 2), 36);
-    state.pattern = parseInt(str.substr(8, 1), 36);
-    if (str.length === 13) {
-      state.scaleMod = parseInt(str.substr(9, 2), 36);
-      state.jitterMod = parseInt(str.substr(11, 2), 36);
+    if (str.length === 14) {
+      // New format: all 2-char fields
+      state.speed          = parseInt(str.substr(0, 2), 36);
+      state.density        = parseInt(str.substr(2, 2), 36);
+      state.colorShift     = parseInt(str.substr(4, 2), 36);
+      state.glitchIntensity= parseInt(str.substr(6, 2), 36);
+      state.pattern        = parseInt(str.substr(8, 2), 36);
+      state.scaleMod       = parseInt(str.substr(10, 2), 36);
+      state.jitterMod      = parseInt(str.substr(12, 2), 36);
+    } else if (str.length === 13) {
+      // Legacy with scaleMod/jitterMod, single-char pattern
+      state.speed          = parseInt(str.substr(0, 2), 36);
+      state.density        = parseInt(str.substr(2, 2), 36);
+      state.colorShift     = parseInt(str.substr(4, 2), 36);
+      state.glitchIntensity= parseInt(str.substr(6, 2), 36);
+      state.pattern        = parseInt(str.substr(8, 1), 36);
+      state.scaleMod       = parseInt(str.substr(9, 2), 36);
+      state.jitterMod      = parseInt(str.substr(11, 2), 36);
+    } else if (str.length === 9) {
+      // Legacy minimal, single-char pattern
+      state.speed          = parseInt(str.substr(0, 2), 36);
+      state.density        = parseInt(str.substr(2, 2), 36);
+      state.colorShift     = parseInt(str.substr(4, 2), 36);
+      state.glitchIntensity= parseInt(str.substr(6, 2), 36);
+      state.pattern        = parseInt(str.substr(8, 1), 36);
+      state.scaleMod       = 50;
+      state.jitterMod      = 0;
     } else {
-      state.scaleMod = 50;
-      state.jitterMod = 0;
+      return false;
     }
     updateUIFromState();
     return true;
@@ -299,7 +392,7 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.density.value = Math.floor(Math.random() * 190) + 10;
   uiElements.colorShift.value = Math.floor(Math.random() * 360);
   uiElements.glitchIntensity.value = Math.floor(Math.random() * 100);
-  uiElements.pattern.value = Math.floor(Math.random() * 9);
+  uiElements.pattern.value = Math.floor(Math.random() * PATTERN_COUNT);
   uiElements.scaleMod.value = Math.floor(Math.random() * 100) + 1;
   uiElements.jitterMod.value = Math.floor(Math.random() * 100);
   updateStateFromUI();
@@ -319,7 +412,6 @@ document.getElementById('btn-share-link').addEventListener('click', () => {
     btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = orig; }, 1500);
   }).catch(() => {
-    // Fallback
     const ta = document.createElement('textarea');
     ta.value = url;
     document.body.appendChild(ta);
@@ -348,71 +440,459 @@ const canvas = document.getElementById('main-canvas');
 const ctx = canvas.getContext('2d');
 let time = 0;
 
+// Persistent buffers for stateful patterns
+let rdA = null, rdB = null, rdA2 = null, rdB2 = null;
+let rdW = 0, rdH = 0;
+
+function initRD(w, h) {
+  rdW = w; rdH = h;
+  rdA  = new Float32Array(w * h).fill(1);
+  rdB  = new Float32Array(w * h).fill(0);
+  rdA2 = new Float32Array(w * h);
+  rdB2 = new Float32Array(w * h);
+  // Seed a few spots
+  for (let i = 0; i < 8; i++) {
+    let sx = Math.floor(Math.random() * w);
+    let sy = Math.floor(Math.random() * h);
+    for (let dy = -3; dy <= 3; dy++)
+      for (let dx = -3; dx <= 3; dx++) {
+        let idx = ((sy+dy+h)%h) * w + ((sx+dx+w)%w);
+        rdB[idx] = 1;
+      }
+  }
+}
+
+function stepRD() {
+  const dA = 1.0, dB = 0.5, feed = 0.055, kill = 0.062;
+  const w = rdW, h = rdH;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      const a = rdA[i], b = rdB[i];
+      const lap_a =
+        rdA[((y-1+h)%h)*w + x] + rdA[((y+1)%h)*w + x] +
+        rdA[y*w + (x-1+w)%w]   + rdA[y*w + (x+1)%w] - 4*a;
+      const lap_b =
+        rdB[((y-1+h)%h)*w + x] + rdB[((y+1)%h)*w + x] +
+        rdB[y*w + (x-1+w)%w]   + rdB[y*w + (x+1)%w] - 4*b;
+      const reaction = a * b * b;
+      rdA2[i] = Math.max(0, Math.min(1, a + dA*lap_a - reaction + feed*(1-a)));
+      rdB2[i] = Math.max(0, Math.min(1, b + dB*lap_b + reaction - (kill+feed)*b));
+    }
+  }
+  const tmp = rdA; rdA = rdA2; rdA2 = tmp;
+  const tmp2 = rdB; rdB = rdB2; rdB2 = tmp2;
+}
+
+// Lorenz attractor state
+let lx = 0.1, ly = 0, lz = 0;
+let lx2 = 10, ly2 = 0, lz2 = 25;
+
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  rdA = null; // force RD reinit on next use
 }
 window.addEventListener('resize', resize);
 resize();
 
+function computePattern(px, py, pattern, t) {
+  switch (pattern) {
+    case 0: { // Wave
+      return Math.sin(px * 10 + t) * Math.cos(py * 10 - t);
+    }
+    case 1: { // Grid
+      return (Math.sin(px * 20 + t) > 0 ? 1 : 0) ^ (Math.cos(py * 20 - t) > 0 ? 1 : 0);
+    }
+    case 2: { // Spiral
+      let dx = px - 0.5, dy = py - 0.5;
+      let angle = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      return Math.sin(angle * 5 + dist * 20 - t * 2);
+    }
+    case 3: { // Noise
+      return Math.sin(px * 50 + t) * Math.cos(py * 50 + t * 1.5) * Math.sin((px+py)*30 - t);
+    }
+    case 4: { // Pulse
+      let dist = Math.sqrt((px-0.5)**2 + (py-0.5)**2);
+      return Math.sin(dist * 50 - t * 5) * Math.cos(px * 10);
+    }
+    case 5: { // Vortex
+      let dx = px - 0.5, dy = py - 0.5;
+      let angle = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      return Math.sin(angle * 10 + dist * 50 - t * 3) * Math.cos(angle * 2 + t);
+    }
+    case 6: { // Matrix
+      return (Math.sin(px * 30) * Math.cos(py * 30 - t * 2) > 0.5) ? 1 : -1;
+    }
+    case 7: { // Fractal (Julia)
+      let zx = px * 4 - 2, zy = py * 4 - 2;
+      let cx = Math.sin(t * 0.5), cy = Math.cos(t * 0.5);
+      let iter = 0;
+      while (zx*zx + zy*zy < 4 && iter < 10) {
+        let xt = zx*zx - zy*zy + cx;
+        zy = 2*zx*zy + cy;
+        zx = xt;
+        iter++;
+      }
+      return iter / 10;
+    }
+    case 8: { // Circuit
+      return Math.sin((px * 20) ^ (py * 20) + t) > 0.5 ? 1 : 0;
+    }
+
+    // ── Wave Variants ──
+    case 9: { // Double Wave
+      let w1 = Math.sin(px * 12 + t) * Math.cos(py * 8 - t * 1.2);
+      let w2 = Math.sin(py * 12 + t * 0.7) * Math.cos(px * 8 + t * 0.9);
+      return (w1 + w2) * 0.5;
+    }
+    case 10: { // Cross Wave
+      let wx = Math.sin(px * 15 + t * 1.1);
+      let wy = Math.sin(py * 15 - t * 0.9);
+      return wx * wy;
+    }
+    case 11: { // Standing Wave
+      return Math.sin(px * 10 + t) * Math.sin(py * 10 + t);
+    }
+    case 12: { // Wave Interference
+      let dx1 = px - 0.3, dy1 = py - 0.3;
+      let dx2 = px - 0.7, dy2 = py - 0.7;
+      let r1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+      let r2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+      return Math.sin(r1 * 40 - t * 4) + Math.sin(r2 * 40 - t * 4);
+    }
+
+    // ── Grid Variants ──
+    case 13: { // Checker Pulse
+      let gx = Math.floor(px * 10), gy = Math.floor(py * 10);
+      let phase = ((gx + gy) % 2 === 0) ? t : -t;
+      return Math.sin(phase * 3) * 0.8 + Math.sin(px * 20 + py * 20) * 0.2;
+    }
+    case 14: { // Hex Grid
+      // Approximate hexagonal tiling
+      let q = px * 10, r = py * 10;
+      let hx = q - r * 0.5;
+      let hy = r * Math.sqrt(3) * 0.5;
+      let cellX = hx % 1.0;
+      let cellY = hy % 1.0;
+      let distHex = Math.sqrt(cellX*cellX + cellY*cellY);
+      return Math.sin(distHex * 20 - t * 2);
+    }
+    case 15: { // Diagonal Grid
+      let d1 = Math.sin((px + py) * 20 + t);
+      let d2 = Math.sin((px - py) * 20 - t);
+      return (d1 > 0 ? 1 : -1) * (d2 > 0 ? 1 : -1);
+    }
+
+    // ── Spiral Variants ──
+    case 16: { // Multi-Arm Spiral
+      let dx = px - 0.5, dy = py - 0.5;
+      let angle = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      return Math.sin(angle * 8 + dist * 25 - t * 2);
+    }
+    case 17: { // Inverted Spiral
+      let dx = px - 0.5, dy = py - 0.5;
+      let angle = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      return Math.sin(angle * 5 - dist * 30 + t * 2) * (1 - dist * 2);
+    }
+    case 18: { // Spiral Web
+      let dx = px - 0.5, dy = py - 0.5;
+      let angle = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let spiral = Math.sin(angle * 6 + dist * 20 - t * 2);
+      let rings  = Math.sin(dist * 40 - t * 3);
+      return spiral * rings;
+    }
+
+    // ── Fractal Variants ──
+    case 19: { // Burning Julia
+      let zx = px * 4 - 2, zy = py * 4 - 2;
+      let cx = Math.sin(t * 0.3), cy = Math.cos(t * 0.4);
+      let iter = 0;
+      while (zx*zx + zy*zy < 4 && iter < 12) {
+        let xt = Math.abs(zx*zx - zy*zy) + cx;
+        zy = Math.abs(2*zx*zy) + cy;
+        zx = xt;
+        iter++;
+      }
+      return iter / 12;
+    }
+    case 20: { // Mandelbrot Zoom
+      let zoom = 1.5 + Math.sin(t * 0.1) * 0.8;
+      let cx = px * 3.5 / zoom - 2.5 / zoom + Math.sin(t * 0.07) * 0.3;
+      let cy = py * 3.5 / zoom - 1.75 / zoom + Math.cos(t * 0.05) * 0.3;
+      let zx = 0, zy = 0, iter = 0;
+      while (zx*zx + zy*zy < 4 && iter < 12) {
+        let xt = zx*zx - zy*zy + cx;
+        zy = 2*zx*zy + cy;
+        zx = xt;
+        iter++;
+      }
+      return iter / 12;
+    }
+    case 21: { // Newton Basin
+      // Newton's method for z^3 - 1 = 0, colorized by root
+      let zx = px * 3 - 1.5, zy = py * 3 - 1.5;
+      let iter = 0;
+      while (iter < 12) {
+        let denom = 3 * ((zx*zx - zy*zy)*(zx*zx - zy*zy) + (2*zx*zy)*(2*zx*zy));
+        if (denom < 1e-6) break;
+        let nx = (2/3)*zx + (zx*zx - zy*zy) / denom;
+        let ny = (2/3)*zy - 2*zx*zy / denom;
+        if (Math.abs(nx-zx) + Math.abs(ny-zy) < 0.001) break;
+        zx = nx; zy = ny;
+        iter++;
+      }
+      let root = Math.atan2(zy, zx) / (Math.PI * 2) + 0.5 + t * 0.05;
+      return Math.sin(root * Math.PI * 6) * (iter / 12);
+    }
+
+    // ── New: Geometric ──
+    case 22: { // Voronoi
+      // Animated Voronoi-like pattern using a few seed points
+      let minDist = 9999, secondMin = 9999;
+      for (let i = 0; i < 6; i++) {
+        let angle = (i / 6) * Math.PI * 2 + t * 0.3;
+        let sx = 0.5 + Math.cos(angle + t * 0.2) * 0.3;
+        let sy = 0.5 + Math.sin(angle * 1.3 + t * 0.15) * 0.3;
+        let d = Math.sqrt((px-sx)**2 + (py-sy)**2);
+        if (d < minDist) { secondMin = minDist; minDist = d; }
+        else if (d < secondMin) secondMin = d;
+      }
+      return Math.sin((secondMin - minDist) * 80 - t * 2);
+    }
+    case 23: { // Diamond Lattice
+      let dx = Math.abs((px * 12 + t * 0.5) % 2 - 1);
+      let dy = Math.abs((py * 12 + t * 0.3) % 2 - 1);
+      return Math.sin((dx + dy) * Math.PI * 5 - t * 3);
+    }
+    case 24: { // Hypnotic Rings
+      let dx = px - 0.5, dy = py - 0.5;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let angle = Math.atan2(dy, dx);
+      return Math.sin(dist * 60 - t * 5) * Math.cos(angle * 4 + t);
+    }
+    case 25: { // Kaleidoscope
+      let dx = px - 0.5, dy = py - 0.5;
+      let angle = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      // Mirror into 8 sectors
+      let sector = Math.floor((angle + Math.PI) / (Math.PI / 4)) % 2;
+      let foldedAngle = ((angle + Math.PI) % (Math.PI / 4));
+      if (sector === 1) foldedAngle = Math.PI / 4 - foldedAngle;
+      return Math.sin(foldedAngle * 20 + dist * 30 - t * 2) * Math.cos(dist * 15 + t);
+    }
+    case 26: { // Starfield
+      // Dense parallax dots
+      let hash = Math.sin(Math.floor(px * 80) * 127.1 + Math.floor(py * 80) * 311.7) * 43758.5453;
+      let frac = hash - Math.floor(hash);
+      let blink = Math.sin(frac * 100 + t * (1 + frac * 4));
+      return frac > 0.85 ? blink : -1; // only show bright "stars"
+    }
+    case 27: { // Tunnel
+      let dx = px - 0.5, dy = py - 0.5;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let angle = Math.atan2(dy, dx);
+      let u = angle / (Math.PI * 2) + 0.5;
+      let v = 0.2 / (dist + 0.001);
+      return Math.sin(u * 20 + t * 2) * Math.cos((v + t) * 10);
+    }
+
+    // ── New: Organic ──
+    case 28: { // Reaction Diffusion (uses persistent buffer, fallback to noise)
+      // Handled separately in render(); return 0 as placeholder
+      return 0;
+    }
+    case 29: { // Moire
+      let r1 = Math.sqrt((px-0.4)**2 + (py-0.5)**2);
+      let r2 = Math.sqrt((px-0.6 + Math.sin(t*0.5)*0.1)**2 + (py-0.5)**2);
+      return Math.sin(r1 * 80) * Math.sin(r2 * 80);
+    }
+    case 30: { // Lissajous Web
+      let freqX = 3, freqY = 2;
+      let lx = Math.sin(freqX * px * Math.PI * 2 + t);
+      let ly = Math.sin(freqY * py * Math.PI * 2 + t * 0.7);
+      return Math.sin((lx + ly) * 10 + t * 0.5);
+    }
+    case 31: { // Plasma
+      let c1 = Math.sin(px * 10 + t);
+      let c2 = Math.sin(py * 10 + t);
+      let c3 = Math.sin((px + py) * 10 + t);
+      let c4 = Math.sin(Math.sqrt((px-0.5)**2 + (py-0.5)**2) * 20 - t * 2);
+      return (c1 + c2 + c3 + c4) / 4;
+    }
+    case 32: { // Lightning
+      // Recursive branching approximation
+      let fy = Math.abs(py - 0.5) * 2;
+      let noise = Math.sin(px * 80 + t * 7) * 0.08 + Math.sin(px * 30 + t * 3) * 0.15;
+      let branch = Math.abs(px - 0.5 - noise);
+      return branch < 0.015 ? 1 : Math.sin(branch * 300 - t * 10) * (1 - fy);
+    }
+
+    // ── New: Digital ──
+    case 33: { // Data Stream
+      let col = Math.floor(px * 20);
+      let offset = Math.sin(col * 1.7) * 5 + Math.cos(col * 0.9) * 3;
+      let drop = (py * 20 + offset + t * 4) % 1.0;
+      return drop < 0.1 ? 1 : (drop < 0.3 ? 0.3 : -1);
+    }
+    case 34: { // Glitch Bars
+      let bar = Math.floor(py * 15);
+      let active = Math.sin(bar * 7.3 + t * 2) > 0.5;
+      if (!active) return -1;
+      let shift = Math.sin(bar * 3.1 + t) * 0.2;
+      return Math.sin((px + shift) * 30 + t * 3);
+    }
+    case 35: { // Bit Shift
+      let ix = Math.floor(px * 16);
+      let iy = Math.floor(py * 16);
+      let bits = (ix ^ iy ^ Math.floor(t * 3)) & 0xF;
+      return (bits / 15) * 2 - 1;
+    }
+    case 36: { // Scanlines
+      let line = Math.floor(py * 40);
+      let scanVal = Math.sin(px * 20 + t * 2) * Math.cos(py * 40 - t);
+      let scanOpacity = (line % 3 === 0) ? 0.2 : 1.0;
+      return scanVal * scanOpacity;
+    }
+    case 37: { // Pixel Sort
+      let col2 = Math.floor(px * 30);
+      let row2 = Math.floor(py * 30);
+      let srcVal = Math.sin(col2 * 1.3 + row2 * 0.7);
+      let sortedRow = (row2 + Math.floor(t * 5 * Math.abs(Math.sin(col2 * 0.3)))) % 30;
+      return Math.sin(sortedRow * 0.7 + col2 * 1.3 + t);
+    }
+
+    // ── New: Mathematical ──
+    case 38: { // Lemniscate (figure-8 field)
+      let cx = px - 0.5, cy = py - 0.5;
+      let a2 = 0.15 + Math.sin(t * 0.5) * 0.05;
+      let r2 = cx*cx + cy*cy;
+      let lemniscate = r2*r2 - 2*a2*(cx*cx - cy*cy);
+      return Math.sin(lemniscate * 100 - t * 3);
+    }
+    case 39: { // Hyperbolic Tiling
+      let zx = px * 2 - 1, zy = py * 2 - 1;
+      // Poincaré disk tiling approximation
+      let r = zx*zx + zy*zy;
+      if (r >= 1) return -1;
+      // Inversion
+      let inv = 1 / (1 - r + 0.001);
+      let tx = zx * inv, ty = zy * inv;
+      return Math.sin(tx * 8 + t) * Math.cos(ty * 8 + t * 0.7);
+    }
+    case 40: { // Strange Attractor (Lorenz projection, precomputed trajectory)
+      // Use the current time to pick a point on the attractor and splat it
+      let ax = px * 2 - 1, ay = py * 2 - 1;
+      // Rossler-like: project 3D to 2D
+      let sigma = 10, rho = 28, beta = 8/3;
+      let lx0 = Math.sin(t * 0.5 + ax * 5) * 0.5;
+      let ly0 = Math.cos(t * 0.3 + ay * 5) * 0.5;
+      let lz0 = Math.sin(t * 0.7 + (ax+ay) * 3) * 0.5;
+      let val = Math.sin((sigma*(ly0-lx0)*0.1) + (lx0*(rho-lz0)*0.01) - ly0 + t);
+      return val;
+    }
+    case 41: { // Clifford Attractor
+      let a = 1.7 + Math.sin(t * 0.1) * 0.5;
+      let b = 1.8 + Math.cos(t * 0.07) * 0.5;
+      let c2 = 0.9 + Math.sin(t * 0.13) * 0.3;
+      let d = 0.4 + Math.cos(t * 0.09) * 0.3;
+      let fx = px * 4 - 2, fy = py * 4 - 2;
+      let nx = Math.sin(a * fy) + c2 * Math.cos(a * fx);
+      let ny = Math.sin(b * fx) + d * Math.cos(b * fy);
+      return Math.sin(nx * 5 + ny * 5 + t);
+    }
+
+    // ── New: Space ──
+    case 42: { // Nebula
+      let n1 = Math.sin(px * 20 + t * 0.5) * Math.cos(py * 15 + t * 0.3);
+      let n2 = Math.cos(px * 12 - t * 0.4) * Math.sin(py * 18 + t * 0.6);
+      let n3 = Math.sin((px+py)*25 - t) * 0.5;
+      let density = (n1 + n2 + n3) / 3;
+      return density > 0.1 ? density : -1;
+    }
+    case 43: { // Aurora
+      let band = Math.sin(py * 6 - t * 0.5 + Math.sin(px * 4 + t * 0.3) * 0.5);
+      let shimmer = Math.sin(px * 30 + t * 3) * 0.3;
+      let envelope = Math.exp(-((py - 0.35 - shimmer * 0.1)**2) * 30);
+      return band * envelope;
+    }
+    case 44: { // Event Horizon
+      let dx = px - 0.5, dy = py - 0.5;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let angle = Math.atan2(dy, dx);
+      let warp = Math.pow(Math.max(0, 1 - dist * 2.5), 3);
+      let frame = angle + warp * 5 + t * 0.5;
+      let accretion = Math.sin(frame * 8) * warp;
+      return dist < 0.08 ? -1 : accretion + Math.sin(dist * 50 - t * 4) * (1 - warp) * 0.3;
+    }
+
+    default:
+      return 0;
+  }
+}
+
 function render() {
   time += state.speed * 0.01;
-  
+
   const w = canvas.width;
   const h = canvas.height;
-  
+
   // Clear with slight trail effect
   ctx.fillStyle = `rgba(0,0,0,${0.1 + (100-state.glitchIntensity)*0.005})`;
   ctx.fillRect(0, 0, w, h);
-  
+
   const cells = state.density;
   const cellW = w / cells;
   const cellH = h / cells;
-  
+
   ctx.lineWidth = 1;
+
+  // Handle Reaction Diffusion specially (pattern 28)
+  if (state.pattern === 28) {
+    const rdSize = Math.min(64, Math.floor(cells * 0.5) + 8);
+    if (!rdA || rdW !== rdSize || rdH !== rdSize) initRD(rdSize, rdSize);
+    for (let i = 0; i < 3; i++) stepRD();
+
+    for (let y = 0; y < rdSize; y++) {
+      for (let x = 0; x < rdSize; x++) {
+        const val = rdA[y * rdSize + x] - rdB[y * rdSize + x];
+        const px2 = x / rdSize, py2 = y / rdSize;
+        const screenX = px2 * w;
+        const screenY = py2 * h;
+        const tileW = w / rdSize;
+        const tileH = h / rdSize;
+
+        let cx = screenX, cy = screenY;
+        if (Math.random() * 100 < state.glitchIntensity) {
+          cx += (Math.random() - 0.5) * tileW * 5;
+          cy += (Math.random() - 0.5) * tileH * 5;
+        }
+        cx += (Math.random() - 0.5) * state.jitterMod * 0.5;
+        cy += (Math.random() - 0.5) * state.jitterMod * 0.5;
+
+        if (val > 0.1) {
+          let hue = (state.colorShift + val * 180 + (x/rdSize)*90 + time*10) % 360;
+          ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.8)`;
+          ctx.fillRect(cx, cy, tileW * (0.5 + val) * (state.scaleMod / 50), tileH * (0.5 + val) * (state.scaleMod / 50));
+        }
+      }
+    }
+    requestAnimationFrame(render);
+    return;
+  }
 
   for (let y = 0; y < cells; y++) {
     for (let x = 0; x < cells; x++) {
-      let val = 0;
       let px = x / cells;
       let py = y / cells;
-      
-      if (state.pattern === 0) { // Wave
-        val = Math.sin(px * 10 + time) * Math.cos(py * 10 - time);
-      } else if (state.pattern === 1) { // Grid
-        val = (Math.sin(px * 20 + time) > 0 ? 1 : 0) ^ (Math.cos(py * 20 - time) > 0 ? 1 : 0);
-      } else if (state.pattern === 2) { // Spiral
-        let dx = px - 0.5; let dy = py - 0.5;
-        let angle = Math.atan2(dy, dx);
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        val = Math.sin(angle * 5 + dist * 20 - time * 2);
-      } else if (state.pattern === 3) { // Noise (approximate)
-        val = Math.sin(px * 50 + time) * Math.cos(py * 50 + time * 1.5) * Math.sin((px+py)*30 - time);
-      } else if (state.pattern === 4) { // Pulse
-        let dist = Math.sqrt((px-0.5)**2 + (py-0.5)**2);
-        val = Math.sin(dist * 50 - time * 5) * Math.cos(px * 10);
-      } else if (state.pattern === 5) { // Vortex
-        let dx = px - 0.5; let dy = py - 0.5;
-        let angle = Math.atan2(dy, dx);
-        let dist = Math.sqrt(dx*dx + dy*dy);
-        val = Math.sin(angle * 10 + dist * 50 - time * 3) * Math.cos(angle * 2 + time);
-      } else if (state.pattern === 6) { // Matrix
-        val = (Math.sin(px * 30) * Math.cos(py * 30 - time * 2) > 0.5) ? 1 : -1;
-      } else if (state.pattern === 7) { // Fractal
-        let zx = px * 4 - 2; let zy = py * 4 - 2;
-        let cx = Math.sin(time * 0.5); let cy = Math.cos(time * 0.5);
-        let iter = 0;
-        while(zx*zx + zy*zy < 4 && iter < 10) {
-          let xt = zx*zx - zy*zy + cx;
-          zy = 2*zx*zy + cy;
-          zx = xt;
-          iter++;
-        }
-        val = iter / 10;
-      } else { // Circuit
-        val = Math.sin((px * 20) ^ (py * 20) + time) > 0.5 ? 1 : 0;
-      }
-      
+
+      let val = computePattern(px, py, state.pattern, time);
+
       // Glitch effect
       let cx = x * cellW;
       let cy = y * cellH;
@@ -422,7 +902,7 @@ function render() {
       }
       cx += (Math.random() - 0.5) * state.jitterMod * 0.5;
       cy += (Math.random() - 0.5) * state.jitterMod * 0.5;
-      
+
       if (val > 0) {
         let hue = (state.colorShift + (val * 180) + (x/cells)*90 + time*10) % 360;
         ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.8)`;
@@ -430,21 +910,19 @@ function render() {
       }
     }
   }
-  
+
   requestAnimationFrame(render);
 }
 
 // Load state from URL hash if present
-// Returns true if state was loaded from hash, false otherwise
 function loadFromURL() {
-  const hash = window.location.hash.slice(1); // remove '#'
-  if (hash && (hash.length === 9 || hash.length === 13)) {
-    if (decodeState(hash)) return true; // successfully loaded
+  const hash = window.location.hash.slice(1);
+  if (hash && (hash.length === 9 || hash.length === 13 || hash.length === 14)) {
+    if (decodeState(hash)) return true;
   }
   return false;
 }
 
-// Listen for hash changes (allows sharing to work even if page is already open)
 window.addEventListener('hashchange', () => {
   loadFromURL();
 });
