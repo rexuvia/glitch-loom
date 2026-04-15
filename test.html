@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Glitch Loom</title>
+</head>
+<body>
+    <h1>Testing Glitch Loom Updates</h1>
+    <p>Open the console to check for errors.</p>
+    <script>
+        // Test state object
+        const state = {
+            speed: 50,
+            density: 50,
+            colorShift: 0,
+            glitchIntensity: 20,
+            pattern: 0,
+            scaleMod: 50,
+            jitterMod: 0,
+            varA: 50,
+            varB: 50,
+            colorIntensity: 100,
+            noiseIntensity: 0
+        };
+
+        // Test encodeState
+        function encodeState() {
+            const parts = [
+                state.speed.toString(36).padStart(2, '0'),
+                state.density.toString(36).padStart(2, '0'),
+                state.colorShift.toString(36).padStart(2, '0'),
+                state.glitchIntensity.toString(36).padStart(2, '0'),
+                state.pattern.toString(36).padStart(2, '0'),
+                state.scaleMod.toString(36).padStart(2, '0'),
+                state.jitterMod.toString(36).padStart(2, '0'),
+                state.varA.toString(36).padStart(2, '0'),
+                state.varB.toString(36).padStart(2, '0'),
+                state.colorIntensity.toString(36).padStart(2, '0'),
+                state.noiseIntensity.toString(36).padStart(2, '0')
+            ];
+            return parts.join('');
+        }
+
+        // Test decodeState for new format (22 chars)
+        function decodeState(str) {
+            try {
+                if (str.length === 22) {
+                    // New format
+                    state.speed = parseInt(str.substr(0, 2), 36);
+                    state.density = parseInt(str.substr(2, 2), 36);
+                    state.colorShift = parseInt(str.substr(4, 2), 36);
+                    state.glitchIntensity = parseInt(str.substr(6, 2), 36);
+                    state.pattern = parseInt(str.substr(8, 2), 36);
+                    state.scaleMod = parseInt(str.substr(10, 2), 36);
+                    state.jitterMod = parseInt(str.substr(12, 2), 36);
+                    state.varA = parseInt(str.substr(14, 2), 36);
+                    state.varB = parseInt(str.substr(16, 2), 36);
+                    state.colorIntensity = parseInt(str.substr(18, 2), 36);
+                    state.noiseIntensity = parseInt(str.substr(20, 2), 36);
+                    return true;
+                }
+                return false;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // Test encoding
+        const encoded = encodeState();
+        console.log('Encoded state (22 chars):', encoded, 'Length:', encoded.length);
+        
+        // Test decoding
+        const decoded = decodeState(encoded);
+        console.log('Decoded successfully:', decoded);
+        console.log('State after decode:', state);
+        
+        // Test backward compatibility with 18-char format
+        const oldFormat = encoded.substring(0, 18);
+        console.log('\nTesting 18-char backward compatibility...');
+        
+        // Reset state
+        Object.assign(state, {
+            speed: 50,
+            density: 50,
+            colorShift: 0,
+            glitchIntensity: 20,
+            pattern: 0,
+            scaleMod: 50,
+            jitterMod: 0,
+            varA: 50,
+            varB: 50,
+            colorIntensity: 100,
+            noiseIntensity: 0
+        });
+        
+        // Simulate decodeState for 18-char format
+        if (oldFormat.length === 18) {
+            state.speed = parseInt(oldFormat.substr(0, 2), 36);
+            state.density = parseInt(oldFormat.substr(2, 2), 36);
+            state.colorShift = parseInt(oldFormat.substr(4, 2), 36);
+            state.glitchIntensity = parseInt(oldFormat.substr(6, 2), 36);
+            state.pattern = parseInt(oldFormat.substr(8, 2), 36);
+            state.scaleMod = parseInt(oldFormat.substr(10, 2), 36);
+            state.jitterMod = parseInt(oldFormat.substr(12, 2), 36);
+            state.varA = parseInt(oldFormat.substr(14, 2), 36);
+            state.varB = parseInt(oldFormat.substr(16, 2), 36);
+            // colorIntensity and noiseIntensity should keep defaults (100, 0)
+            console.log('18-char decode successful');
+            console.log('colorIntensity should be 100:', state.colorIntensity);
+            console.log('noiseIntensity should be 0:', state.noiseIntensity);
+        }
+        
+        console.log('\nAll tests completed!');
+    </script>
+</body>
+</html>
