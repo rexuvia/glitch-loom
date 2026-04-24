@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Glitch Loom</title>
+<style>
+:root {
+  --bg: #080810;
+  --surface: rgba(255,255,255,0.04);
+  --surface2: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.12);
+  --cyan: #00f0ff;
+  --pink: #ff00aa;
+  --green: #00ff88;
+  --gold: #ffd700;
+  --text: #e0e8f0;
+  --muted: #8899aa;
+  --radius: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow-x:hidden}
+
+/* ─── LAYOUT ─── */
+#app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;max-width:1200px;margin:0 auto;padding:0 12px}
+@media(min-width:860px){#app{grid-template-columns:260px 1fr;grid-template-rows:auto 1fr;}}
+
+/* ─── HEADER ─── */
+#header{grid-column:1/-1;padding:14px 0 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--border)}
+#logo{font-size:1.5rem;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,var(--cyan),var(--pink),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#logo span{font-size:.7rem;display:block;letter-spacing:4px;margin-top:-2px;color:var(--muted);-webkit-text-fill-color:var(--muted)}
+#header-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ─── SIDEBAR ─── */
+#sidebar{padding:12px 0 12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+@media(min-width:860px){#sidebar{padding:16px 16px 16px 0;border-right:1px solid var(--border)}}
+
+/* ─── CANVAS ZONE ─── */
+#canvas-zone{display:flex;flex-direction:column;gap:10px;padding:12px 0}
+@media(min-width:860px){#canvas-zone{padding:16px 0 16px 16px}}
+#canvas-wrap{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;border:1px solid var(--border);box-shadow:0 0 40px rgba(0,240,255,.06);flex:1;min-height:300px;max-height:600px;aspect-ratio:1/1}
+@media(min-width:860px){#canvas-wrap{aspect-ratio:unset;max-height:unset}}
+#main-canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+#overlay-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.6}
+#canvas-status{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--muted);pointer-events:none;white-space:nowrap;transition:.3s}
+
+/* ─── STATUS BAR ─── */
+#statusbar{grid-column:1/-1;border-top:1px solid var(--border);padding:6px 0;display:flex;gap:12px;align-items:center;font-size:11px;color:var(--muted);flex-wrap:wrap}
+#progress-bar{height:2px;background:linear-gradient(90deg,var(--cyan),var(--pink));border-radius:1px;transition:width .3s;width:0%}
+#progress-wrap{flex:1;background:var(--surface);border-radius:1px;overflow:hidden;max-width:200px}
+
+/* ─── PANELS ─── */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;display:flex;flex-direction:column;gap:8px}
+.panel-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* ─── CONTROLS ─── */
+.ctrl-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctrl-label{font-size:11px;color:var(--muted);min-width:68px}
+.ctrl-value{font-size:11px;color:var(--cyan);min-width:24px;text-align:right}
+input[type=range]{-webkit-appearance:none;flex:1;height:4px;background:var(--surface2);border-radius:2px;border:none;cursor:pointer;min-width:60px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 6px var(--cyan)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;border:none}
+select,input[type=file]{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 8px;font-size:12px;cursor:pointer;width:100%}
+select:focus,input:focus{outline:none;border-color:var(--cyan)}
+select option{background:#111}
+
+/* ─── BUTTONS ─── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn:hover{background:var(--surface);border-color:var(--cyan);color:var(--cyan)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--pink),var(--cyan));border:none;color:#000}
+.btn-primary:hover{opacity:.9;color:#000}
+.btn-success{background:linear-gradient(135deg,#00aa55,var(--green));border:none;color:#000}
+.btn-success:hover{opacity:.9;color:#000}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ─── PRESET CHIPS ─── */
+.preset-grid{display:flex;gap:5px;flex-wrap:wrap}
+.preset-chip{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);font-size:11px;cursor:pointer;transition:.15s}
+.preset-chip:hover,.preset-chip.active{border-color:var(--cyan);color:var(--cyan)}
+
+/* ─── TOGGLE GROUP ─── */
+.toggle-group{display:flex;background:var(--surface);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.toggle-btn{flex:1;padding:5px 4px;text-align:center;font-size:10px;font-weight:600;cursor:pointer;transition:.15s;letter-spacing:.5px}
+.toggle-btn.active{background:var(--cyan);color:#000}
+
+/* ─── ANIMATION ─── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{animation:spin .8s linear infinite;display:inline-block}
+
+/* ─── WEAVE VIZ ─── */
+#weave-preview{width:100%;height:40px;border-radius:6px;overflow:hidden;margin-top:2px}
+
+/* ─── SECTION TABS ─── */
+.tab-bar{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;color:var(--muted);letter-spacing:.5px}
+.tab.active{background:var(--surface2);color:var(--text)}
+.tab-content{display:none}
+.tab-content.active{display:flex;flex-direction:column;gap:8px}
+
+/* ─── COLOR SWATCH ─── */
+.color-row{display:flex;gap:5px;flex-wrap:wrap}
+.swatch{width:22px;height:22px;border-radius:4px;cursor:pointer;border:2px solid transparent;transition:.15s;flex-shrink:0}
+.swatch.active{border-color:#fff}
+
+/* mobile bottom action bar */
+#mobile-actions{display:flex;gap:6px;padding:8px 0}
+@media(min-width:860px){#mobile-actions{display:none}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<header id="header">
+  <div id="logo">GLITCH LOOM<span>pixel art tapestry engine</span></div>
+  <div id="header-actions">
+    <button class="btn btn-sm" id="btn-randomize">🎲 Random</button>
+    <button class="btn btn-sm btn-success" id="btn-export-png">⬇ PNG</button>
+    <button class="btn btn-sm btn-success" id="btn-export-gif">⬇ GIF</button>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+
+  <!-- PRESETS -->
+  <div class="panel">
+    <div class="panel-title">Presets</div>
+    <div class="preset-grid" id="preset-grid"></div>
+  </div>
+
+  <!-- IMAGE SOURCE -->
+  <div class="panel">
+    <div class="panel-title">Image Source</div>
+    <input type="file" id="upload" accept="image/*">
+    <div class="btn-row">
+      <button class="btn btn-sm" id="btn-procedural" style="flex:1">✦ Generate</button>
+      <select id="proc-type" style="flex:1;padding:5px 6px;font-size:11px">
+        <option value="gradient">Gradient</option>
+        <option value="noise">Noise</option>
+        <option value="geometric">Geometric</option>
+        <option value="plasma">Plasma</option>
+        <option value="mandelbrot">Fractal</option>
+      </select>
+    </div>
+    <div class="color-row" id="palette-row"></div>
+  </div>
+
+  <!-- TABS for effect sections -->
+  <div class="panel" style="flex:1">
+    <div class="tab-bar">
+      <div class="tab active" data-tab="weave">Weave</div>
+      <div class="tab" data-tab="sort">Sort</div>
+      <div class="tab" data-tab="mosh">Mosh</div>
+      <div class="tab" data-tab="anim">Anim</div>
+    </div>
+
+    <!-- WEAVE TAB -->
+    <div class="tab-content active" id="tab-weave">
+      <div style="height:2px"></div>
+      <div>
+        <div class="ctrl-label" style="margin-bottom:4px">Weave Pattern</div>
+        <div class="toggle-group" id="weave-pattern-group">
+          <div class="toggle-btn active" data-val="plain">Plain</div>
+          <div class="toggle-btn" data-val="twill">Twill</div>
+          <div class="toggle-btn" data-val="satin">Satin</div>
+          <div class="toggle-btn" data-val="herringbone">Herr.</div>
+          <div class="toggle-btn" data-val="custom">Custom</div>
+        </div>
+      </div>
+      <canvas id="weave-preview" height="40"></canvas>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Warp Size</span>
+        <input type="range" id="warp-size" min="2" max="40" value="8">
+        <span class="ctrl-value" id="warp-size-val">8</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Weft Size</span>
+        <input type="range" id="weft-size" min="2" max="40" value="8">
+        <span class="ctrl-value" id="weft-size-val">8</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Warp/Weft</span>
+        <input type="range" id="warp-ratio" min="0" max="100" value="50">
+        <span class="ctrl-value" id="warp-ratio-val">50%</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Blend</span>
+        <input type="range" id="weave-blend" min="0" max="100" value="80">
+        <span class="ctrl-value" id="weave-blend-val">80</span>
+      </div>
+    </div>
+
+    <!-- SORT TAB -->
+    <div class="tab-content" id="tab-sort">
+      <div style="height:2px"></div>
+      <div>
+        <div class="ctrl-label" style="margin-bottom:4px">Sort Metric</div>
+        <div class="toggle-group" id="sort-metric-group">
+          <div class="toggle-btn active" data-val="brightness">Luma</div>
+          <div class="toggle-btn" data-val="hue">Hue</div>
+          <div class="toggle-btn" data-val="saturation">Sat.</div>
+          <div class="toggle-btn" data-val="red">R</div>
+          <div class="toggle-btn" data-val="green">G</div>
+          <div class="toggle-btn" data-val="blue">B</div>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Intensity</span>
+        <input type="range" id="sort-intensity" min="0" max="100" value="60">
+        <span class="ctrl-value" id="sort-intensity-val">60</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Threshold</span>
+        <input type="range" id="sort-threshold" min="0" max="255" value="80">
+        <span class="ctrl-value" id="sort-threshold-val">80</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Direction</span>
+        <div class="toggle-group" style="flex:1" id="sort-dir-group">
+          <div class="toggle-btn active" data-val="horizontal">Horiz</div>
+          <div class="toggle-btn" data-val="vertical">Vert</div>
+          <div class="toggle-btn" data-val="both">Both</div>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Reverse</span>
+        <input type="checkbox" id="sort-reverse" style="width:auto;cursor:pointer">
+      </div>
+    </div>
+
+    <!-- MOSH TAB -->
+    <div class="tab-content" id="tab-mosh">
+      <div style="height:2px"></div>
+      <div>
+        <div class="ctrl-label" style="margin-bottom:4px">Datamosh Type</div>
+        <div class="toggle-group" id="mosh-type-group">
+          <div class="toggle-btn active" data-val="block">Block</div>
+          <div class="toggle-btn" data-val="channel">Channel</div>
+          <div class="toggle-btn" data-val="repeat">Repeat</div>
+          <div class="toggle-btn" data-val="feedback">Feedback</div>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Intensity</span>
+        <input type="range" id="mosh-intensity" min="0" max="100" value="40">
+        <span class="ctrl-value" id="mosh-intensity-val">40</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Block Size</span>
+        <input type="range" id="mosh-block" min="2" max="60" value="16">
+        <span class="ctrl-value" id="mosh-block-val">16</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Shift X</span>
+        <input type="range" id="mosh-shift-x" min="-80" max="80" value="0">
+        <span class="ctrl-value" id="mosh-shift-x-val">0</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Shift Y</span>
+        <input type="range" id="mosh-shift-y" min="-80" max="80" value="0">
+        <span class="ctrl-value" id="mosh-shift-y-val">0</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Chaos</span>
+        <input type="range" id="mosh-chaos" min="0" max="100" value="50">
+        <span class="ctrl-value" id="mosh-chaos-val">50</span>
+      </div>
+    </div>
+
+    <!-- ANIM TAB -->
+    <div class="tab-content" id="tab-anim">
+      <div style="height:2px"></div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Frames</span>
+        <input type="range" id="anim-frames" min="2" max="24" value="8">
+        <span class="ctrl-value" id="anim-frames-val">8</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Delay (ms)</span>
+        <input type="range" id="anim-delay" min="50" max="500" value="120">
+        <span class="ctrl-value" id="anim-delay-val">120</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Evolve</span>
+        <div class="toggle-group" style="flex:1" id="anim-evolve-group">
+          <div class="toggle-btn active" data-val="sort">Sort</div>
+          <div class="toggle-btn" data-val="mosh">Mosh</div>
+          <div class="toggle-btn" data-val="both">Both</div>
+        </div>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Mode</span>
+        <div class="toggle-group" style="flex:1" id="anim-mode-group">
+          <div class="toggle-btn active" data-val="forward">Fwd</div>
+          <div class="toggle-btn" data-val="pingpong">Ping</div>
+          <div class="toggle-btn" data-val="random">Rand</div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-sm" id="btn-preview-anim" style="flex:1">▶ Preview</button>
+        <button class="btn btn-sm btn-success" id="btn-export-gif2" style="flex:1">⬇ GIF</button>
+      </div>
+      <div id="anim-status" style="font-size:11px;color:var(--muted);text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- APPLY -->
+  <button class="btn btn-primary" id="btn-apply" style="width:100%;padding:12px;font-size:14px">✦ Weave Glitch</button>
+</aside>
+
+<!-- CANVAS ZONE -->
+<main id="canvas-zone">
+  <div id="mobile-actions">
+    <button class="btn btn-primary btn-sm" id="btn-apply-m" style="flex:1">✦ Weave Glitch</button>
+    <button class="btn btn-sm btn-success" id="btn-export-png-m">⬇ PNG</button>
+  </div>
+  <div id="canvas-wrap">
+    <canvas id="main-canvas"></canvas>
+    <canvas id="overlay-canvas"></canvas>
+    <div id="canvas-status">Upload image or click Generate</div>
+  </div>
+</main>
+
+<!-- STATUS BAR -->
+<footer id="statusbar">
+  <span id="status-text">Ready</span>
+  <div id="progress-wrap"><div id="progress-bar"></div></div>
+  <span id="size-info" style="margin-left:auto"></span>
+</footer>
+
+</div><!-- #app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// GLITCH LOOM — Full Engine
+// ═══════════════════════════════════════════════════════
+
+const $ = id => document.getElementById(id);
+const mainCanvas = $('main-canvas');
+const overlayCanvas = $('overlay-canvas');
+const ctx = mainCanvas.getContext('2d');
+const octx = overlayCanvas.getContext('2d');
+
+let originalImageData = null;
+let currentImageData = null;
+let animFrames = [];
+let animPlaying = false;
+let animTimer = null;
+
+// ─── STATE ───────────────────────────────────────────
+const state = {
+  weavePattern: 'plain',
+  warpSize: 8,
+  weftSize: 8,
+  warpRatio: 0.5,
+  weaveBlend: 0.8,
+  sortMetric: 'brightness',
+  sortIntensity: 0.6,
+  sortThreshold: 80,
+  sortDirection: 'horizontal',
+  sortReverse: false,
+  moshType: 'block',
+  moshIntensity: 0.4,
+  moshBlock: 16,
+  moshShiftX: 0,
+  moshShiftY: 0,
+  moshChaos: 0.5,
+  animFrames: 8,
+  animDelay: 120,
+  animEvolve: 'sort',
+  animMode: 'forward',
+  palette: ['#ff00aa','#00f0ff','#00ff88','#ffd700','#ff6600'],
+  procType: 'gradient',
+};
+
+// ─── PRESETS ─────────────────────────────────────────
+const PRESETS = [
+  {
+    name: 'Cyberpunk',
+    state: { weavePattern:'twill', warpSize:6, weftSize:10, warpRatio:.6, weaveBlend:.9,
+             sortMetric:'brightness', sortIntensity:.8, sortThreshold:60, sortDirection:'both', sortReverse:false,
+             moshType:'channel', moshIntensity:.5, moshBlock:12, moshShiftX:8, moshShiftY:0, moshChaos:.6,
+             palette:['#ff00aa','#00f0ff','#9900ff','#ff6600','#00ff88'] }
+  },
+  {
+    name: 'Vaporwave',
+    state: { weavePattern:'satin', warpSize:12, weftSize:8, warpRatio:.4, weaveBlend:.7,
+             sortMetric:'hue', sortIntensity:.5, sortThreshold:100, sortDirection:'horizontal', sortReverse:true,
+             moshType:'repeat', moshIntensity:.3, moshBlock:20, moshShiftX:0, moshShiftY:0, moshChaos:.3,
+             palette:['#ff71ce','#b967ff','#01cdfe','#05ffa1','#fffb96'] }
+  },
+  {
+    name: 'Glitch Noir',
+    state: { weavePattern:'herringbone', warpSize:4, weftSize:4, warpRatio:.5, weaveBlend:1,
+             sortMetric:'brightness', sortIntensity:1, sortThreshold:30, sortDirection:'vertical', sortReverse:false,
+             moshType:'block', moshIntensity:.7, moshBlock:8, moshShiftX:20, moshShiftY:10, moshChaos:.8,
+             palette:['#ffffff','#888888','#ff0000','#000000','#333333'] }
+  },
+  {
+    name: 'Aurora',
+    state: { weavePattern:'plain', warpSize:16, weftSize:6, warpRatio:.5, weaveBlend:.6,
+             sortMetric:'saturation', sortIntensity:.6, sortThreshold:50, sortDirection:'horizontal', sortReverse:false,
+             moshType:'feedback', moshIntensity:.2, moshBlock:30, moshShiftX:0, moshShiftY:5, moshChaos:.2,
+             palette:['#00ff88','#00f0ff','#0055ff','#6600ff','#00ffaa'] }
+  },
+  {
+    name: 'Inferno',
+    state: { weavePattern:'twill', warpSize:10, weftSize:5, warpRatio:.7, weaveBlend:.95,
+             sortMetric:'red', sortIntensity:.9, sortThreshold:40, sortDirection:'both', sortReverse:false,
+             moshType:'block', moshIntensity:.6, moshBlock:10, moshShiftX:15, moshShiftY:5, moshChaos:.9,
+             palette:['#ff0000','#ff6600','#ffcc00','#ff3300','#cc0000'] }
+  },
+];
+
+// ─── CANVAS RESIZE ────────────────────────────────────
+function resizeCanvas() {
+  const wrap = $('canvas-wrap');
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight || w;
+  mainCanvas.width = w;
+  mainCanvas.height = h;
+  overlayCanvas.width = w;
+  overlayCanvas.height = h;
+  if (currentImageData) renderCurrent();
+  updateSizeInfo();
+}
+new ResizeObserver(resizeCanvas).observe($('canvas-wrap'));
+window.addEventListener('load', resizeCanvas);
+
+function updateSizeInfo() {
+  $('size-info').textContent = `${mainCanvas.width}×${mainCanvas.height}`;
+}
+
+// ─── PROCEDURAL IMAGE GENERATOR ──────────────────────
+const PALETTE_COLORS = [
+  ['#ff00aa','#00f0ff','#00ff88','#ffd700','#ff6600'],
+  ['#ff71ce','#b967ff','#01cdfe','#05ffa1','#fffb96'],
+  ['#ff0000','#ff6600','#ffcc00','#ff3300','#cc0000'],
+  ['#00ff88','#00f0ff','#0055ff','#6600ff','#00ffaa'],
+  ['#ffffff','#888888','#ff0000','#000000','#444444'],
+];
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+function lerpRgb(a,b,t) {
+  return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t];
+}
+
+function generateProcedural(type, palette, width, height) {
+  const data = new ImageData(width, height);
+  const d = data.data;
+  const colors = palette.map(hexToRgb);
+
+  switch(type) {
+    case 'gradient': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const t = (x/width + y/height) / 2;
+        const i = Math.min(Math.floor(t*(colors.length-1)), colors.length-2);
+        const ft = t*(colors.length-1)-i;
+        const [r,g,b] = lerpRgb(colors[i],colors[i+1],ft);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'noise': {
+      // Perlin-ish with multiple octaves using sin
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const nx=x/width*4, ny=y/height*4;
+        let v = Math.sin(nx*3.1+ny*2.7)*0.5+0.5;
+        v += Math.sin(nx*6.3+ny*5.4)*0.25+0.25;
+        v += Math.sin(nx*12.6-ny*10.8)*0.125+0.125;
+        v = (v/1.875);
+        const t = (Math.sin(v*Math.PI*2)*0.5+0.5) * (colors.length-1);
+        const i = Math.min(Math.floor(t),colors.length-2);
+        const [r,g,b] = lerpRgb(colors[i],colors[i+1],t-i);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'geometric': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const cx=x-width/2, cy=y-height/2;
+        const angle = (Math.atan2(cy,cx)+Math.PI)/(Math.PI*2);
+        const ring = Math.floor(Math.sqrt(cx*cx+cy*cy)/(Math.min(width,height)/8)) % colors.length;
+        const t = (angle + ring/colors.length) % 1;
+        const ci = Math.floor(t*(colors.length-1));
+        const [r,g,b] = colors[Math.min(ci,colors.length-1)];
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'plasma': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const nx=x/width*8, ny=y/height*8;
+        let v = Math.sin(nx+ny);
+        v += Math.sin(nx*0.5);
+        v += Math.sin((nx+ny)*0.5);
+        const cx=nx-4, cy=ny-4;
+        v += Math.sin(Math.sqrt(cx*cx+cy*cy+1));
+        v = (v+4)/8;
+        const t = v*(colors.length-1);
+        const i = Math.min(Math.floor(t),colors.length-2);
+        const [r,g,b] = lerpRgb(colors[i],colors[i+1],t-i);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+    case 'mandelbrot': {
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        const cx=(x/width)*3.5-2.5, cy=(y/height)*2-1;
+        let zx=0,zy=0,iter=0,maxIter=64;
+        while(zx*zx+zy*zy<4&&iter<maxIter){
+          const tmp=zx*zx-zy*zy+cx;
+          zy=2*zx*zy+cy; zx=tmp; iter++;
+        }
+        const t=(iter/maxIter)*(colors.length-1);
+        const i=Math.min(Math.floor(t),colors.length-2);
+        const [r,g,b]= iter===maxIter?[0,0,0]:lerpRgb(colors[i],colors[i+1],t-i);
+        const idx=(y*width+x)*4;
+        d[idx]=r; d[idx+1]=g; d[idx+2]=b; d[idx+3]=255;
+      }
+      break;
+    }
+  }
+  return data;
+}
+
+// ─── IMAGE LOADING ────────────────────────────────────
+function loadImageData(imgData) {
+  originalImageData = imgData;
+  currentImageData = cloneImageData(imgData);
+  renderCurrent();
+  setStatus('Image loaded — ready to weave');
+  $('canvas-status').style.display='none';
+}
+
+function cloneImageData(src) {
+  const dst = new ImageData(src.width, src.height);
+  dst.data.set(src.data);
+  return dst;
+}
+
+function renderCurrent() {
+  if (!currentImageData) return;
+  const offscreen = new OffscreenCanvas(currentImageData.width, currentImageData.height);
+  const oc = offscreen.getContext('2d');
+  oc.putImageData(currentImageData, 0, 0);
+  ctx.clearRect(0,0,mainCanvas.width,mainCanvas.height);
+  ctx.drawImage(offscreen, 0, 0, mainCanvas.width, mainCanvas.height);
+}
+
+// ─── PIXEL METRICS ────────────────────────────────────
+function getMetric(r,g,b,metric) {
+  switch(metric) {
+    case 'brightness': return 0.299*r + 0.587*g + 0.114*b;
+    case 'hue': {
+      const rn=r/255,gn=g/255,bn=b/255;
+      const mx=Math.max(rn,gn,bn),mn=Math.min(rn,gn,bn),d=mx-mn;
+      if(d===0) return 0;
+      let h = mx===rn ? ((gn-bn)/d)%6 : mx===gn ? (bn-rn)/d+2 : (rn-gn)/d+4;
+      return (h/6+1)%1*255;
+    }
+    case 'saturation': {
+      const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+      const l=(mx+mn)/510;
+      if(mx===mn) return 0;
+      return (mx-mn)/(1-Math.abs(2*l-1))/255*255;
+    }
+    case 'red': return r;
+    case 'green': return g;
+    case 'blue': return b;
+    default: return (r+g+b)/3;
+  }
+}
+
+// ─── PIXEL SORTING ────────────────────────────────────
+function pixelSortSpan(data, pixels, indices, metric, reverse) {
+  // Sort a span of pixel indices by metric
+  indices.sort((a,b) => {
+    const ai=a*4, bi=b*4;
+    const ma=getMetric(data[ai],data[ai+1],data[ai+2],metric);
+    const mb=getMetric(data[bi],data[bi+1],data[bi+2],metric);
+    return reverse ? mb-ma : ma-mb;
+  });
+}
+
+function applyPixelSort(imageData, metric, intensity, threshold, direction, reverse) {
+  const {width, height, data} = imageData;
+  const buf = new Uint8ClampedArray(data);
+
+  function sortLine(getIdx, len) {
+    let span=[];
+    for (let i=0;i<=len;i++) {
+      const idx = i<len ? getIdx(i)*4 : -1;
+      const v = idx>=0 ? getMetric(data[idx],data[idx+1],data[idx+2],metric) : -1;
+      if (i<len && v>threshold && Math.random()<intensity) {
+        span.push(getIdx(i));
+      } else if (span.length>1) {
+        // Sort span
+        const sorted=[...span].sort((a,b) => {
+          const ai=a*4,bi=b*4;
+          const ma=getMetric(data[ai],data[ai+1],data[ai+2],metric);
+          const mb=getMetric(data[bi],data[bi+1],data[bi+2],metric);
+          return reverse?mb-ma:ma-mb;
+        });
+        for (let k=0;k<span.length;k++) {
+          const dst=span[k]*4, src=sorted[k]*4;
+          buf[dst]=data[src]; buf[dst+1]=data[src+1]; buf[dst+2]=data[src+2]; buf[dst+3]=data[src+3];
+        }
+        span=[];
+      } else {
+        span=[];
+      }
+    }
+  }
+
+  if (direction==='horizontal'||direction==='both') {
+    for (let y=0;y<height;y++) {
+      sortLine(x=>y*width+x, width);
+    }
+  }
+  if (direction==='vertical'||direction==='both') {
+    for (let x=0;x<width;x++) {
+      sortLine(y=>y*width+x, height);
+    }
+  }
+
+  imageData.data.set(buf);
+  return imageData;
+}
+
+// ─── DATAMOSH ─────────────────────────────────────────
+function applyDatamosh(imageData, type, intensity, blockSize, shiftX, shiftY, chaos) {
+  const {width,height,data} = imageData;
+  const src = new Uint8ClampedArray(data);
+
+  switch(type) {
+    case 'block': {
+      for (let by=0;by<height;by+=blockSize) {
+        for (let bx=0;bx<width;bx+=blockSize) {
+          if (Math.random()>intensity) continue;
+          const dx = Math.round((Math.random()*2-1)*chaos*40+shiftX);
+          const dy = Math.round((Math.random()*2-1)*chaos*20+shiftY);
+          for (let ky=0;ky<blockSize&&by+ky<height;ky++) {
+            for (let kx=0;kx<blockSize&&bx+kx<width;kx++) {
+              const dstX=bx+kx, dstY=by+ky;
+              const srcX=Math.max(0,Math.min(width-1,dstX+dx));
+              const srcY=Math.max(0,Math.min(height-1,dstY+dy));
+              const di=(dstY*width+dstX)*4;
+              const si=(srcY*width+srcX)*4;
+              data[di]=src[si]; data[di+1]=src[si+1]; data[di+2]=src[si+2]; data[di+3]=src[si+3];
+            }
+          }
+        }
+      }
+      break;
+    }
+    case 'channel': {
+      const offX=Math.round(shiftX||chaos*20), offY=Math.round(shiftY||chaos*10);
+      for (let y=0;y<height;y++) for (let x=0;x<width;x++) {
+        if (Math.random()>intensity*2) continue;
+        const di=(y*width+x)*4;
+        const rx=Math.max(0,Math.min(width-1,x+offX));
+        const ry=Math.max(0,Math.min(height-1,y+offY));
+        const ri=(ry*width+rx)*4;
+        const bx2=Math.max(0,Math.min(width-1,x-offX));
+        const by2=Math.max(0,Math.min(height-1,y-offY));
+        const bi=(by2*width+bx2)*4;
+        data[di]=src[ri]; data[di+1]=src[di+1]; data[di+2]=src[bi+2]; data[di+3]=255;
+      }
+      break;
+    }
+    case 'repeat': {
+      const strip = Math.max(2, Math.floor(blockSize));
+      for (let y=0;y<height;y++) {
+        if (Math.random()<intensity) {
+          const srcY = Math.max(0,Math.min(height-1,y-Math.floor(Math.random()*strip*chaos*4+1)));
+          for (let x=0;x<width;x++) {
+            const di=(y*width+x)*4, si=(srcY*width+x)*4;
+            data[di]=src[si]; data[di+1]=src[si+1]; data[di+2]=src[si+2]; data[di+3]=src[si+3];
+          }
+        }
+      }
+      break;
+    }
+    case 'feedback': {
+      for (let y=height-1;y>0;y--) {
+        for (let x=0;x<width;x++) {
+          if (Math.random()>intensity) continue;
+          const di=(y*width+x)*4;
+          const fy=Math.max(0,y-1-Math.floor(Math.random()*chaos*blockSize));
+          const fx=Math.max(0,Math.min(width-1,x+Math.round((Math.random()*2-1)*shiftX)));
+          const fi=(fy*width+fx)*4;
+          data[di]=Math.min(255,src[fi]+shiftX*0.3)|0;
+          data[di+1]=src[fi+1]; data[di+2]=Math.min(255,src[fi+2]+shiftY*0.3)|0; data[di+3]=255;
+        }
+      }
+      break;
+    }
+  }
+  return imageData;
+}
+
+// ─── WEAVE ENGINE ─────────────────────────────────────
+function getWeaveCell(pattern, wx, wy, warpSize, weftSize) {
+  // Returns true = warp strand on top, false = weft strand on top
+  const px = wx % warpSize;
+  const py = wy % weftSize;
+  switch(pattern) {
+    case 'plain': return (px+py)%2===0;
+    case 'twill': return (px+py*2)%3===0;
+    case 'satin': {
+      const step=5;
+      return (px*2+py*3)%step===0;
+    }
+    case 'herringbone': {
+      const section=Math.floor(wx/(warpSize*2));
+      const localX=wx%(warpSize*2);
+      if(localX<warpSize) return (px+py)%2===0;
+      else return (px+py+1)%2===0;
+    }
+    case 'custom': return Math.sin(px*py*0.7+px*0.5)*0.5+0.5>0.5;
+    default: return (px+py)%2===0;
+  }
+}
+
+function applyWeave(warpData, weftData, pattern, warpSize, weftSize, warpRatio, blend) {
+  const {width,height} = warpData;
+  const result = new ImageData(width, height);
+  const wd=warpData.data, we=weftData.data, rd=result.data;
+
+  for (let y=0;y<height;y++) {
+    for (let x=0;x<width;x++) {
+      const isWarp = getWeaveCell(pattern,x,y,warpSize,weftSize);
+      const idx=(y*width+x)*4;
+      const useWarp = isWarp ? Math.random()<warpRatio : Math.random()>=warpRatio;
+
+      if (useWarp || blend<1) {
+        const front = isWarp ? wd : we;
+        const back  = isWarp ? we : wd;
+        if (blend>=1) {
+          rd[idx]=front[idx]; rd[idx+1]=front[idx+1]; rd[idx+2]=front[idx+2]; rd[idx+3]=front[idx+3];
+        } else {
+          const b=1-blend;
+          rd[idx]=front[idx]*blend+back[idx]*b|0;
+          rd[idx+1]=front[idx+1]*blend+back[idx+1]*b|0;
+          rd[idx+2]=front[idx+2]*blend+back[idx+2]*b|0;
+          rd[idx+3]=255;
+        }
+      } else {
+        const src = we;
+        rd[idx]=src[idx]; rd[idx+1]=src[idx+1]; rd[idx+2]=src[idx+2]; rd[idx+3]=src[idx+3];
+      }
+    }
+  }
+  return result;
+}
+
+// ─── MAIN PROCESS ─────────────────────────────────────
+async function processGlitch(seed) {
+  if (!originalImageData) { setStatus('No image loaded'); return null; }
+
+  const W=originalImageData.width, H=originalImageData.height;
+
+  // Warp strand = pixel sorted
+  const warpData = cloneImageData(originalImageData);
+  applyPixelSort(warpData, state.sortMetric, state.sortIntensity, state.sortThreshold, state.sortDirection, state.sortReverse);
+
+  // Weft strand = datamoshed
+  const weftData = cloneImageData(originalImageData);
+  const chaos = state.moshChaos + (seed||0)*0.1;
+  applyDatamosh(weftData, state.moshType, state.moshIntensity, state.moshBlock,
+    state.moshShiftX, state.moshShiftY, chaos);
+
+  // Weave together
+  const result = applyWeave(warpData, weftData, state.weavePattern,
+    state.warpSize, state.weftSize, state.warpRatio, state.weaveBlend);
+  return result;
+}
+
+async function applyAll() {
+  if (!originalImageData) { setStatus('No image — generate or upload one first'); return; }
+  setStatus('Weaving...'); setProgress(10);
+  await sleep(10);
+  const result = await processGlitch(0);
+  setProgress(90);
+  currentImageData = result;
+  renderCurrent();
+  setProgress(100);
+  setStatus('Woven ✓');
+  setTimeout(()=>setProgress(0),600);
+}
+
+// ─── ANIMATION ENGINE ─────────────────────────────────
+async function generateAnimation() {
+  if (!originalImageData) { setStatus('No image loaded'); return; }
+  animFrames = [];
+  const n = state.animFrames;
+  setStatus('Generating animation frames...');
+
+  for (let i=0;i<n;i++) {
+    setProgress((i/n)*90);
+    $('anim-status').textContent = `Frame ${i+1}/${n}`;
+    await sleep(5);
+
+    const W=originalImageData.width, H=originalImageData.height;
+    const t=i/(n-1||1);
+
+    const warpData = cloneImageData(originalImageData);
+    const weftData = cloneImageData(originalImageData);
+
+    const evolve = state.animEvolve;
+    const si = evolve==='mosh' ? state.sortIntensity : state.sortIntensity*t;
+    const mi = evolve==='sort' ? state.moshIntensity : state.moshIntensity*t;
+
+    if (evolve!=='mosh') {
+      applyPixelSort(warpData, state.sortMetric, si, state.sortThreshold*(1-t*0.3), state.sortDirection, state.sortReverse);
+    } else {
+      applyPixelSort(warpData, state.sortMetric, state.sortIntensity, state.sortThreshold, state.sortDirection, state.sortReverse);
+    }
+
+    if (evolve!=='sort') {
+      applyDatamosh(weftData, state.moshType, mi, state.moshBlock, state.moshShiftX*t, state.moshShiftY*t, state.moshChaos*t);
+    } else {
+      applyDatamosh(weftData, state.moshType, state.moshIntensity, state.moshBlock, state.moshShiftX, state.moshShiftY, state.moshChaos);
+    }
+
+    const frame = applyWeave(warpData, weftData, state.weavePattern,
+      state.warpSize, state.weftSize, state.warpRatio, state.weaveBlend);
+    animFrames.push(frame);
+  }
+
+  setProgress(100);
+  setStatus(`Animation ready — ${n} frames`);
+  $('anim-status').textContent = `${n} frames ready`;
+  setTimeout(()=>setProgress(0),600);
+  return animFrames;
+}
+
+function previewAnimation() {
+  if (!animFrames.length) { generateAnimation().then(previewAnimation); return; }
+  if (animPlaying) { stopAnimation(); return; }
+  $('btn-preview-anim').textContent='⏹ Stop';
+  animPlaying=true;
+  let fi=0;
+  let dir=1;
+  function tick() {
+    if (!animPlaying) return;
+    const frame=animFrames[fi];
+    const offscreen=new OffscreenCanvas(frame.width,frame.height);
+    const oc=offscreen.getContext('2d');
+    oc.putImageData(frame,0,0);
+    ctx.clearRect(0,0,mainCanvas.width,mainCanvas.height);
+    ctx.drawImage(offscreen,0,0,mainCanvas.width,mainCanvas.height);
+
+    if(state.animMode==='forward'){ fi=(fi+1)%animFrames.length; }
+    else if(state.animMode==='pingpong'){
+      fi+=dir;
+      if(fi>=animFrames.length-1||fi<=0) dir=-dir;
+    } else {
+      fi=Math.floor(Math.random()*animFrames.length);
+    }
+    animTimer=setTimeout(tick,state.animDelay);
+  }
+  tick();
+}
+
+function stopAnimation() {
+  animPlaying=false;
+  clearTimeout(animTimer);
+  $('btn-preview-anim').textContent='▶ Preview';
+  if(currentImageData) renderCurrent();
+}
+
+// ─── GIF ENCODER (pure JS, LZW + GIF89a) ──────────────
+// Minimal self-contained GIF encoder
+class GifEncoder {
+  constructor(w,h,delay=100) {
+    this.w=w; this.h=h; this.delay=delay;
+    this.frames=[];
+  }
+  addFrame(imageData) { this.frames.push(imageData); }
+  encode() {
+    // Build global palette from all frames (median-cut simplified to 256 colors)
+    const palette = this._buildPalette();
+    const chunks=[];
+    // Header
+    chunks.push(this._str('GIF89a'));
+    chunks.push(this._u16(this.w)); chunks.push(this._u16(this.h));
+    chunks.push(new Uint8Array([0xF7,0,0])); // GCT flag, bg, aspect
+    chunks.push(new Uint8Array(palette.flat())); // 256*3 bytes
+    // Netscape loop extension
+    chunks.push(new Uint8Array([0x21,0xFF,0x0B]));
+    chunks.push(this._str('NETSCAPE2.0'));
+    chunks.push(new Uint8Array([0x03,0x01,0x00,0x00,0x00]));
+
+    for (const frame of this.frames) {
+      // Graphic control extension
+      chunks.push(new Uint8Array([0x21,0xF9,0x04,0x04]));
+      chunks.push(this._u16(Math.round(this.delay/10)));
+      chunks.push(new Uint8Array([0x00,0x00]));
+      // Image descriptor
+      chunks.push(new Uint8Array([0x2C]));
+      chunks.push(this._u16(0)); chunks.push(this._u16(0));
+      chunks.push(this._u16(this.w)); chunks.push(this._u16(this.h));
+      chunks.push(new Uint8Array([0x00]));
+      // Image data (LZW)
+      const indices = this._quantize(frame, palette);
+      const compressed = this._lzw(indices,8);
+      chunks.push(new Uint8Array([8])); // min LZW code size
+      chunks.push(...this._packetize(compressed));
+    }
+    chunks.push(new Uint8Array([0x3B]));
+    return this._concat(chunks);
+  }
+
+  _buildPalette() {
+    // Simple fixed web-safe-ish palette
+    const pal=[];
+    for(let r=0;r<6;r++) for(let g=0;g<6;g++) for(let b=0;b<6;b++){
+      pal.push([r*51,g*51,b*51]);
+    }
+    while(pal.length<256) pal.push([0,0,0]);
+    return pal;
+  }
+
+  _quantize(frame, palette) {
+    const {width,height,data} = frame;
+    const indices = new Uint8Array(width*height);
+    for(let i=0;i<width*height;i++) {
+      const r=data[i*4],g=data[i*4+1],b=data[i*4+2];
+      let best=0, bestD=1e9;
+      for(let j=0;j<palette.length;j++) {
+        const p=palette[j];
+        const d=(r-p[0])**2+(g-p[1])**2+(b-p[2])**2;
+        if(d<bestD){bestD=d;best=j;}
+      }
+      indices[i]=best;
+    }
+    return indices;
+  }
+
+  _lzw(indices, minCodeSize) {
+    const clearCode=1<<minCodeSize, eoi=clearCode+1;
+    let codeSize=minCodeSize+1, nextCode=eoi+1;
+    const table=new Map();
+    const out=[];
+    let bits=0,bitBuf=0;
+
+    const emit=(code)=>{
+      bitBuf|=code<<bits; bits+=codeSize;
+      while(bits>=8){out.push(bitBuf&0xFF);bitBuf>>=8;bits-=8;}
+    };
+
+    emit(clearCode);
+    let prefix=null;
+    for(let i=0;i<=indices.length;i++){
+      const px=i<indices.length?indices[i]:-1;
+      if(prefix===null){prefix=px;continue;}
+      const key=prefix*4096+px;
+      if(table.has(key)){prefix=table.get(key);}
+      else{
+        emit(prefix);
+        if(nextCode<4096){table.set(key,nextCode++);if(nextCode>(1<<codeSize)&&codeSize<12)codeSize++;}
+        else{emit(clearCode);table.clear();nextCode=eoi+1;codeSize=minCodeSize+1;}
+        prefix=px;
+      }
+    }
+    if(prefix!==null&&prefix>=0) emit(prefix);
+    emit(eoi);
+    if(bits>0) out.push(bitBuf&0xFF);
+    return new Uint8Array(out);
+  }
+
+  _packetize(data) {
+    const chunks=[];
+    for(let i=0;i<data.length;i+=255){
+      const sub=data.slice(i,i+255);
+      chunks.push(new Uint8Array([sub.length]));
+      chunks.push(sub);
+    }
+    chunks.push(new Uint8Array([0]));
+    return chunks;
+  }
+
+  _str(s){ return new TextEncoder().encode(s); }
+  _u16(v){ return new Uint8Array([v&0xFF,(v>>8)&0xFF]); }
+  _concat(parts) {
+    const total=parts.reduce((a,b)=>a+b.length,0);
+    const buf=new Uint8Array(total);
+    let off=0;
+    for(const p of parts){buf.set(p,off);off+=p.length;}
+    return buf;
+  }
+}
+
+async function exportGif() {
+  if (!animFrames.length) {
+    setStatus('Generating frames first...');
+    await generateAnimation();
+  }
+  setStatus('Encoding GIF...');
+  setProgress(20);
+  await sleep(10);
+
+  // Scale frames to canvas size
+  const W=Math.min(mainCanvas.width,400);
+  const H=Math.min(mainCanvas.height,400);
+  const scaleCanvas=new OffscreenCanvas(W,H);
+  const sc=scaleCanvas.getContext('2d');
+
+  const enc=new GifEncoder(W,H,state.animDelay);
+  for(let i=0;i<animFrames.length;i++){
+    setProgress(20+70*(i/animFrames.length));
+    await sleep(2);
+    const src=new OffscreenCanvas(animFrames[i].width,animFrames[i].height);
+    src.getContext('2d').putImageData(animFrames[i],0,0);
+    sc.drawImage(src,0,0,W,H);
+    const scaled=sc.getImageData(0,0,W,H);
+    enc.addFrame(scaled);
+  }
+
+  const bytes=enc.encode();
+  setProgress(100);
+  const blob=new Blob([bytes],{type:'image/gif'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='glitch-loom.gif'; a.click();
+  URL.revokeObjectURL(url);
+  setStatus('GIF exported ✓');
+  setTimeout(()=>setProgress(0),800);
+}
+
+// ─── WEAVE PREVIEW CANVAS ─────────────────────────────
+function drawWeavePreview() {
+  const canvas=$('weave-preview');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width=canvas.offsetWidth;
+  const H=canvas.height;
+  const ws=state.warpSize, wf=state.weftSize;
+  const colors=['#00f0ff','#ff00aa'];
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const isWarp=getWeaveCell(state.weavePattern,x,y,ws,wf);
+    ctx.fillStyle=isWarp?colors[0]:colors[1];
+    ctx.fillRect(x,y,1,1);
+  }
+}
+
+// ─── PALETTE SWATCHES ─────────────────────────────────
+function renderPalette() {
+  const row=$('palette-row');
+  row.innerHTML='';
+  PALETTE_COLORS.forEach((pal,pi)=>{
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;gap:2px;cursor:pointer;border-radius:4px;padding:2px;border:1px solid transparent;transition:.15s';
+    pal.forEach(c=>{
+      const s=document.createElement('div');
+      s.className='swatch';
+      s.style.cssText=`width:14px;height:14px;background:${c};border:none;border-radius:2px`;
+      wrap.appendChild(s);
+    });
+    wrap.addEventListener('click',()=>{
+      state.palette=pal;
+      document.querySelectorAll('#palette-row > div').forEach(e=>e.style.borderColor='transparent');
+      wrap.style.borderColor='var(--cyan)';
+    });
+    row.appendChild(wrap);
+  });
+}
+
+// ─── PRESET SYSTEM ────────────────────────────────────
+function renderPresets() {
+  const grid=$('preset-grid');
+  PRESETS.forEach((p,i)=>{
+    const chip=document.createElement('div');
+    chip.className='preset-chip';
+    chip.textContent=p.name;
+    chip.addEventListener('click',()=>{
+      Object.assign(state, p.state);
+      syncUI();
+      drawWeavePreview();
+      document.querySelectorAll('.preset-chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+    });
+    grid.appendChild(chip);
+  });
+}
+
+// ─── TOGGLE GROUPS ────────────────────────────────────
+function initToggleGroup(groupId, stateKey) {
+  const group=$(groupId);
+  if(!group) return;
+  group.querySelectorAll('.toggle-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      group.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state[stateKey]=btn.dataset.val;
+      if(stateKey==='weavePattern') drawWeavePreview();
+      if(stateKey==='sortDirection') {}
+    });
+  });
+}
+
+// ─── SLIDER BINDING ───────────────────────────────────
+function bindSlider(id, stateKey, displayId, transform) {
+  const el=$(id), disp=$(displayId);
+  el.addEventListener('input',()=>{
+    const v=parseFloat(el.value);
+    state[stateKey]=transform?transform(v):v;
+    disp.textContent=displayId.includes('ratio')?v+'%':v;
+    if(stateKey.includes('warp')||stateKey.includes('weft')||stateKey==='weavePattern') drawWeavePreview();
+  });
+}
+
+// ─── SYNC UI FROM STATE ───────────────────────────────
+function syncUI() {
+  // Sliders
+  [
+    ['warp-size','warpSize','warp-size-val'],
+    ['weft-size','weftSize','weft-size-val'],
+    ['warp-ratio','warpRatio','warp-ratio-val'],
+    ['weave-blend','weaveBlend','weave-blend-val'],
+    ['sort-intensity','sortIntensity','sort-intensity-val'],
+    ['sort-threshold','sortThreshold','sort-threshold-val'],
+    ['mosh-intensity','moshIntensity','mosh-intensity-val'],
+    ['mosh-block','moshBlock','mosh-block-val'],
+    ['mosh-shift-x','moshShiftX','mosh-shift-x-val'],
+    ['mosh-shift-y','moshShiftY','mosh-shift-y-val'],
+    ['mosh-chaos','moshChaos','mosh-chaos-val'],
+    ['anim-frames','animFrames','anim-frames-val'],
+    ['anim-delay','animDelay','anim-delay-val'],
+  ].forEach(([id,key,dispId])=>{
+    const el=$(id), disp=$(dispId);
+    if(!el) return;
+    const val=state[key];
+    // Reverse-map: if val is 0-1 range, map to slider
+    if(key==='warpRatio'){el.value=val*100;disp.textContent=Math.round(val*100)+'%';}
+    else if(key==='weaveBlend'){el.value=val*100;disp.textContent=Math.round(val*100);}
+    else if(key==='sortIntensity'){el.value=val*100;disp.textContent=Math.round(val*100);}
+    else if(key==='moshIntensity'){el.value=val*100;disp.textContent=Math.round(val*100);}
+    else if(key==='moshChaos'){el.value=val*100;disp.textContent=Math.round(val*100);}
+    else {el.value=val;disp.textContent=val;}
+  });
+
+  // Toggle groups
+  const toggles={
+    'weave-pattern-group':'weavePattern',
+    'sort-metric-group':'sortMetric',
+    'sort-dir-group':'sortDirection',
+    'mosh-type-group':'moshType',
+    'anim-evolve-group':'animEvolve',
+    'anim-mode-group':'animMode',
+  };
+  for(const [gid,key] of Object.entries(toggles)){
+    const g=$(gid); if(!g) continue;
+    g.querySelectorAll('.toggle-btn').forEach(btn=>{
+      btn.classList.toggle('active',btn.dataset.val===state[key]);
+    });
+  }
+
+  $('sort-reverse').checked=state.sortReverse;
+}
+
+// ─── TABS ─────────────────────────────────────────────
+function initTabs() {
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      $('tab-'+tab.dataset.tab).classList.add('active');
+    });
+  });
+}
+
+// ─── UTILS ────────────────────────────────────────────
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function setStatus(msg){$('status-text').textContent=msg;}
+function setProgress(pct){$('progress-bar').style.width=pct+'%';}
+
+function randomize() {
+  state.weavePattern=['plain','twill','satin','herringbone','custom'][Math.floor(Math.random()*5)];
+  state.warpSize=Math.floor(Math.random()*20)+4;
+  state.weftSize=Math.floor(Math.random()*20)+4;
+  state.warpRatio=Math.random();
+  state.weaveBlend=0.5+Math.random()*0.5;
+  state.sortMetric=['brightness','hue','saturation','red','green','blue'][Math.floor(Math.random()*6)];
+  state.sortIntensity=0.3+Math.random()*0.7;
+  state.sortThreshold=Math.floor(Math.random()*150)+10;
+  state.sortDirection=['horizontal','vertical','both'][Math.floor(Math.random()*3)];
+  state.sortReverse=Math.random()>0.5;
+  state.moshType=['block','channel','repeat','feedback'][Math.floor(Math.random()*4)];
+  state.moshIntensity=0.2+Math.random()*0.6;
+  state.moshBlock=Math.floor(Math.random()*40)+4;
+  state.moshShiftX=Math.floor((Math.random()*2-1)*40);
+  state.moshShiftY=Math.floor((Math.random()*2-1)*20);
+  state.moshChaos=Math.random();
+  syncUI();
+  drawWeavePreview();
+}
+
+// ─── EXPORT PNG ───────────────────────────────────────
+function exportPng() {
+  const link=document.createElement('a');
+  link.download='glitch-loom.png';
+  link.href=mainCanvas.toDataURL('image/png');
+  link.click();
+}
+
+// ─── EVENT WIRING ─────────────────────────────────────
+function init() {
+  // Tabs
+  initTabs();
+
+  // Toggle groups
+  initToggleGroup('weave-pattern-group','weavePattern');
+  initToggleGroup('sort-metric-group','sortMetric');
+  initToggleGroup('sort-dir-group','sortDirection');
+  initToggleGroup('mosh-type-group','moshType');
+  initToggleGroup('anim-evolve-group','animEvolve');
+  initToggleGroup('anim-mode-group','animMode');
+
+  // Sliders
+  [
+    ['warp-size','warpSize','warp-size-val',null],
+    ['weft-size','weftSize','weft-size-val',null],
+    ['warp-ratio','warpRatio','warp-ratio-val',v=>v/100],
+    ['weave-blend','weaveBlend','weave-blend-val',v=>v/100],
+    ['sort-intensity','sortIntensity','sort-intensity-val',v=>v/100],
+    ['sort-threshold','sortThreshold','sort-threshold-val',null],
+    ['mosh-intensity','moshIntensity','mosh-intensity-val',v=>v/100],
+    ['mosh-block','moshBlock','mosh-block-val',null],
+    ['mosh-shift-x','moshShiftX','mosh-shift-x-val',null],
+    ['mosh-shift-y','moshShiftY','mosh-shift-y-val',null],
+    ['mosh-chaos','moshChaos','mosh-chaos-val',v=>v/100],
+    ['anim-frames','animFrames','anim-frames-val',null],
+    ['anim-delay','animDelay','anim-delay-val',null],
+  ].forEach(([id,key,dispId,tr])=>bindSlider(id,key,dispId,tr));
+
+  // Reverse checkbox
+  $('sort-reverse').addEventListener('change',e=>state.sortReverse=e.target.checked);
+
+  // Image upload
+  $('upload').addEventListener('change',e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const size=Math.min(Math.max(img.width,img.height),800);
+        const offscreen=new OffscreenCanvas(size,size);
+        const oc=offscreen.getContext('2d');
+        // Center-crop
+        const scale=Math.min(size/img.width,size/img.height);
+        const sw=img.width*scale, sh=img.height*scale;
+        oc.drawImage(img,(size-sw)/2,(size-sh)/2,sw,sh);
+        const data=oc.getImageData(0,0,size,size);
+        loadImageData(data);
+        animFrames=[];
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Procedural generate
+  $('btn-procedural').addEventListener('click',()=>{
+    const size=512;
+    const type=$('proc-type').value;
+    const pal=state.palette||PALETTE_COLORS[0];
+    setStatus('Generating procedural image...');
+    setTimeout(()=>{
+      const data=generateProcedural(type,pal,size,size);
+      loadImageData(data);
+      animFrames=[];
+      setStatus(`Generated ${type} image`);
+    },10);
+  });
+
+  // Apply
+  $('btn-apply').addEventListener('click',()=>applyAll());
+  $('btn-apply-m').addEventListener('click',()=>applyAll());
+
+  // Randomize
+  $('btn-randomize').addEventListener('click',randomize);
+
+  // Export
+  $('btn-export-png').addEventListener('click',exportPng);
+  $('btn-export-png-m').addEventListener('click',exportPng);
+  $('btn-export-gif').addEventListener('click',exportGif);
+  $('btn-export-gif2').addEventListener('click',exportGif);
+
+  // Animation
+  $('btn-preview-anim').addEventListener('click',previewAnimation);
+
+  // Presets
+  renderPresets();
+  renderPalette();
+
+  // Initial weave preview (needs sizing)
+  setTimeout(drawWeavePreview,100);
+
+  // Start with a procedural image so it's not blank
+  setTimeout(()=>{
+    const data=generateProcedural('plasma',PALETTE_COLORS[0],512,512);
+    loadImageData(data);
+    setStatus('Plasma image generated — click ✦ Weave Glitch to start');
+  },150);
+}
+
+// ─── SLIDER DISPLAY INIT ─────────────────────────────
+// Wire display values on slider input for remaining display spans
+function wireDisplays() {
+  const maps=[
+    ['warp-size','warp-size-val'],
+    ['weft-size','weft-size-val'],
+    ['warp-ratio','warp-ratio-val'],
+    ['weave-blend','weave-blend-val'],
+    ['sort-intensity','sort-intensity-val'],
+    ['sort-threshold','sort-threshold-val'],
+    ['mosh-intensity','mosh-intensity-val'],
+    ['mosh-block','mosh-block-val'],
+    ['mosh-shift-x','mosh-shift-x-val'],
+    ['mosh-shift-y','mosh-shift-y-val'],
+    ['mosh-chaos','mosh-chaos-val'],
+    ['anim-frames','anim-frames-val'],
+    ['anim-delay','anim-delay-val'],
+  ];
+  maps.forEach(([rid,did])=>{
+    const el=$(rid),disp=$(did);
+    if(!el||!disp) return;
+    disp.textContent=el.value+(did.includes('ratio')?'%':'');
+  });
+}
+wireDisplays();
+
+document.addEventListener('DOMContentLoaded',init);
+window.addEventListener('load',()=>{resizeCanvas();drawWeavePreview();});
+</script>
+</body>
+</html>

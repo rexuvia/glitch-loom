@@ -1,0 +1,49 @@
+{
+  "name": "LEXAPLAST_NAME",
+  "description": "Custom lexaplast for generating creative outputs",
+  "created": "$(date)",
+  "version": "1.0.0",
+  
+  "codon": {
+    "lexasomes": [
+      "default.txt",
+      "default.txt"
+    ],
+    "n": 2,
+    "selection_mode": "random",
+    "allow_duplicates": false
+  },
+  
+  "prompt": "Combine these concepts: {{codon[0]}} and {{codon[1]}}.\n\nCreate something interesting that emerges from this combination. Be specific and imaginative.\n\nInclude:\n1. What it is\n2. How it works\n3. Why it's valuable or interesting\n\nKeep your response to 3-4 sentences.",
+  
+  "model": "deepseek-chat",
+  "temperature": 0.8,
+  "max_tokens": 300,
+  "top_p": 0.9,
+  
+  "metadata": {
+    "category": "concept_generation",
+    "difficulty": "medium",
+    "creativity_level": "high",
+    "expected_output_type": "creative_concept"
+  },
+  
+  "validation": {
+    "min_sequons": 2,
+    "max_sequons": 5,
+    "required_fields": ["name", "description", "prompt", "model"]
+  },
+  
+  "examples": [
+    {
+      "codon": ["quantum entanglement", "game mechanics"],
+      "output": "Quantum Entanglement Game: Players control paired particles where actions on one instantly affect the other across the game world, creating unique cooperative puzzle mechanics that explore non-locality through interactive gameplay."
+    },
+    {
+      "codon": ["bioluminescence", "interactive art"],
+      "output": "Living Light Installation: A room-sized interactive artwork where visitors' movements trigger bioluminescent patterns on responsive surfaces, creating a symbiotic dance between human presence and organic light emission that evolves with each interaction."
+    }
+  ],
+  
+  "instructions": "Edit this template to customize for your needs:\n1. Update 'lexasomes' array to point to your lexasome files\n2. Modify the prompt template for your specific use case\n3. Adjust model parameters (temperature, max_tokens) as needed\n4. Update metadata for categorization\n5. Add more examples if desired"
+}

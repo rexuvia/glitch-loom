@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wave Collapse Weaver</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+    body {
+      background-color: #0a0e27;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-width: 375px;
+      overflow-x: hidden;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #canvas {
+      background-color: #0a0e27;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .palette {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 20px 0;
+      max-width: 100%;
+    }
+    .tile-option {
+      width: 50px;
+      height: 50px;
+      margin: 5px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .tile-option:hover {
+      transform: scale(1.1);
+      border-color: #00f3ff;
+    }
+    .tile-option.selected {
+      border-color: #00f3ff;
+      border-width: 3px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 600px;
+    }
+    button {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 10px 20px;
+      margin: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      font-size: 14px;
+    }
+    button:hover {
+      background-color: rgba(0, 243, 255, 0.3);
+      transform: scale(1.05);
+    }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      margin: 5px 10px;
+      color: #fff;
+    }
+    .slider-container input {
+      width: 120px;
+      margin: 0 10px;
+    }
+    .dropdown-container {
+      display: flex;
+      align-items: center;
+      margin: 5px 10px;
+    }
+    select {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    select:focus {
+      outline: none;
+      border-color: #00f3ff;
+    }
+    .instructions {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 5px;
+      max-width: 600px;
+      text-align: center;
+      line-height: 1.5;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 600px) {
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      button, .slider-container, .dropdown-container {
+        width: 90%;
+        margin: 5px 0;
+      }
+      .palette {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 style="margin-bottom: 20px; font-family: 'Arial', sans-serif; text-transform: uppercase; letter-spacing: 2px; color: #00f3ff;">Wave Collapse Weaver</h1>
+    <div class="instructions">
+      <strong>Create circuit patterns with Wave Function Collapse!</strong><br>
+      1. Select a tile from the palette below.<br>
+      2. Click on the grid to place circuit constraints.<br>
+      3. Hit "Generate" to start the algorithm.<br>
+      4. Control the speed, pause, or reset as needed.<br>
+      Larger grids take longer to complete.
+    </div>
+    <canvas id="canvas"></canvas>
+    <div class="palette" id="palette"></div>
+    <div class="controls">
+      <button id="generate">Generate</button>
+      <button id="pause" style="display: none;">Pause</button>
+      <button id="resume" style="display: none;">Resume</button>
+      <button id="reset">Reset</button>
+      <button id="clear">Clear All</button>
+      <div class="slider-container">
+        <label>Speed (1x-50x):</label>
+        <input type="range" id="speed" min="1" max="50" value="10">
+        <span id="speedValue">10x</span>
+      </div>
+      <div class="dropdown-container">
+        <label>Grid Size:</label>
+        <select id="gridSize">
+          <option value="15">15 x 15</option>
+          <option value="20" selected>20 x 20</option>
+          <option value="25">25 x 25</option>
+          <option value="30">30 x 30</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const paletteContainer = document.getElementById('palette');
+    const generateBtn = document.getElementById('generate');
+    const pauseBtn = document.getElementById('pause');
+    const resumeBtn = document.getElementById('resume');
+    const resetBtn = document.getElementById('reset');
+    const clearBtn = document.getElementById('clear');
+    const speedSlider = document.getElementById('speed');
+    const speedValue = document.getElementById('speedValue');
+    const gridSizeSelect = document.getElementById('gridSize');
+    
+    let gridSize = 20;
+    let cellSize = 30;
+    let tiles = [];
+    let allTileVariants = [];
+    let grid = [];
+    let wfc = null;
+    let isRunning = false;
+    let isPaused = false;
+    let animationId = null;
+    let selectedTileIndex = -1;
+    let constraints = new Set();
+    let lastCollapsed = new Set();
+    
+    const colors = {
+      background: '#0a0e27',
+      gridLine: 'rgba(255, 255, 255, 0.1)',
+      cyan: '#00f3ff',
+      magenta: '#ff00ff',
+      yellow: '#ffff00',
+      green: '#00ff88'
+    };
+    
+    function defineTiles() {
+      tiles = [
+        { name: 'straight', edges: ['A', 'B', 'A', 'B'], color: colors.cyan },
+        { name: 'corner', edges: ['A', 'A', 'B', 'B'], color: colors.magenta },
+        { name: 'tjunction', edges: ['A', 'B', 'B', 'B'], color: colors.yellow },
+        { name: 'cross', edges: ['B', 'B', 'B', 'B'], color: colors.green },
+        { name: 'terminal', edges: ['B', 'C', 'C', 'C'], color: colors.cyan },
+        { name: 'empty', edges: ['C', 'C', 'C', 'C'], color: colors.magenta }
+      ];
+      
+      allTileVariants = [];
+      tiles.forEach(tile => {
+        let current = tile;
+        for (let i = 0; i < 4; i++) {
+          allTileVariants.push({
+            base: tile.name,
+            rotation: i * 90,
+            edges: current.edges,
+            color: tile.color,
+            index: allTileVariants.length
+          });
+          current = {
+            name: tile.name,
+            edges: [current.edges[3], current.edges[0], current.edges[1], current.edges[2]],
+            color: tile.color
+          };
+        }
+      });
+      allTileVariants = allTileVariants.filter((v, i, self) =>
+        i === self.findIndex(t => t.base === v.base && t.edges.join(',') === v.edges.join(',')));
+    }
+    
+    function createPalette() {
+      paletteContainer.innerHTML = '';
+      allTileVariants.forEach((tile, index) => {
+        const canvas = document.createElement('canvas');
+        canvas.className = 'tile-option';
+        canvas.width = 50;
+        canvas.height = 50;
+        canvas.dataset.index = index;
+        const pctx = canvas.getContext('2d');
+        drawTile(pctx, tile, 25, 25, 20);
+        canvas.addEventListener('click', () => selectTile(index));
+        paletteContainer.appendChild(canvas);
+      });
+      updatePaletteSelection();
+    }
+    
+    function selectTile(index) {
+      selectedTileIndex = index;
+      updatePaletteSelection();
+    }
+    
+    function updatePaletteSelection() {
+      const options = paletteContainer.querySelectorAll('.tile-option');
+      options.forEach(opt => {
+        if (parseInt(opt.dataset.index) === selectedTileIndex) {
+          opt.classList.add('selected');
+        } else {
+          opt.classList.remove('selected');
+        }
+      });
+    }
+    
+    function drawTile(ctx, tile, cx, cy, size) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate((tile.rotation || 0) * Math.PI / 180);
+      const half = size / 2;
+      ctx.strokeStyle = tile.color;
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = tile.color;
+      
+      switch (tile.base) {
+        case 'straight':
+          ctx.beginPath();
+          ctx.moveTo(0, -half);
+          ctx.lineTo(0, half);
+          ctx.stroke();
+          break;
+        case 'corner':
+          ctx.beginPath();
+          ctx.moveTo(0, -half);
+          ctx.lineTo(0, 0);
+          ctx.lineTo(half, 0);
+          ctx.stroke();
+          break;
+        case 'tjunction':
+          ctx.beginPath();
+          ctx.moveTo(0, -half);
+          ctx.lineTo(0, 0);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(half, 0);
+          ctx.moveTo(0, 0);
+          ctx.lineTo(-half, 0);
+          ctx.stroke();
+          break;
+        case 'cross':
+          ctx.beginPath();
+          ctx.moveTo(0, -half);
+          ctx.lineTo(0, half);
+          ctx.moveTo(-half, 0);
+          ctx.lineTo(half, 0);
+          ctx.stroke();
+          break;
+        case 'terminal':
+          ctx.beginPath();
+          ctx.moveTo(0, -half);
+          ctx.lineTo(0, -half/2);
+          ctx.stroke();
+          break;
+        case 'empty':
+          ctx.beginPath();
+          ctx.arc(0, 0, 5, 0, Math.PI * 2);
+          ctx.stroke();
+          break;
+      }
+      ctx.restore();
+    }
+    
+    class WFC {
+      constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.grid = Array.from({length: height}, () => Array.from({length: width}, () => ({
+          collapsed: null,
+          possibilities: [...allTileVariants],
+          x: 0, y: 0
+        })));
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            this.grid[y][x].x = x;
+            this.grid[y][x].y = y;
+          }
+        }
+        this.applyConstraints();
+      }
+      
+      applyConstraints() {
+        constraints.forEach(key => {
+          const [x, y] = key.split(',').map(Number);
+          if (x >= 0 && x < this.width && y >= 0 && y < this.height && selectedTileIndex >= 0) {
+            const tile = allTileVariants[selectedTileIndex];
+            this.grid[y][x].collapsed = tile;
+            this.grid[y][x].possibilities = [tile];
+          }
+        });
+      }
+      
+      findLowestEntropyCell() {
+        let minEntropy = Infinity;
+        let candidates = [];
+        for (let y = 0; y < this.height; y++) {
+          for (let x = 0; x < this.width; x++) {
+            const cell = this.grid[y][x];
+            if (!cell.collapsed && cell.possibilities.length < minEntropy && cell.possibilities.length > 1) {
+              minEntropy = cell.possibilities.length;
+              candidates = [cell];
+            } else if (!cell.collapsed && cell.possibilities.length === minEntropy) {
+              candidates.push(cell);
+            }
+          }
+        }
+        if (candidates.length === 0) {
+          return this.checkCompletion() ? null : this.handleContradiction();
+        }
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      }
+      
+      checkCompletion() {
+        for (let y = 0; y < this.height; y++) {
+          for (let x = 0; x < this.width; x++) {
+            if (!this.grid[y][x].collapsed) return false;
+          }
+        }
+        return true;
+      }
+      
+      handleContradiction() {
+        this.grid = Array.from({length: this.height}, () => Array.from({length: this.width}, () => ({
+          collapsed: null,
+          possibilities: [...allTileVariants],
+          x: 0, y: 0
+        })));
+        for (let y = 0; y < this.height; y++) {
+          for (let x = 0; x < this.width; x++) {
+            this.grid[y][x].x = x;
+            this.grid[y][x].y = y;
+          }
+        }
+        this.applyConstraints();
+        return null;
+      }
+      
+      step() {
+        let cell = this.findLowestEntropyCell();
+        if (!cell) {
+          isRunning = false;
+          generateBtn.style.display = 'inline-block';
+          pauseBtn.style.display = 'none';
+          resumeBtn.style.display = 'none';
+          return 'DONE';
+        }
+        let tile = cell.possibilities[Math.floor(Math.random() * cell.possibilities.length)];
+        cell.collapsed = tile;
+        cell.possibilities = [tile];
+        lastCollapsed.clear();
+        lastCollapsed.add(`${cell.x},${cell.y}`);
+        this.propagate(cell.x, cell.y);
+        return 'CONTINUE';
+      }
+      
+      isCompatible(tile1, tile2, direction) {
+        switch (direction) {
+          case 'top': return tile1.edges[0] === tile2.edges[2];
+          case 'right': return tile1.edges[1] === tile2.edges[3];
+          case 'bottom': return tile1.edges[2] === tile2.edges[0];
+          case 'left': return tile1.edges[3] === tile2.edges[1];
+        }
+        return false;
+      }
+      
+      propagate(cx, cy) {
+        let stack = [{x: cx, y: cy}];
+        while (stack.length > 0) {
+          let {x, y} = stack.pop();
+          let cell = this.grid[y][x];
+          if (cell.possibilities.length === 0) {
+            this.handleContradiction();
+            return;
+          }
+          if (y > 0) {
+            let n = this.grid[y-1][x];
+            if (!n.collapsed) {
+              let original = n.possibilities.length;
+              n.possibilities = n.possibilities.filter(t2 => cell.possibilities.some(t1 => this.isCompatible(t1, t2, 'top')));
+              if (n.possibilities.length !== original) stack.push({x, y: y-1});
+            }
+          }
+          if (x < this.width - 1) {
+            let n = this.grid[y][x+1];
+            if (!n.collapsed) {
+              let original = n.possibilities.length;
+              n.possibilities = n.possibilities.filter(t2 => cell.possibilities.some(t1 => this.isCompatible(t1, t2, 'right')));
+              if (n.possibilities.length !== original) stack.push({x: x+1, y});
+            }
+          }
+          if (y < this.height - 1) {
+            let n = this.grid[y+1][x];
+            if (!n.collapsed) {
+              let original = n.possibilities.length;
+              n.possibilities = n.possibilities.filter(t2 => cell.possibilities.some(t1 => this.isCompatible(t1, t2, 'bottom')));
+              if (n.possibilities.length !== original) stack.push({x, y: y+1});
+            }
+          }
+          if (x > 0) {
+            let n = this.grid[y][x-1];
+            if (!n.collapsed) {
+              let original = n.possibilities.length;
+              n.possibilities = n.possibilities.filter(t2 => cell.possibilities.some(t1 => this.isCompatible(t1, t2, 'left')));
+              if (n.possibilities.length !== original) stack.push({x: x-1, y});
+            }
+          }
+        }
+      }
+    }
+    
+    function resizeCanvas() {
+      canvas.width = gridSize * cellSize;
+      canvas.height = gridSize * cellSize;
+    }
+    
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = colors.background;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw grid lines
+      ctx.strokeStyle = colors.gridLine;
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= gridSize; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * cellSize, 0);
+        ctx.lineTo(i * cellSize, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * cellSize);
+        ctx.lineTo(canvas.width, i * cellSize);
+        ctx.stroke();
+      }
+      
+      // Draw tiles
+      if (wfc) {
+        for (let y = 0; y < gridSize; y++) {
+          for (let x = 0; x < gridSize; x++) {
+            const cell = wfc.grid[y][x];
+            if (cell.collapsed) {
+              const cx = x * cellSize + cellSize / 2;
+              const cy = y * cellSize + cellSize / 2;
+              drawTile(ctx, cell.collapsed, cx, cy, cellSize * 0.6);
+              
+              // Highlight constraints
+              if (constraints.has(`${x},${y}`)) {
+                ctx.strokeStyle = 'rgba(0, 243, 255, 0.5)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(x * cellSize + 2, y * cellSize + 2, cellSize - 4, cellSize - 4);
+              }
+              
+              // Highlight last collapsed
+              if (lastCollapsed.has(`${x},${y}`)) {
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.2)';
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+              }
+            } else {
+              // Show entropy count
+              const entropy = cell.possibilities.length;
+              ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+              ctx.font = '12px Arial';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(entropy, x * cellSize + cellSize / 2, y * cellSize + cellSize / 2);
+            }
+          }
+        }
+      }
+    }
+    
+    function animate() {
+      if (isRunning && !isPaused) {
+        const speed = parseInt(speedSlider.value);
+        for (let i = 0; i < speed; i++) {
+          if (wfc.step() === 'DONE') {
+            isRunning = false;
+            break;
+          }
+        }
+      }
+      drawGrid();
+      if (isRunning) {
+        animationId = requestAnimationFrame(animate);
+      }
+    }
+    
+    canvas.addEventListener('click', (e) => {
+      if (isRunning || selectedTileIndex < 0) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = Math.floor((e.clientX - rect.left) / cellSize);
+      const y = Math.floor((e.clientY - rect.top) / cellSize);
+      
+      const key = `${x},${y}`;
+      if (constraints.has(key)) {
+        constraints.delete(key);
+      } else {
+        constraints.add(key);
+      }
+      
+      if (wfc) {
+        wfc = new WFC(gridSize, gridSize);
+      }
+      drawGrid();
+    });
+    
+    generateBtn.addEventListener('click', () => {
+      if (!wfc) {
+        wfc = new WFC(gridSize, gridSize);
+      }
+      isRunning = true;
+      isPaused = false;
+      generateBtn.style.display = 'none';
+      pauseBtn.style.display = 'inline-block';
+      resumeBtn.style.display = 'none';
+      animate();
+    });
+    
+    pauseBtn.addEventListener('click', () => {
+      isPaused = true;
+      pauseBtn.style.display = 'none';
+      resumeBtn.style.display = 'inline-block';
+    });
+    
+    resumeBtn.addEventListener('click', () => {
+      isPaused = false;
+      pauseBtn.style.display = 'inline-block';
+      resumeBtn.style.display = 'none';
+      if (isRunning) animate();
+    });
+    
+    resetBtn.addEventListener('click', () => {
+      isRunning = false;
+      isPaused = false;
+      if (animationId) cancelAnimationFrame(animationId);
+      wfc = new WFC(gridSize, gridSize);
+      generateBtn.style.display = 'inline-block';
+      pauseBtn.style.display = 'none';
+      resumeBtn.style.display = 'none';
+      drawGrid();
+    });
+    
+    clearBtn.addEventListener('click', () => {
+      isRunning = false;
+      isPaused = false;
+      if (animationId) cancelAnimationFrame(animationId);
+      constraints.clear();
+      wfc = null;
+      generateBtn.style.display = 'inline-block';
+      pauseBtn.style.display = 'none';
+      resumeBtn.style.display = 'none';
+      drawGrid();
+    });
+    
+    speedSlider.addEventListener('input', () => {
+      speedValue.textContent = speedSlider.value + 'x';
+    });
+    
+    gridSizeSelect.addEventListener('change', () => {
+      gridSize = parseInt(gridSizeSelect.value);
+      cellSize = Math.min(30, Math.floor(600 / gridSize));
+      constraints.clear();
+      wfc = null;
+      isRunning = false;
+      resizeCanvas();
+      drawGrid();
+    });
+    
+    // Initialize
+    defineTiles();
+    createPalette();
+    resizeCanvas();
+    drawGrid();
+  </script>
+</body>
+</html>

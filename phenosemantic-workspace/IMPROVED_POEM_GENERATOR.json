@@ -1,0 +1,64 @@
+{
+  "name": "enhanced_poem_generator",
+  "ui_label": "EnhancedPoem",
+  "description": "Generate and self-evaluate humorous poems with quality ratings",
+  "created": "2026-03-02",
+  "version": "2.0.0",
+  "author": "Based on rater_cli patterns",
+  
+  "codon": {
+    "lexasomes": [
+      "poem_subjects.txt",
+      "poem_styles.txt",
+      "poem_qualities.csv"
+    ],
+    "n": 3,
+    "selection_mode": "weighted",
+    "allow_duplicates": false
+  },
+  
+  "template_string": "TASK: Generate a funny poem and self-evaluate it.\n\nPOEM REQUIREMENTS:\n- Subject: {{codon[0]}}\n- Style: {{codon[1]}}\n- Focus Quality: {{codon[2]}}\n\nGenerate a humorous 3-8 line poem that excels at the focus quality.\n\nAfter the poem, provide a self-evaluation:\n1. Rating (1-10) for humor and style adherence\n2. How well it achieves the focus quality\n3. One strength\n4. One area for improvement\n\nFormat:\n--- POEM ---\n[Title]\n\n[Content]\n--- EVALUATION ---\nRating: X/10\nFocus Quality Achievement: [explanation]\nStrength: [specific strength]\nImprovement: [specific suggestion]",
+  
+  "model": "deepseek-chat",
+  "temperature": 0.85,
+  "max_tokens": 350,
+  "top_p": 0.9,
+  "frequency_penalty": 0.2,
+  
+  "metadata": {
+    "category": "creative_writing",
+    "subcategory": "humorous_poetry",
+    "difficulty": "medium",
+    "creativity_level": "high",
+    "evaluation_integrated": true,
+    "output_structure": "poem_with_self_evaluation"
+  },
+  
+  "examples": [
+    {
+      "codon": ["a philosophical sock", "haiku", "brevity"],
+      "output": "--- POEM ---\nSock's Existential Crisis\n\nOne of a pair, alone\nDryer tumbles, thoughts are sown\nWhere is my match?\n\n--- EVALUATION ---\nRating: 8/10\nFocus Quality Achievement: Excellent brevity - 17 syllables exactly, each line essential\nStrength: Combines mundane object (sock) with philosophical theme effectively\nImprovement: Could add more specific sensory detail about the dryer experience"
+    },
+    {
+      "codon": ["a singing refrigerator", "limerick", "rhythm"],
+      "output": "--- POEM ---\nThe Musical Fridge\n\nA fridge that began to sing tunes\nOf vegetables, milk, and prunes\nIt hummed day and night\nWith culinary delight\nAnd gave all the leftovers boons!\n\n--- EVALUATION ---\nRating: 9/10\nFocus Quality Achievement: Perfect limerick rhythm (AABBA) with strong meter\nStrength: Creative personification of appliance with food-themed vocabulary\nImprovement: The last line could be funnier - maybe about 'giving cheese the blues'"
+    }
+  ],
+  
+  "validation": {
+    "required_sections": ["POEM", "EVALUATION"],
+    "required_elements": ["title", "content", "rating", "strength", "improvement"],
+    "min_poem_lines": 3,
+    "max_poem_lines": 8,
+    "rating_range": "1-10"
+  },
+  
+  "instructions": "This enhanced generator follows rater_cli patterns by integrating self-evaluation. It produces structured outputs ready for curation. The weighted selection from poem_qualities.csv ensures varied focus areas.",
+  
+  "integration": {
+    "housekeeping_compatible": true,
+    "rating_extractable": true,
+    "batch_processing": true,
+    "quality_tracking": true
+  }
+}

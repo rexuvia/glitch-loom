@@ -1,0 +1,90 @@
+{
+  "name": "phenosemantic",
+  "description": "Comprehensive skill for working with phenosemantic-py platform",
+  "version": "0.1.0",
+  "author": "Rexuvia",
+  "keywords": ["pheno", "phenosemantic", "mining", "lexasome", "lexaplast"],
+  "paths": {
+    "pheno_dir": "/home/ubuntu/.openclaw/workspace/phenosemantic-py",
+    "output_dir": "/home/ubuntu/pheno-outputs",
+    "workspace_dir": "/home/ubuntu/.openclaw/workspace/phenosemantic-workspace",
+    "log_dir": "/home/ubuntu/mining-logs",
+    "skill_dir": "/home/ubuntu/.openclaw/skills/phenosemantic"
+  },
+  "defaults": {
+    "mining": {
+      "quick_count": 20,
+      "standard_count": 100,
+      "overnight_count": 500,
+      "default_delay": 1000,
+      "quick_delay": 500,
+      "overnight_delay": 2000
+    },
+    "housekeeping": {
+      "batch_size": 50,
+      "min_rating": 7,
+      "auto_archive": true
+    },
+    "generation": {
+      "default_model": "deepseek-chat",
+      "default_temperature": 0.8,
+      "default_max_tokens": 300
+    }
+  },
+  "lexasome_categories": [
+    "game_mechanics",
+    "creative_domains",
+    "technical_concepts",
+    "abstract_ideas",
+    "visual_styles",
+    "narrative_elements",
+    "interaction_patterns",
+    "emotional_states"
+  ],
+  "lexaplast_templates": [
+    "concept_generator",
+    "prompt_template",
+    "analysis_framework",
+    "creative_constraint",
+    "game_concept",
+    "story_generator",
+    "problem_solver",
+    "analogy_maker"
+  ],
+  "integration": {
+    "daily_game_pipeline": true,
+    "cron_support": true,
+    "multi_agent_compatible": true,
+    "telegram_notifications": true
+  },
+  "commands": {
+    "mine": {
+      "description": "Mine outputs using phenosemantic",
+      "flags": ["--quick", "--overnight", "--count", "--delay", "--debug"]
+    },
+    "housekeep": {
+      "description": "Process unrated outputs",
+      "flags": ["--path", "--batch", "--auto", "--verbose"]
+    },
+    "create": {
+      "description": "Create new lexasomes or lexaplasts",
+      "subcommands": ["lexasome", "lexaplast", "sequon"]
+    },
+    "list": {
+      "description": "List available resources",
+      "subcommands": ["lexasomes", "lexaplasts", "outputs", "templates"]
+    },
+    "stats": {
+      "description": "Show mining statistics",
+      "flags": ["--today", "--week", "--month", "--json"]
+    },
+    "config": {
+      "description": "Show or update configuration",
+      "flags": ["--show", "--update", "--fix-paths"]
+    },
+    "help": {
+      "description": "Show help information",
+      "flags": ["--full", "--examples", "--commands"]
+    }
+  }
+}

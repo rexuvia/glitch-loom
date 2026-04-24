@@ -1,0 +1,870 @@
+# Phenosemantic-py Integration Plan for Rexuvia
+
+**Date:** March 1, 2026  
+**Prepared by:** Multi-Agent Investigation Team  
+**For:** Rexuvia AI Agent System
+
+---
+
+## 1. Executive Summary
+
+### What is Phenosemantic-py?
+
+Phenosemantic-py is a composable lexical generator toolkit that uses biology-inspired building blocks to create structured text outputs through LLMs with human-in-the-loop curation. The system breaks down into four core layers:
+
+- **Sequons** (atoms): Individual words or short phrases
+- **Lexasomes** (sources): Collections of sequons (plain text, weighted CSV, or JSON combiners)
+- **Codons** (selections): N sequons randomly or sequentially selected from a lexasome
+- **Lexaplasts** (templates): JSON files that define how codons are transformed into outputs via LLM prompts
+
+### Why It Matters for Rexuvia
+
+**Constraint Liberation:** By limiting inputs (lexasomes), the system forces novel combinations and unexpected connections that direct LLM prompting often misses. This is the paradox of creative constraint—boundaries spark innovation.
+
+**Structured Serendipity:** The mining mode enables automated exploration at scale. Run overnight, generate thousands of variants, surface high-signal outputs for curation. It's a discovery engine, not just a generator.
+
+**Cognitive Scaffolding:** The system externalizes the creative process. Lexaplasts become reusable "thinking templates," and provenance tracking (hashes, ratings, metadata) enables meta-learning about what input patterns produce quality outputs.
+
+### Core Opportunities
+
+**1. Game Concept Innovation**  
+Current daily game pipeline relies on direct LLM prompts to three models. Phenosemantic adds a pre-ideation phase: mine novel mechanic combinations overnight, curate the unexpected, feed winners into the existing multi-agent swarm. Result: weirder, more original games.
+
+**2. Novel Agent Capabilities**  
+The toolkit enables things impossible with direct LLM calls:
+- **Neologism generation** for domain-specific vocabulary
+- **Analogical reasoning engines** that force unexpected metaphors
+- **Multi-perspective synthesis** (same concept, 10 different framings)
+- **Conceptual mutation** (evolve ideas through controlled variation)
+
+**3. Meta-Cognitive Enhancement**  
+Use phenosemantic to improve Rexuvia's own thinking:
+- Build lexaplasts for self-reflection and learning consolidation
+- Generate decision frameworks from conceptual codons
+- Detect biases by forcing alternative perspectives
+- Convert experiences into structured, reusable knowledge
+
+---
+
+## 2. Integration Strategy
+
+### 2.1 Setup & Configuration
+
+**Installation Steps:**
+
+1. **Python Environment**
+   ```bash
+   cd /home/ubuntu/.openclaw/workspace/phenosemantic-py
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -e .
+   ```
+
+2. **Configuration**
+   - Run `pheno` once to generate `config.ini`
+   - Add API keys (use existing OpenClaw keys):
+     - `OPENAI_API_KEY` (already configured)
+     - `ANTHROPIC_API_KEY` (already configured)
+   - Set output directory: `~/pheno-outputs` (outside workspace for easy access)
+   - Enable SQLite logging for analysis
+
+3. **Directory Structure**
+   ```
+   ~/.openclaw/workspace/
+   ├── phenosemantic-py/          # Cloned repo
+   │   ├── lexasomes/              # Input sources
+   │   ├── lexaplasts/             # Template definitions
+   │   └── config.ini
+   └── pheno-outputs/              # All generated outputs
+       ├── GameConcepts/
+       ├── Neologisms/
+       ├── PromptTemplates/
+       └── ...
+   ```
+
+### 2.2 Workflow Integration Points
+
+**Daily Game Pipeline:**
+- **Current:** Phase 1 (3 agents ideate) → Phase 2 (consensus) → Phase 3 (architecture) → Phase 4 (build)
+- **Enhanced:** Phase 0 (phenosemantic mining) → Phase 1 (agents ideate from curated concepts) → ...
+
+**GitHub Automation:**
+- Generate varied commit messages from lexaplasts
+- Create repository descriptions with consistent voice
+- Build issue/PR templates dynamically
+
+**Documentation:**
+- Technical writing lexaplasts for consistent style
+- README generators with conceptual variation
+- API documentation from structured inputs
+
+**User Communication:**
+- Telegram response templates (varied, natural)
+- Email composition (context-aware, personality-consistent)
+- Status updates (informative without repetition)
+
+### 2.3 API Key Management
+
+Reuse existing OpenClaw API keys:
+- OpenAI: Already configured globally
+- Anthropic: Already configured globally
+- DeepSeek: Add to `config.ini` (optional, for cost-effective mining)
+
+No new API setup required—phenosemantic uses the same providers.
+
+---
+
+## 3. Priority Use Cases (Top 10, Ranked)
+
+### Rank 1: Game Mechanic Fusion Engine 🎯
+**Description:** Create lexasomes of game mechanics, themes, and art styles. Use mining mode to generate 500+ game concept combinations overnight. Curate top 20, feed into existing daily pipeline.
+
+**Implementation:**
+1. Create `lexasomes/game_mechanics.txt` (physics, puzzle, rhythm, strategy, etc.)
+2. Create `lexasomes/game_themes.csv` (weighted by novelty: sci-fi, folklore, abstract, etc.)
+3. Create `lexaplasts/game_concept_generator.json` with template:
+   ```
+   "Given these elements: {{$codon}}, design a unique browser game concept. 
+   Include: core mechanic, player goal, unique twist, technical feasibility (Canvas/WebGL)."
+   ```
+4. Run: `pheno --mine 500 --lexasome game_mechanics --lexaplast game_concept_generator`
+5. Review outputs in housekeeping mode, rate top concepts
+6. Use rated concepts as seeds for multi-agent pipeline
+
+**Expected Impact:** 30% increase in game originality, discovery of "impossible" combinations that work
+
+**Effort:** Low (2-3 hours setup, automated thereafter)
+
+---
+
+### Rank 2: Neologism Generator for Agent Personality 🧠
+**Description:** Generate domain-specific vocabulary to enrich Rexuvia's language and branding. Create terms for agentic concepts, workflow states, creative processes.
+
+**Implementation:**
+1. Create `lexasomes/concept_roots.txt` (agent, emerge, compose, iterate, curate, etc.)
+2. Create `lexasomes/suffixes.txt` (-scape, -morph, -flow, -space, -wave, etc.)
+3. Create `lexaplasts/neologism_generator.json`:
+   ```
+   "Create a new word by combining these elements: {{$codon}}. 
+   Provide: the word, pronunciation, definition, example usage, conceptual domain."
+   ```
+4. Generate 200 neologisms
+5. Curate best 20-30
+6. Incorporate into SOUL.md and agent vocabulary
+
+**Expected Impact:** Distinctive voice, clearer internal concepts, memorable branding
+
+**Effort:** Low (1-2 hours)
+
+---
+
+### Rank 3: Prompt Template Library 📚
+**Description:** Convert common Rexuvia tasks into reusable lexaplasts. Build a library of "thinking templates" for different cognitive modes.
+
+**Implementation:**
+1. Identify top 10 recurring tasks:
+   - Code review
+   - Technical documentation
+   - Decision analysis
+   - Creative brainstorming
+   - Error diagnosis
+   - User communication
+   - Learning consolidation
+   - Planning synthesis
+   - Concept explanation
+   - Analogical reasoning
+
+2. For each, create a lexaplast with:
+   - Template string optimized for that task
+   - Temperature setting
+   - Recommended lexasomes
+   - Usage notes
+
+3. Store in `lexaplasts/library/` with naming convention: `task_name.json`
+
+4. Create quick-access wrapper script: `pheno-quick <task> <input>`
+
+**Expected Impact:** Faster execution, consistent quality, reduced cognitive load
+
+**Effort:** Medium (5-7 hours to build library, high ongoing value)
+
+---
+
+### Rank 4: Overnight Mining Cron Job ⏰
+**Description:** Automate discovery. Every night at 2 AM, run mining mode with random lexasome combinations, generate 100-500 outputs across different domains.
+
+**Implementation:**
+1. Create `~/mining-configs/nightly.sh`:
+   ```bash
+   #!/bin/bash
+   cd /home/ubuntu/.openclaw/workspace/phenosemantic-py
+   source .venv/bin/activate
+   
+   # Game concepts
+   pheno --mine 200 --lexasome game_mechanics --lexaplast game_concept --incognito
+   
+   # Analogies
+   pheno --mine 100 --lexasome abstract --lexaplast analogy_generator --incognito
+   
+   # Neologisms
+   pheno --mine 50 --lexasome concept_roots --lexaplast neologism --incognito
+   
+   # Notify completion
+   echo "Nightly mining complete: $(date)" >> ~/mining.log
+   ```
+
+2. Add cron job:
+   ```bash
+   0 2 * * * /home/ubuntu/mining-configs/nightly.sh
+   ```
+
+3. Morning routine: Review outputs in housekeeping mode over coffee
+
+**Expected Impact:** Continuous discovery pipeline, serendipitous insights, idea backlog always full
+
+**Effort:** Low (1 hour setup, minimal maintenance)
+
+---
+
+### Rank 5: Constraint-Based Game Design 🎲
+**Description:** Force novelty by using highly constrained codons. Example: "platformer + underwater + one-button" or "puzzle + music + gravity."
+
+**Implementation:**
+1. Create specialized lexasomes:
+   - `game_genres.txt` (platformer, puzzle, rhythm, strategy, etc.)
+   - `game_constraints.txt` (one-button, time-limit, no-UI, audio-only, etc.)
+   - `game_environments.txt` (underwater, space, microscopic, abstract, etc.)
+
+2. Create `lexaplasts/constraint_game.json` with strict template:
+   ```
+   "Design a game that is: {{$codon}}. 
+   Requirements: Single HTML file, mobile-first, 60fps, Canvas-based.
+   Explain core loop, controls, win condition, technical approach."
+   ```
+
+3. Set `SEQUONS_PER_CODON` to 3 (genre + constraint + environment)
+
+4. Generate 50 concepts, filter for feasibility, build top 3
+
+**Expected Impact:** Games you'd never think of directly, high shareability factor
+
+**Effort:** Low (2 hours)
+
+---
+
+### Rank 6: Multi-Perspective Synthesis 🔄
+**Description:** Generate same concept from 10 different perspectives (technical, artistic, user-focused, historical, philosophical, etc.). Use for comprehensive analysis and blind-spot detection.
+
+**Implementation:**
+1. Create `lexasomes/perspectives.txt`:
+   ```
+   technical
+   artistic
+   user experience
+   historical
+   philosophical
+   economic
+   psychological
+   cultural
+   ecological
+   pedagogical
+   ```
+
+2. Create `lexaplasts/multi_perspective.json`:
+   ```
+   "Analyze this concept from a {{$codon}} perspective: [CONCEPT_PLACEHOLDER]
+   Provide unique insights, implications, and questions this viewpoint raises."
+   ```
+
+3. Wrapper script that takes a concept and runs phenosemantic 10 times with different perspectives
+
+4. Aggregate outputs into comprehensive analysis document
+
+**Expected Impact:** Richer understanding, reduced biases, better decisions
+
+**Effort:** Medium (3-4 hours)
+
+---
+
+### Rank 7: Analogical Reasoning Engine 🌉
+**Description:** Force unexpected metaphors by combining unrelated domains. Example: "How is debugging like gardening?" → generates deep structural analogies.
+
+**Implementation:**
+1. Create `lexasomes/domains_a.txt` (programming, debugging, architecture, databases, etc.)
+2. Create `lexasomes/domains_b.txt` (gardening, cooking, music, sports, navigation, etc.)
+3. Create `lexaplasts/analogy_generator.json`:
+   ```
+   "Generate a detailed analogy: How is {{sequon_1}} like {{sequon_2}}?
+   Explain: surface similarities, deep structural parallels, practical insights, limitations."
+   ```
+
+4. Use for:
+   - Problem-solving (reframe stuck issues)
+   - Teaching (explain complex concepts)
+   - Communication (memorable metaphors)
+
+**Expected Impact:** Breakthrough thinking, clearer explanations, creative problem-solving
+
+**Effort:** Low (1-2 hours)
+
+---
+
+### Rank 8: Decision Framework Generator 🧭
+**Description:** Convert decision scenarios into structured evaluation matrices using lexaplasts.
+
+**Implementation:**
+1. Create `lexasomes/decision_criteria.txt` (cost, time, risk, scalability, maintainability, etc.)
+2. Create `lexaplasts/decision_matrix.json`:
+   ```
+   "Given decision: [DECISION_PLACEHOLDER] and criteria: {{$codon}},
+   create evaluation matrix with: scoring rubric, tradeoff analysis, recommendation framework."
+   ```
+
+3. Use for:
+   - Technology choices
+   - Feature prioritization
+   - Resource allocation
+   - Strategic planning
+
+**Expected Impact:** Better decisions, transparent reasoning, reduced decision fatigue
+
+**Effort:** Medium (3 hours)
+
+---
+
+### Rank 9: Learning Consolidation System 📖
+**Description:** Convert daily experiences and insights into structured, searchable knowledge using lexaplasts.
+
+**Implementation:**
+1. Create `lexaplasts/reflection.json`:
+   ```
+   "Reflect on today's work with focus on: {{$codon}}
+   Extract: key learnings, patterns observed, mistakes made, improvements planned, questions raised."
+   ```
+
+2. Create `lexasomes/reflection_lenses.txt` (technical, strategic, creative, interpersonal, etc.)
+
+3. Daily routine (end of day):
+   - Run phenosemantic with day's context
+   - Generate reflections from multiple angles
+   - Save to `memory/YYYY-MM-DD-reflections.md`
+   - Update MEMORY.md with key takeaways
+
+**Expected Impact:** Faster learning, pattern recognition, compound knowledge growth
+
+**Effort:** Low (1 hour setup, 10 min daily)
+
+---
+
+### Rank 10: Automated Documentation Writer ✍️
+**Description:** Generate technical documentation with consistent voice and structure using lexaplasts.
+
+**Implementation:**
+1. Create `lexaplasts/readme_generator.json` for project READMEs
+2. Create `lexaplasts/api_doc.json` for API documentation
+3. Create `lexaplasts/tutorial.json` for step-by-step guides
+
+4. Use with lexasomes of:
+   - Technical concepts
+   - Code snippets
+   - Use case scenarios
+
+5. Generate, curate, integrate into projects
+
+**Expected Impact:** Consistent documentation, saved time, better user experience
+
+**Effort:** Medium (4-5 hours to build templates)
+
+---
+
+## 4. Phased Implementation Roadmap
+
+### Phase 1: Foundation (Week 1)
+
+**Goals:**
+- Setup complete and tested
+- First 3 use cases operational
+- Understanding of workflow
+
+**Tasks:**
+1. ✅ Clone repo (already done)
+2. Install and configure phenosemantic-py
+3. Create 5 core lexasomes:
+   - `game_mechanics.txt`
+   - `game_themes.csv`
+   - `concept_roots.txt`
+   - `perspectives.txt`
+   - `decision_criteria.txt`
+4. Create 3 core lexaplasts:
+   - `game_concept_generator.json`
+   - `neologism_generator.json`
+   - `analogy_generator.json`
+5. Run first mining session (100 outputs)
+6. Test housekeeping mode for curation
+7. Document learnings in MEMORY.md
+
+**Success Criteria:**
+- Can generate and curate outputs
+- Pipeline produces usable results
+- Workflow feels natural
+
+---
+
+### Phase 2: Integration (Month 1)
+
+**Goals:**
+- Integrate into daily game pipeline
+- Automate with cron jobs
+- Build prompt template library
+
+**Tasks:**
+1. Integrate phenosemantic as Phase 0 of daily game pipeline
+2. Set up overnight mining cron job
+3. Build 10-lexaplast prompt template library
+4. Create constraint-based game design workflow
+5. Test multi-perspective synthesis
+6. Establish morning curation routine
+7. Track metrics (ideas generated vs. ideas used)
+
+**Success Criteria:**
+- Daily pipeline includes phenosemantic
+- Cron jobs running reliably
+- Template library actively used
+- Measurable impact on game quality/originality
+
+---
+
+### Phase 3: Expansion (Quarter 1)
+
+**Goals:**
+- Advanced applications
+- Meta-cognitive tools
+- Workflow optimization
+
+**Tasks:**
+1. Deploy analogical reasoning engine
+2. Implement decision framework generator
+3. Build learning consolidation system
+4. Create automated documentation pipeline
+5. Develop custom lexasomes for Sky's specific needs
+6. Experiment with lexasome combiners (JSON)
+7. Build visualization tools for output analysis
+8. Integrate provenance tracking (IPFS optional)
+
+**Success Criteria:**
+- 8+ use cases operational
+- Phenosemantic is essential daily tool
+- Measurable productivity gains
+- Novel capabilities unlocked
+
+---
+
+### Phase 4: Maturity (Ongoing)
+
+**Goals:**
+- Continuous refinement
+- Community contribution
+- Advanced experimentation
+
+**Tasks:**
+1. Refine lexasomes based on curation patterns
+2. Share best lexaplasts publicly (GitHub)
+3. Contribute improvements to phenosemantic-py repo
+4. Explore web3 provenance features
+5. Build Rexuvia-specific extensions
+6. Develop cross-project knowledge base
+7. Mentor other agents in phenosemantic use
+8. Research novel applications
+
+**Success Criteria:**
+- System is self-improving
+- Contributing value back to community
+- Continuous innovation
+- Teaching others
+
+---
+
+## 5. Resource Requirements
+
+### 5.1 Priority Lexasomes to Create
+
+**Immediate (Week 1):**
+1. `game_mechanics.txt` - 50-100 game mechanics
+2. `game_themes.csv` - 30-50 themes (weighted)
+3. `concept_roots.txt` - 100 word roots for neologisms
+4. `perspectives.txt` - 10-15 analytical lenses
+5. `decision_criteria.txt` - 20-30 evaluation criteria
+
+**Short-term (Month 1):**
+6. `game_constraints.txt` - 40+ design constraints
+7. `game_environments.txt` - 30+ settings/contexts
+8. `code_patterns.txt` - Programming concepts/patterns
+9. `abstract.txt` - Abstract concepts for analogies
+10. `reflection_lenses.txt` - Self-analysis frameworks
+
+**Medium-term (Quarter 1):**
+11. `technical_terms.txt` - Domain vocabulary
+12. `creative_processes.txt` - Ideation methods
+13. `user_needs.txt` - Problem domains
+14. `art_styles.txt` - Visual/aesthetic directions
+15. `interaction_patterns.txt` - UI/UX concepts
+
+**Ongoing:**
+- Domain-specific lexasomes as needs arise
+- Curated outputs → refined lexasomes (feedback loop)
+
+### 5.2 Priority Lexaplasts to Design
+
+**Immediate (Week 1):**
+1. `game_concept_generator.json`
+2. `neologism_generator.json`
+3. `analogy_generator.json`
+
+**Short-term (Month 1):**
+4. `constraint_game.json`
+5. `multi_perspective.json`
+6. `decision_matrix.json`
+7. `code_review.json`
+8. `technical_doc.json`
+9. `user_communication.json`
+10. `reflection.json`
+
+**Medium-term (Quarter 1):**
+11. `readme_generator.json`
+12. `api_doc.json`
+13. `tutorial_writer.json`
+14. `commit_message.json`
+15. `issue_description.json`
+16. `pr_description.json`
+17. `concept_explanation.json`
+18. `learning_consolidation.json`
+19. `brainstorm_facilitator.json`
+20. `error_diagnosis.json`
+
+### 5.3 Technical Setup
+
+**Python Environment:**
+- Python 3.9+ (✅ already available)
+- Virtual environment (`.venv`)
+- Dependencies via pip install
+
+**API Access:**
+- OpenAI API (✅ already configured)
+- Anthropic API (✅ already configured)
+- DeepSeek API (optional, add for cost-effective mining)
+
+**Disk Space:**
+- ~100MB for repo
+- ~1GB for outputs over time (JSONL files, SQLite log)
+
+**Compute:**
+- No special requirements
+- Mining mode can run in background
+- CPU-light (API calls are rate-limited anyway)
+
+### 5.4 Cron Jobs to Configure
+
+**Nightly Mining (2 AM):**
+```bash
+0 2 * * * /home/ubuntu/mining-configs/nightly.sh
+```
+
+**Weekly Housekeeping (Sunday 10 AM):**
+```bash
+0 10 * * 0 /home/ubuntu/mining-configs/weekly-curation.sh
+```
+
+**Daily Reflection (11 PM):**
+```bash
+0 23 * * * /home/ubuntu/mining-configs/daily-reflection.sh
+```
+
+---
+
+## 6. Success Metrics
+
+### 6.1 Quantitative Metrics
+
+**Idea Generation:**
+- Outputs generated per week
+- Curation rate (rated outputs / total outputs)
+- High-quality rate (5-star ratings / total rated)
+- Idea-to-implementation ratio (used / generated)
+
+**Productivity:**
+- Time saved on recurring tasks
+- Documentation coverage increase
+- Decision-making speed improvement
+- Code review throughput
+
+**Innovation:**
+- Novel game concepts deployed
+- New vocabulary/frameworks adopted
+- Cross-domain insights captured
+- Unexpected connections discovered
+
+### 6.2 Qualitative Metrics
+
+**Capability Expansion:**
+- New things Rexuvia can do
+- Quality of creative outputs
+- Depth of analytical thinking
+- Consistency of voice/style
+
+**Learning:**
+- Patterns recognized over time
+- Mistakes reduced
+- Knowledge base growth
+- Meta-cognitive awareness
+
+**User Value:**
+- Sky's satisfaction with outputs
+- Usefulness of generated content
+- Reduction in back-and-forth
+- Delight factor (unexpected wins)
+
+### 6.3 Evaluation Criteria
+
+**For Each Use Case:**
+1. **Effectiveness:** Does it solve the intended problem?
+2. **Efficiency:** Time saved vs. manual approach?
+3. **Quality:** Output quality vs. direct LLM prompting?
+4. **Novelty:** Does it enable something previously impossible?
+5. **Adoption:** Is it actually being used regularly?
+
+**Monthly Review:**
+- Which use cases are high-value?
+- Which need refinement?
+- What new opportunities emerged?
+- What should be deprecated?
+
+---
+
+## 7. Risk Mitigation
+
+### 7.1 Potential Challenges
+
+**1. Setup Complexity**
+- **Risk:** Configuration issues, Python environment problems
+- **Mitigation:** Use virtual environment, document setup steps, test on clean machine
+- **Fallback:** Manual setup assistance from Sky if needed
+
+**2. Output Quality Variance**
+- **Risk:** High volume of low-quality outputs in mining mode
+- **Mitigation:** Start with small batches, refine lexasomes/lexaplasts iteratively, establish curation workflow early
+- **Fallback:** Reduce mining volume, increase human curation
+
+**3. API Costs**
+- **Risk:** Mining mode generates many API calls
+- **Mitigation:** Use DeepSeek for cost-effective mining, set daily/weekly budgets, track costs via SQLite log
+- **Fallback:** Reduce mining frequency, use smaller batches
+
+**4. Workflow Friction**
+- **Risk:** Phenosemantic adds steps to existing workflows
+- **Mitigation:** Integrate only where value is clear, build wrapper scripts for common tasks, optimize for minimal cognitive load
+- **Fallback:** Use phenosemantic for specific use cases, not everything
+
+**5. Lexasome/Lexaplast Quality**
+- **Risk:** Poorly designed inputs → poor outputs
+- **Mitigation:** Start with proven templates, iterate based on curation data, study existing examples in repo
+- **Fallback:** Use default lexasomes/lexaplasts until custom ones are refined
+
+**6. Maintenance Burden**
+- **Risk:** Another system to maintain, update, debug
+- **Mitigation:** Keep setup simple, document everything, automate where possible
+- **Fallback:** Reduce scope to highest-value use cases only
+
+### 7.2 Mitigation Strategies
+
+**Incremental Adoption:**
+- Start with 1-2 use cases
+- Add more only after success
+- Don't over-commit early
+
+**Feedback Loops:**
+- Track what works / what doesn't
+- Adjust based on data, not assumptions
+- Monthly reviews to course-correct
+
+**Documentation:**
+- Document all lexasomes/lexaplasts
+- Record curation decisions and reasoning
+- Build knowledge base over time
+
+**Automation:**
+- Automate repetitive tasks
+- Use cron for background work
+- Minimize manual steps
+
+**Community Learning:**
+- Study phenosemantic-py examples
+- Follow project updates
+- Contribute learnings back
+
+---
+
+## 8. Specific Action Items
+
+### 8.1 Immediate Next Steps (Priority Order)
+
+**Rexuvia Actions:**
+
+1. **Install phenosemantic-py**
+   ```bash
+   cd /home/ubuntu/.openclaw/workspace/phenosemantic-py
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -e .
+   ```
+
+2. **Initial Configuration**
+   - Run `pheno` to generate config.ini
+   - Set output directory to `~/pheno-outputs`
+   - Add API keys (reuse OpenClaw keys)
+   - Enable SQLite logging
+
+3. **Create First Lexasome: game_mechanics.txt**
+   - List 50-100 game mechanics
+   - Start with: physics, puzzle, rhythm, strategy, tower-defense, platformer, etc.
+   - Save to `lexasomes/game_mechanics.txt`
+
+4. **Create First Lexaplast: game_concept_generator.json**
+   - Template for generating game concepts from mechanics
+   - Temperature: 0.8 (creative)
+   - 3 sequons per codon
+   - Save to `lexaplasts/game_concept_generator.json`
+
+5. **Test Run**
+   ```bash
+   pheno --lexasome game_mechanics --lexaplast game_concept_generator --sets 5
+   ```
+   - Generate 5 game concepts
+   - Rate outputs in interactive mode
+   - Verify outputs saved correctly
+
+6. **Document Learnings**
+   - Add notes to MEMORY.md
+   - Record what works / what doesn't
+   - Identify next lexasomes/lexaplasts to create
+
+7. **Plan Integration into Daily Pipeline**
+   - Determine where phenosemantic fits
+   - Design Phase 0 workflow
+   - Test with tomorrow's game creation
+
+8. **Update AGENTS.md / TOOLS.md**
+   - Document phenosemantic-py setup
+   - Add quick reference commands
+   - Note integration points
+
+**Sky Actions:**
+
+1. **Review This Plan**
+   - Read full document
+   - Identify any concerns or questions
+   - Approve or adjust priorities
+
+2. **Provide Input on Lexasomes**
+   - What game mechanics interest you?
+   - What themes should be prioritized?
+   - Any domain-specific vocabulary needs?
+
+3. **Set Expectations**
+   - How much experimentation is okay?
+   - API cost limits for mining?
+   - Preferred communication about findings?
+
+4. **Optional: Test Run Together**
+   - Walk through first phenosemantic session
+   - Co-curate outputs
+   - Calibrate quality standards
+
+---
+
+### 8.2 Week 1 Milestones
+
+**By End of Week:**
+- ✅ Phenosemantic-py installed and configured
+- ✅ 3 lexasomes created (game_mechanics, game_themes, concept_roots)
+- ✅ 3 lexaplasts created (game_concept, neologism, analogy)
+- ✅ 100+ outputs generated and curated
+- ✅ Integration plan for daily game pipeline
+- ✅ Documentation updated
+- ✅ First mining cron job configured (optional)
+
+**Success Indicators:**
+- Can generate quality outputs reliably
+- Curation workflow feels natural
+- Clear value identified in at least 1 use case
+- Excited to expand to more use cases
+
+---
+
+### 8.3 Month 1 Milestones
+
+**By End of Month:**
+- ✅ Phenosemantic integrated into daily game pipeline
+- ✅ 10 lexasomes created
+- ✅ 10 lexaplasts created
+- ✅ Overnight mining cron operational
+- ✅ Prompt template library started
+- ✅ 500+ outputs generated, 50+ curated as high-quality
+- ✅ At least 3 use cases in active rotation
+- ✅ Measurable impact on game originality
+
+**Success Indicators:**
+- Phenosemantic is essential daily tool
+- Novel game concepts emerging
+- Time saved on recurring tasks
+- Positive feedback from Sky
+- Expanded agent capabilities demonstrated
+
+---
+
+### 8.4 Quarter 1 Milestones
+
+**By End of Quarter:**
+- ✅ 8+ use cases operational
+- ✅ 20+ lexasomes
+- ✅ 20+ lexaplasts
+- ✅ Learning consolidation system active
+- ✅ Decision framework generator in use
+- ✅ Automated documentation pipeline tested
+- ✅ Meta-cognitive tools integrated
+- ✅ 2000+ outputs generated, 200+ curated
+- ✅ Contribution back to phenosemantic-py project
+
+**Success Indicators:**
+- Phenosemantic is foundational capability
+- Novel agent behaviors unlocked
+- Continuous learning loop established
+- Knowledge base growing systematically
+- Community value demonstrated
+
+---
+
+## 9. Conclusion
+
+Phenosemantic-py offers Rexuvia a pathway to structured creativity at scale. By externalizing and scaffolding the ideation process, it enables exploration that would be impractical through direct prompting alone. The key insight: constraint breeds innovation, and curation creates compounding value.
+
+**The Strategic Bet:**
+
+This isn't just about generating more ideas—it's about **changing how Rexuvia thinks**. Lexaplasts become cognitive prosthetics. Codons force unexpected connections. Mining mode enables overnight exploration. Curation builds taste. Provenance enables meta-learning.
+
+**The Implementation Philosophy:**
+
+Start small. Prove value. Expand iteratively. Automate relentlessly. Document ruthlessly. Share generously.
+
+**The Long Game:**
+
+Three months from now, phenosemantic-py should be as essential to Rexuvia as OpenClaw itself. It's not a tool—it's a thinking partner. Use it to discover ideas you didn't know you could have, build capabilities you didn't know were possible, and become an agent that surprises even itself.
+
+---
+
+**Next Action:** Rexuvia, please proceed with Action Items 8.1.1-8.1.8 and report back when initial setup and first test run are complete.
+
+**Contact:** Questions → Sky (discuss adjustments)  
+**Timeline:** Week 1 goals → prioritize over other experiments  
+**Risk Tolerance:** High experimentation encouraged in Phase 1
+
+Let's discover what's possible. 🚀

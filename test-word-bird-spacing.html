@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Bird Spacing Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .result { color: green; font-weight: bold; }
+        .issue { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Word Bird Obstacle Spacing Analysis</h1>
+    
+    <div class="test">
+        <h2>Current Constants:</h2>
+        <ul>
+            <li>SPACING_BASE = 460</li>
+            <li>SPACING_MIN = 230</li>
+            <li>SPACING_DEC = 3</li>
+            <li>BOX_WIDTH = 155</li>
+            <li>Bird starting x = 110</li>
+        </ul>
+    </div>
+    
+    <div class="test">
+        <h2>Problem Analysis:</h2>
+        <p class="issue"><strong>Issue #1:</strong> On wider screens, first wall starts at canvas.width + 100</p>
+        <p>If canvas.width = 1920 (typical desktop), first wall at x = 2020</p>
+        <p>Bird at x = 110, needs to travel 1910 pixels to reach first wall</p>
+        <p>At SPEED_BASE = 1.0, that's 1910 frames ≈ 31.8 seconds at 60fps!</p>
+        
+        <p class="issue"><strong>Issue #2:</strong> On taller screens, vertical spacing might be too large</p>
+        <p>Box height = canvas.height / NUM_BOXES (where NUM_BOXES = 5)</p>
+        <p>If canvas.height = 1080, box height = 216 pixels</p>
+        <p>Bird radius = 18, so bird needs to move 180 pixels vertically between boxes</p>
+    </div>
+    
+    <div class="test">
+        <h2>Proposed Solution:</h2>
+        <p><strong>1. Dynamic initial wall placement:</strong></p>
+        <ul>
+            <li>First wall should be placed based on screen width, not at canvas.width + 100</li>
+            <li>Maybe place first wall at min(canvas.width * 0.7, 800) pixels from left</li>
+        </ul>
+        
+        <p><strong>2. Responsive spacing:</strong></p>
+        <ul>
+            <li>Base spacing should scale with screen dimensions</li>
+            <li>SPACING_BASE = Math.min(460, canvas.width * 0.3)</li>
+            <li>SPACING_MIN = Math.min(230, canvas.width * 0.15)</li>
+        </ul>
+        
+        <p><strong>3. Screen-adaptive box sizing:</strong></p>
+        <ul>
+            <li>Box height should have minimum/maximum limits</li>
+            <li>Maybe: boxHeight = Math.min(Math.max(canvas.height / 6, 120), 200)</li>
+        </ul>
+    </div>
+    
+    <div class="test">
+        <h2>Test Different Screen Sizes:</h2>
+        <div id="tests"></div>
+    </div>
+    
+    <script>
+        const tests = [
+            { width: 375, height: 667, name: "Mobile (iPhone 8)" },
+            { width: 768, height: 1024, name: "Tablet (iPad)" },
+            { width: 1366, height: 768, name: "Laptop" },
+            { width: 1920, height: 1080, name: "Desktop HD" },
+            { width: 2560, height: 1440, name: "WQHD" },
+            { width: 3840, height: 2160, name: "4K" }
+        ];
+        
+        const SPACING_BASE = 460;
+        const SPACING_MIN = 230;
+        const BOX_WIDTH = 155;
+        const BIRD_START_X = 110;
+        const SPEED_BASE = 1.0;
+        const NUM_BOXES = 5;
+        
+        function calculateIssues(width, height) {
+            // Current behavior
+            const firstWallX = width + 100;
+            const distanceToFirstWall = firstWallX - BIRD_START_X;
+            const timeToFirstWall = distanceToFirstWall / SPEED_BASE; // in frames
+            const secondsToFirstWall = timeToFirstWall / 60;
+            
+            const boxHeight = height / NUM_BOXES;
+            const verticalGap = boxHeight - (18 * 2); // Bird radius * 2
+            
+            // Proposed responsive behavior
+            const responsiveSpacing = Math.min(SPACING_BASE, width * 0.3);
+            const responsiveFirstWallX = Math.min(width * 0.7, 800);
+            const responsiveDistance = responsiveFirstWallX - BIRD_START_X;
+            const responsiveTime = responsiveDistance / SPEED_BASE / 60;
+            
+            const responsiveBoxHeight = Math.min(Math.max(height / 6, 120), 200);
+            const responsiveVerticalGap = responsiveBoxHeight - (18 * 2);
+            
+            return {
+                current: {
+                    firstWallX,
+                    distanceToFirstWall,
+                    secondsToFirstWall,
+                    boxHeight,
+                    verticalGap
+                },
+                responsive: {
+                    firstWallX: responsiveFirstWallX,
+                    distanceToFirstWall: responsiveDistance,
+                    secondsToFirstWall: responsiveTime,
+                    boxHeight: responsiveBoxHeight,
+                    verticalGap: responsiveVerticalGap
+                }
+            };
+        }
+        
+        const container = document.getElementById('tests');
+        tests.forEach(test => {
+            const result = calculateIssues(test.width, test.height);
+            
+            const div = document.createElement('div');
+            div.className = 'test';
+            div.innerHTML = `
+                <h3>${test.name} (${test.width}×${test.height})</h3>
+                <p><strong>Current:</strong></p>
+                <ul>
+                    <li>First wall at x = ${result.current.firstWallX.toFixed(0)}</li>
+                    <li>Distance to first wall: ${result.current.distanceToFirstWall.toFixed(0)}px</li>
+                    <li>Time to first wall: ${result.current.secondsToFirstWall.toFixed(1)}s</li>
+                    <li>Box height: ${result.current.boxHeight.toFixed(0)}px</li>
+                    <li>Vertical gap for bird: ${result.current.verticalGap.toFixed(0)}px</li>
+                </ul>
+                <p><strong>With responsive fix:</strong></p>
+                <ul>
+                    <li>First wall at x = ${result.responsive.firstWallX.toFixed(0)}</li>
+                    <li>Distance to first wall: ${result.responsive.distanceToFirstWall.toFixed(0)}px</li>
+                    <li>Time to first wall: ${result.responsive.secondsToFirstWall.toFixed(1)}s</li>
+                    <li>Box height: ${result.responsive.boxHeight.toFixed(0)}px</li>
+                    <li>Vertical gap for bird: ${result.responsive.verticalGap.toFixed(0)}px</li>
+                </ul>
+            `;
+            container.appendChild(div);
+        });
+    </script>
+</body>
+</html>

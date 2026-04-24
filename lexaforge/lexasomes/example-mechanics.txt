@@ -1,0 +1,21 @@
+# Example game mechanics
+procedural generation
+physics simulation
+roguelike elements
+crafting system
+base building
+resource management
+turn-based combat
+real-time strategy
+permadeath
+character progression
+skill trees
+dialogue choices
+moral decisions
+sandbox exploration
+puzzle solving
+stealth mechanics
+parkour movement
+vehicle physics
+weather systems
+day-night cycle

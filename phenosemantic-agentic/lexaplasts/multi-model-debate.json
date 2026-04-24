@@ -1,0 +1,40 @@
+{
+  "name": "multi-model-debate",
+  "description": "Compare perspectives from multiple AI models on a creative concept",
+  "version": "1.0.0",
+  "template": "Three AI models with different strengths debate the creative concept of '{{domain}}' from their unique perspectives:\n\n**Model 1 (Analytical/Technical Perspective - GPT-5):**\n{{model1_response}}\n\n**Model 2 (Balanced/Creative Perspective - Claude Sonnet):**\n{{model2_response}}\n\n**Model 3 (Unconventional/Creative Perspective - Grok):**\n{{model3_response}}\n\n**Synthesis:** After presenting all three perspectives, provide a synthesized analysis that identifies common themes, key differences, and novel insights that emerge from combining these viewpoints.",
+  "variables": {
+    "domain": {
+      "source": "domains/creative.txt",
+      "count": 1,
+      "description": "Creative domain to explore"
+    }
+  },
+  "models": [
+    {
+      "id": "model1",
+      "model": "gpt5",
+      "role": "Analytical/Technical Perspective",
+      "instruction": "Provide a logical, structured analysis of the creative concept. Focus on underlying patterns, potential applications, and systematic implications."
+    },
+    {
+      "id": "model2", 
+      "model": "sonnet",
+      "role": "Balanced/Creative Perspective",
+      "instruction": "Provide a balanced analysis that combines creative insight with practical considerations. Explore both imaginative possibilities and realistic constraints."
+    },
+    {
+      "id": "model3",
+      "model": "grok",
+      "role": "Unconventional/Creative Perspective",
+      "instruction": "Provide an unconventional, outside-the-box analysis. Challenge assumptions, explore radical possibilities, and consider unexpected implications."
+    }
+  ],
+  "synthesis_model": "sonnet",
+  "output_format": "structured-markdown",
+  "metadata": {
+    "created": "2026-03-02",
+    "author": "Rexuvia",
+    "phase": "2"
+  }
+}

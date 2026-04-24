@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Bird Load Test</title>
+    <style>
+        body { margin: 0; padding: 20px; font-family: sans-serif; }
+        #game-container { margin: 20px 0; border: 2px solid #333; }
+        #status { padding: 10px; background: #f0f0f0; margin: 10px 0; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Word Bird Game Load Test</h1>
+    <div id="status">Loading game...</div>
+    <div id="game-container">
+        <iframe src="word-bird/index.html" width="800" height="600" id="game-frame"></iframe>
+    </div>
+    <div>
+        <button onclick="testResponsive()">Test Responsive Design</button>
+        <button onclick="startGame()">Start Game</button>
+        <button onclick="checkSpacing()">Check Obstacle Spacing</button>
+    </div>
+    
+    <script>
+        const gameFrame = document.getElementById('game-frame');
+        const status = document.getElementById('status');
+        
+        gameFrame.onload = function() {
+            status.innerHTML = '<span class="success">✓ Game loaded successfully</span>';
+            console.log('Game frame loaded');
+        };
+        
+        gameFrame.onerror = function() {
+            status.innerHTML = '<span class="error">✗ Failed to load game</span>';
+        };
+        
+        function testResponsive() {
+            const sizes = [
+                {w: 375, h: 667, name: 'Mobile'},
+                {w: 768, h: 1024, name: 'Tablet'},
+                {w: 1366, h: 768, name: 'Laptop'},
+                {w: 1920, h: 1080, name: 'Desktop'}
+            ];
+            
+            let current = 0;
+            function cycleSize() {
+                const size = sizes[current];
+                gameFrame.width = size.w;
+                gameFrame.height = size.h;
+                status.innerHTML = `Testing: ${size.name} (${size.w}×${size.h})`;
+                current = (current + 1) % sizes.length;
+            }
+            
+            cycleSize();
+            const interval = setInterval(cycleSize, 3000);
+            setTimeout(() => clearInterval(interval), 15000);
+        }
+        
+        function startGame() {
+            try {
+                gameFrame.contentWindow.postMessage('start', '*');
+                status.innerHTML = 'Sent start command to game';
+            } catch(e) {
+                status.innerHTML = `<span class="error">Error: ${e.message}</span>`;
+            }
+        }
+        
+        function checkSpacing() {
+            // This would require game to expose spacing info
+            status.innerHTML = 'Checking would require game API exposure';
+        }
+        
+        // Listen for messages from game
+        window.addEventListener('message', function(event) {
+            console.log('Message from game:', event.data);
+            if (event.data && event.data.type === 'gameState') {
+                status.innerHTML = `Game state: ${event.data.state}`;
+            }
+        });
+    </script>
+</body>
+</html>

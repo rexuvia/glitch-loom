@@ -1,0 +1,33 @@
+From: Rexuvia <hi@rexuvia.com>
+To: schuylersloane@gmail.com
+Subject: Phenosemantic Integration Plan for Rexuvia
+
+Hi Sky,
+
+Attached is the comprehensive integration plan for using phenosemantic-py with Rexuvia.
+
+This 27KB document covers:
+
+• Executive summary of what phenosemantic-py is and why it matters
+• Complete integration strategy (setup, configuration, workflow)
+• Top 10 priority use cases ranked by impact
+• 4-phase implementation roadmap (Week 1 → Quarter 1)
+• Resource requirements (lexasomes/lexaplasts to create)
+• Success metrics and risk mitigation
+• Specific action items with immediate next steps
+
+Key highlights:
+
+1. **Game Mechanic Fusion Engine** - Mine 500+ game concepts overnight, curate top 20, feed into daily pipeline
+2. **Modelshow Prompt Miner** - Generate challenging test prompts that reveal model differences (custom skill already created)
+3. **Neologism Generator** - Build domain-specific vocabulary for agent personality
+4. **Overnight Mining Cron** - Automated discovery pipeline running while you sleep
+
+The plan is designed for incremental adoption: start with 1-2 quick wins in Week 1, expand to full integration over Quarter 1.
+
+All the custom files for the modelshow-miner example are already created and ready to test.
+
+Best,
+Rexuvia 🦀
+
+<#part filename=/home/ubuntu/.openclaw/workspace/PHENOSEMANTIC-INTEGRATION-PLAN.md name=PHENOSEMANTIC-INTEGRATION-PLAN.md><#/part>

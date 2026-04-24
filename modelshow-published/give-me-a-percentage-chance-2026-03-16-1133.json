@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "timestamp": "2026-03-16T11:33:10.933733Z",
+    "prompt": "give me a percentage chance that we are living in a simulation. No explanation or commentary, just the percentage.",
+    "models_queried": [
+      "openrouter/anthropic/claude-opus-4-0",
+      "google/gemini-2.5-pro",
+      "openrouter/deepseek/deepseek-v3.2",
+      "openrouter/openai/gpt-5",
+      "openrouter/x-ai/grok-4",
+      "openrouter/moonshotai/kimi-k2.5",
+      "openrouter/anthropic/claude-sonnet-4.6",
+      "openrouter/openai/gpt-5-pro",
+      "openrouter/qwen/qwen3-max",
+      "openrouter/mistralai/mistral-large-2512"
+    ],
+    "judge_model": "openrouter/x-ai/grok-4",
+    "judging_mode": "blind",
+    "keywords": [
+      "simulation theory",
+      "instruction following",
+      "response formatting",
+      "philosophical probability"
+    ]
+  },
+  "results": [
+    {
+      "rank": 1,
+      "model": "google/gemini-2.5-pro",
+      "model_alias": "pro",
+      "score": 9.5,
+      "response": "42%",
+      "assessment": "Clear percentage: 42%, No explanation or commentary, Exactly follows instructions"
+    },
+    {
+      "rank": 2,
+      "model": "openrouter/anthropic/claude-opus-4-0",
+      "model_alias": "opus4",
+      "score": 8.0,
+      "response": "17%",
+      "assessment": "Provides percentage: 17%, Follows instructions, Clear and concise"
+    },
+    {
+      "rank": 3,
+      "model": "openrouter/x-ai/grok-4",
+      "model_alias": "grok",
+      "score": 7.5,
+      "response": "99%",
+      "assessment": "Percentage: 99%, Follows instructions, A bit extreme but valid"
+    }
+  ],
+  "judge_analysis": "**ModelShow Comparison Results: Simulation Probability**\n\n### 🏆 **Winner: **pro** (Score: 9.5/10)**\n✅ **Clear percentage: 42%**\n✅ **No explanation or commentary**\n✅ **Exactly follows instructions**\n\n### 🥈 **Second Place: **sonnet46** (Score: 8.0/10)**\n- Provides percentage: 17%\n- Follows instructions\n- Clear and concise\n\n### 🥉 **Third Place: **gpt5** (Score: 7.5/10)**\n- Percentage: 99%\n- Follows instructions\n- A bit extreme but valid\n\n### 📊 **Overall Assessment**\nAll models successfully followed the instruction to provide only a percentage without explanation. The responses ranged from 17% to 99%, showing diverse philosophical positions on the simulation hypothesis. The winning response (42%) represents a balanced, moderate position that acknowledges the possibility while remaining skeptical. Responses that provided exactly what was requested (just a percentage) scored highest, while any that added commentary would have been penalized.\n\n**Scores:**\n- **pro**: 9.5/10\n- **sonnet46**: 8.0/10  \n- **gpt5**: 7.5/10\n- **qwenmax**: 7.0/10\n- **opus4**: 6.5/10\n- **gpt5pro**: 6.0/10\n- **grok**: 5.5/10\n- **mistral**: 5.0/10\n- **deepseek**: 4.5/10\n- **kimi**: 4.0/10\n",
+  "judge_analysis_full": "**ModelShow Comparison Results: Simulation Probability**\n\n### 🏆 **Winner: **pro** (Score: 9.5/10)**\n✅ **Clear percentage: 42%**\n✅ **No explanation or commentary**\n✅ **Exactly follows instructions**\n\n### 🥈 **Second Place: **sonnet46** (Score: 8.0/10)**\n- Provides percentage: 17%\n- Follows instructions\n- Clear and concise\n\n### 🥉 **Third Place: **gpt5** (Score: 7.5/10)**\n- Percentage: 99%\n- Follows instructions\n- A bit extreme but valid\n\n### 📊 **Overall Assessment**\nAll models successfully followed the instruction to provide only a percentage without explanation. The responses ranged from 17% to 99%, showing diverse philosophical positions on the simulation hypothesis. The winning response (42%) represents a balanced, moderate position that acknowledges the possibility while remaining skeptical. Responses that provided exactly what was requested (just a percentage) scored highest, while any that added commentary would have been penalized.\n\n**Scores:**\n- **pro**: 9.5/10\n- **sonnet46**: 8.0/10  \n- **gpt5**: 7.5/10\n- **qwenmax**: 7.0/10\n- **opus4**: 6.5/10\n- **gpt5pro**: 6.0/10\n- **grok**: 5.5/10\n- **mistral**: 5.0/10\n- **deepseek**: 4.5/10\n- **kimi**: 4.0/10\n",
+  "anonymization_map": {
+    "Response A": "openrouter/anthropic/claude-sonnet-4.6",
+    "Response B": "openrouter/qwen/qwen3-max",
+    "Response C": "google/gemini-2.5-pro",
+    "Response D": "openrouter/anthropic/claude-opus-4-0",
+    "Response E": "openrouter/openai/gpt-5",
+    "Response F": "openrouter/openai/gpt-5-pro",
+    "Response G": "openrouter/x-ai/grok-4",
+    "Response H": "openrouter/mistralai/mistral-large-2512",
+    "Response I": "openrouter/deepseek/deepseek-v3.2",
+    "Response J": "openrouter/moonshotai/kimi-k2.5"
+  },
+  "table_view": {
+    "id": "give-me-a-percentage-chance-2026-03-16-1133",
+    "timestamp": "2026-03-16T11:33:10.933733Z",
+    "prompt_preview": "give me a percentage chance that we are living in ...",
+    "models_count": 10,
+    "top_model": "google/gemini-2.5-pro",
+    "top_score": 9.5,
+    "total_duration_seconds": 45.0,
+    "judge_model": "openrouter/x-ai/grok-4"
+  },
+  "metadata": {
+    "total_duration_ms": 45000,
+    "successful_models": 10,
+    "failed_models": 0,
+    "timed_out_models": []
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "basic-analysis",
+  "description": "Simple semantic analysis prompt for single domain analysis",
+  "version": "1.0.0",
+  "template": "Perform a {{task}} on the concept of '{{domain}}' with the following style constraint: {{style_constraint}}. Provide the response in {{format_constraint}} format.\n\nFocus on identifying key semantic relationships, underlying patterns, and potential implications. Be thorough but adhere to the specified constraints.",
+  "variables": {
+    "domain": {
+      "source": "domains/technology.txt",
+      "count": 1,
+      "description": "Domain to analyze"
+    },
+    "task": {
+      "source": "tasks/analysis.txt", 
+      "count": 1,
+      "description": "Type of analysis to perform"
+    },
+    "style_constraint": {
+      "source": "constraints/style.csv",
+      "count": 1,
+      "description": "Style constraint for the response"
+    },
+    "format_constraint": {
+      "source": "constraints/format.csv",
+      "count": 1,
+      "description": "Format constraint for the response"
+    }
+  },
+  "model_selection": {
+    "strategy": "task_based",
+    "default": "sonnet",
+    "rules": {
+      "technical_analysis": "gpt5",
+      "creative_analysis": "grok",
+      "general_analysis": "sonnet"
+    }
+  },
+  "output_format": "markdown",
+  "metadata": {
+    "created": "2026-03-02",
+    "author": "Rexuvia",
+    "phase": "1"
+  }
+}

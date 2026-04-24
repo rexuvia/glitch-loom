@@ -1,0 +1,11 @@
+# Application domains
+game mechanics
+interactive art
+data visualization
+educational tools
+music generation
+physics simulation
+storytelling
+puzzle design
+social experiments
+architectural visualization

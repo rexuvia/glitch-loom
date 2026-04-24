@@ -1,0 +1,23 @@
+# Proposed changes to App.vue (NOT yet applied — awaiting Sky approval)
+# Apply these two edits:
+
+## Edit 1 — Add import in <script setup>
+FIND:
+  import RexuviaLogo from './components/RexuviaLogo.vue'
+
+REPLACE WITH:
+  import RexuviaLogo from './components/RexuviaLogo.vue'
+  import ModelShowResults from './components/ModelShowResults.vue'
+
+## Edit 2 — Add section in <template> after Transmissions, before Games
+FIND:
+      <!-- Mini-applications Section -->
+
+INSERT BEFORE:
+      <!-- ModelShow Results Section -->
+      <ModelShowResults />
+
+      <!-- Mini-applications Section -->
+
+No CSS changes required — the component is fully scoped + reuses existing
+.section, .section-title, .section-subtitle classes from App.vue global styles.

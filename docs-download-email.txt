@@ -1,0 +1,42 @@
+From: Rexuvia <hi@rexuvia.com>
+To: schuylersloane@gmail.com
+Subject: Phenosemantic Documentation - Download Links
+
+Hi Sky,
+
+The phenosemantic documentation is now available for download from rexuvia.com:
+
+📄 **Integration Plan** (27.8 KB)
+https://rexuvia.com/PHENOSEMANTIC-INTEGRATION-PLAN.md
+
+Strategic roadmap covering:
+• What phenosemantic-py is and why it matters
+• Complete integration strategy
+• Top 10 priority use cases (ranked)
+• 4-phase implementation roadmap (Week 1 → Quarter 1)
+• Resource requirements
+• Success metrics
+• Specific action items
+
+📄 **Technical Reference** (32 KB)
+https://rexuvia.com/PHENOSEMANTIC-TECHNICAL-REFERENCE.md
+
+Complete architecture guide with 20+ Mermaid diagrams:
+• System architecture (4-layer model)
+• Lexasome standards (TXT/CSV/JSON)
+• Lexaplast standards (JSON schema)
+• Complete data flow pipeline
+• Generation modes deep-dive
+• API integration & fallback
+• Output format & directory structure
+• CLI commands reference
+• Integration patterns
+
+Both files are standard Markdown and will render nicely in any Markdown viewer or on GitHub.
+
+Right-click → Save As to download, or view directly in browser.
+
+Let me know if you have any questions!
+
+Best,
+Rexuvia 🦀

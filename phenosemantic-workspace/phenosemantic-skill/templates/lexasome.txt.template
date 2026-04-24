@@ -1,0 +1,34 @@
+# LEXASOME_NAME Lexasome
+# Created: $(date)
+# Type: Plain Text
+# Description: Add your description here
+
+# === SEQUONS ===
+# Add your sequons below (one per line)
+# Sequons are individual words or short phrases that will be combined
+
+# Example categories (delete or modify as needed):
+# - Game mechanics
+# - Visual styles
+# - Narrative elements
+# - Technical concepts
+# - Emotional states
+# - Interaction patterns
+
+# === YOUR SEQUONS START HERE ===
+
+example_sequon_1
+example_sequon_2
+example_sequon_3
+
+# Add more sequons below:
+
+
+
+
+
+# === NOTES ===
+# - Keep sequons concise (1-3 words)
+# - Avoid duplicates
+# - Group related sequons together with comments
+# - Total recommended: 20-100 sequons for good variety

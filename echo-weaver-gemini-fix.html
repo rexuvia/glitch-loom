@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Echo Weaver</title>
+  <style>
+    /* 1. Root reset & Fullscreen setup */
+    * { 
+      -webkit-tap-highlight-color: transparent; 
+      box-sizing: border-box; 
+      touch-action: none; /* Disables browser handling of gestures */
+    }
+    
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: #0a0a1e; 
+      color: #fff; 
+      font-family: 'Courier New', monospace; 
+      overflow: hidden; /* Prevent scrolling */
+      position: fixed; /* Lock body in place */
+    }
+
+    /* 2. Main Game Container - uses Play canvas */
+    #app { 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100vh; /* Fallback */
+      height: 100dvh; /* Mobile viewport fix */
+      z-index: 1;
+    }
+
+    /* SVG fills the container completely */
+    svg { 
+      display: block;
+      width: 100%; 
+      height: 100%; 
+      background: radial-gradient(circle at center, #1a1a3a, #0a0a1e);
+    }
+
+    /* 3. Node & Visual Styles */
+    .node { 
+      cursor: pointer; 
+      transition: transform 0.2s; 
+      filter: drop-shadow(0 0 10px currentColor);
+    }
+    /* Hover effects only for pointer devices to avoid sticky hover on touch */
+    @media (hover: hover) {
+        .node:hover { transform: scale(1.15); }
+    }
+    
+    .node.tone { fill: #ff00ff; --glow: #ff00ff; }
+    .node.delay { fill: #00ffff; --glow: #00ffff; }
+    .node.filter { fill: #ffff00; --glow: #ffff00; }
+    .node.trigger { fill: #00ff00; --glow: #00ff00; }
+    
+    .connection { 
+      stroke: rgba(255,255,255,0.4); 
+      stroke-width: 2; 
+      stroke-dasharray: 8 4; 
+      pointer-events: none; /* let clicks pass through lines */
+      animation: dash 3s linear infinite; 
+    }
+    @keyframes dash { to { stroke-dashoffset: -24; } }
+    
+    .pulse { 
+      r: 6; 
+      fill: #ffffff; 
+      filter: blur(3px) drop-shadow(0 0 8px #fff);
+      pointer-events: none;
+    }
+    
+    .glow { animation: glow-pulse 0.5s ease-in-out; }
+    @keyframes glow-pulse { 
+      0%, 100% { filter: drop-shadow(0 0 10px var(--glow)); }
+      50% { filter: drop-shadow(0 0 25px var(--glow)); }
+    }
+    
+    .trail { 
+      stroke: #ffffff; 
+      stroke-width: 3; 
+      opacity: 0.6; 
+      stroke-linecap: round;
+      pointer-events: none;
+    }
+
+    /* 4. Minimal UI - Menu Button */
+    #menu-btn {
+      position: absolute;
+      top: max(15px, env(safe-area-inset-top)); /* Respect notch */
+      right: max(15px, env(safe-area-inset-right));
+      z-index: 100; /* Above everything */
+      background: rgba(10, 10, 30, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      width: 44px; /* Accessible touch target */
+      height: 44px;
+      border-radius: 50%;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    #menu-btn:active { transform: scale(0.9); }
+
+    /* 5. Audio Start Overlay */
+    #audio-prompt {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 10, 30, 0.9);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      backdrop-filter: blur(10px);
+    }
+    #audio-prompt h2 { color: #00ffff; margin-bottom: 20px; font-size: 2rem; }
+    #audio-prompt button {
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      background: #00ffff;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      border-radius: 30px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+    }
+
+    /* 6. Settings Panel (Slide-in) */
+    .panel-backdrop {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 150;
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .panel-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .control-panel {
+      position: absolute;
+      top: 0; 
+      right: 0;
+      width: 300px;
+      max-width: 85%;
+      height: 100%;
+      background: rgba(16, 16, 32, 0.95);
+      border-left: 1px solid rgba(255,255,255,0.1);
+      padding: 20px;
+      padding-top: max(60px, env(safe-area-inset-top)); /* Space for close btn */
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      overflow-y: auto;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    }
+    .panel-backdrop.open .control-panel { transform: translateX(0); }
+
+    /* Panel Contents */
+    .panel-section { margin-bottom: 25px; }
+    .panel-header { 
+      font-size: 0.8rem; 
+      text-transform: uppercase; 
+      color: #888; 
+      margin-bottom: 10px; 
+      letter-spacing: 1px;
+    }
+    
+    /* Preset grid buttons */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    
+    .btn { 
+      background: #2a2a4a; 
+      border: 1px solid rgba(255,255,255,0.1); 
+      color: #eee;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn:active { background: #3a3a5a; }
+    .btn.active { border-color: #00ffff; color: #00ffff; background: rgba(0, 255, 255, 0.1); }
+
+    /* BPM Input */
+    .bpm-row { display: flex; align-items: center; justify-content: space-between; background: #222; padding: 10px; border-radius: 8px; }
+    .bpm-btn { width: 40px; height: 40px; background: #333; border: none; color: #fff; border-radius: 50%; font-size: 1.2rem; }
+    .bpm-val { font-size: 1.2rem; font-weight: bold; }
+
+    /* Close button inside panel */
+    .close-panel {
+      position: absolute;
+      top: max(15px, env(safe-area-inset-top));
+      right: 15px;
+      width: 40px; height: 40px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 28px;
+    }
+    
+    /* Tutorial text */
+    .tutorial {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #aaa;
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- START SCREEN -->
+  <div v-if="!audioReady" id="audio-prompt">
+    <h2>Echo Weaver</h2>
+    <p style="opacity: 0.7; margin-bottom: 30px;">Tap to immerse</p>
+    <button @click="enableAudio">Start</button>
+  </div>
+
+  <!-- MAIN UI (Only visible after start) -->
+  <template v-else>
+    <!-- Menu Button -->
+    <div id="menu-btn" @click.stop="menuOpen = true">⚙️</div>
+
+    <!-- SETTINGS PANEL -->
+    <div class="panel-backdrop" :class="{open: menuOpen}" @click.self="menuOpen = false">
+      <div class="control-panel">
+        <button class="close-panel" @click="menuOpen = false">×</button>
+        
+        <div class="panel-section">
+          <div class="panel-header">Soundscapes</div>
+          <div class="grid-2">
+            <button class="btn" @click="loadPreset(0)" :class="{active: currentPreset === 0}">Loop</button>
+            <button class="btn" @click="loadPreset(1)" :class="{active: currentPreset === 1}">Cascade</button>
+            <button class="btn" @click="loadPreset(2)" :class="{active: currentPreset === 2}">Swarm</button>
+            <button class="btn" @click="loadPreset(3)" :class="{active: currentPreset === 3}">Pulse</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-header">Nodal Tempo</div>
+          <div class="bpm-row">
+            <button class="bpm-btn" @click="changeBpm(-10)">-</button>
+            <span class="bpm-val">{{ bpm }}</span>
+            <button class="bpm-btn" @click="changeBpm(10)">+</button>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-header">How to Play</div>
+          <div class="tutorial">
+            • <strong>Tap empty space</strong> to create a node.<br>
+            • <strong>Drag</strong> to move nodes.<br>
+            • <strong>Drag onto another</strong> to connect.<br>
+            • <strong>Long press</strong> a node to delete.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME CANVAS (SVG) -->
+    <svg 
+      ref="svgBoard"
+      @mousedown="handleStart" 
+      @touchstart.passive="handleStart"
+      @mousemove="handleMove"
+      @touchmove.prevent="handleMove"
+      @mouseup="handleEnd"
+      @touchend="handleEnd"
+    >
+      <!-- Connections -->
+      <line v-for="c in connections" :key="c.id" 
+        :x1="getNode(c.from).x" :y1="getNode(c.from).y" 
+        :x2="getNode(c.to).x" :y2="getNode(c.to).y" 
+        class="connection" />
+
+      <!-- Trails -->
+      <line v-for="(t,i) in trails" :key="'t'+i"
+        :x1="t.x1" :y1="t.y1" :x2="t.x2" :y2="t.y2"
+        class="trail" />
+        
+      <!-- Pulses -->
+      <circle v-for="p in pulses" :key="p.id"
+        :cx="p.x" :cy="p.y" r="6" class="pulse" />
+
+      <!-- Nodes -->
+      <circle v-for="n in nodes" :key="n.id"
+        :cx="n.x" :cy="n.y" r="24"
+        :class="['node', n.type, {glow: n.glowing}]"
+        @mousedown.stop="startDrag(n, $event)"
+        @touchstart.stop.prevent="startDrag(n, $event)"
+      />
+    </svg>
+  </template>
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const { createApp, ref, reactive, onMounted, onUnmounted, computed, watch, nextTick } = Vue;
+
+createApp({
+  setup() {
+    // STATE
+    const audioReady = ref(false);
+    const menuOpen = ref(false);
+    const nodes = reactive([]);
+    const connections = reactive([]);
+    const pulses = reactive([]);
+    const trails = reactive([]);
+    const bpm = ref(120);
+    const currentPreset = ref(0);
+    
+    // SYSTEMS
+    let audioCtx = null;
+    let mainTimer = null;
+    let dragTarget = null;
+    let dragOffset = {x:0, y:0};
+    let longPressTimer = null;
+    const svgBoard = ref(null);
+
+    // --- GEOMETRY & UTILS ---
+    const getPos = (e) => {
+      // Unified pointer position that handles mouse & touch
+      if (e.changedTouches) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    };
+
+    const getNode = (id) => nodes.find(n => n.id === id) || {x:0,y:0};
+
+    // --- CORE LOGIC ---
+    const addNode = (x, y) => {
+        const types = ['tone', 'delay', 'filter', 'trigger'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const id = Date.now() + Math.random();
+        // Constrain to screen
+        x = Math.max(24, Math.min(window.innerWidth - 24, x));
+        y = Math.max(24, Math.min(window.innerHeight - 24, y));
+        
+        nodes.push({ 
+            id, type, x, y, 
+            freq: 200 + Math.random()*600, 
+            glowing: false 
+        });
+    };
+
+    const connect = (aId, bId) => {
+        if (aId === bId) return;
+        const exists = connections.find(c => (c.from === aId && c.to === bId));
+        if (!exists) connections.push({ id: Date.now()+Math.random(), from: aId, to: bId });
+    };
+
+    // --- INTERACTION ---
+    const handleStart = (e) => {
+        if (menuOpen.value) return; 
+        if (e.target.tagName !== 'svg') return; // Only BG clicks
+        const {x, y} = getPos(e);
+        addNode(x, y);
+    };
+
+    const startDrag = (node, e) => {
+        if (menuOpen.value) return;
+        const {x, y} = getPos(e);
+        dragTarget = node;
+        dragOffset = { x: node.x - x, y: node.y - y };
+        
+        // Long press to delete
+        longPressTimer = setTimeout(() => {
+            if (dragTarget === node) {
+                 // Remove node & connections
+                 const idx = nodes.findIndex(n => n.id === node.id);
+                 if (idx > -1) nodes.splice(idx, 1);
+                 // remove connections
+                 for (let i = connections.length-1; i>=0; i--) {
+                     if (connections[i].from === node.id || connections[i].to === node.id) {
+                         connections.splice(i, 1);
+                     }
+                 }
+                 dragTarget = null;
+                 navigator.vibrate?.(50); // Haptic feedback
+            }
+        }, 600);
+    };
+
+    const handleMove = (e) => {
+        if (!dragTarget) return;
+        clearTimeout(longPressTimer); // Moved -> cancel delete
+        
+        const {x, y} = getPos(e);
+        // Constrain
+        dragTarget.x = Math.max(24, Math.min(window.innerWidth - 24, x + dragOffset.x));
+        dragTarget.y = Math.max(24, Math.min(window.innerHeight - 24, y + dragOffset.y));
+    };
+
+    const handleEnd = (e) => {
+        if (!dragTarget) return;
+        clearTimeout(longPressTimer);
+        
+        // Check for snap-to-connect
+        const {x, y} = getPos(e);
+        const dropTarget = nodes.find(n => n !== dragTarget && Math.hypot(n.x - dragTarget.x, n.y - dragTarget.y) < 50);
+        
+        if (dropTarget) {
+            connect(dragTarget.id, dropTarget.id);
+            // Optional: Spring back? Or just leave it?
+            // Let's leave it where dropped, but maybe snap slightly away if too close?
+        }
+        
+        dragTarget = null;
+    };
+
+    // --- AUDIO SYSTEM ---
+    const playSound = (node) => {
+        if (!audioCtx) return;
+        
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        if (node.type === 'tone') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(node.freq, t);
+            gain.gain.setValueAtTime(0.3, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+            osc.start(t);
+            osc.stop(t + 0.5);
+        }
+        else if (node.type === 'delay') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(node.freq * 0.5, t);
+            gain.gain.setValueAtTime(0.2, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+            osc.start(t);
+            osc.stop(t + 0.2);
+        }
+        else if (node.type === 'filter') {
+            osc.type = 'sawtooth';
+            // Sweep filter effect simulated with freq drop
+            osc.frequency.setValueAtTime(800, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.3);
+            gain.gain.setValueAtTime(0.1, t);
+            gain.gain.linearRampToValueAtTime(0, t + 0.3);
+            osc.start(t);
+            osc.stop(t + 0.3);
+        }
+    };
+
+    const triggerNode = (node) => {
+        node.glowing = true;
+        setTimeout(() => node.glowing = false, 150);
+        playSound(node); // Audio
+        
+        // Fire pulses to connected nodes
+        const outgoing = connections.filter(c => c.from === node.id);
+        outgoing.forEach(c => {
+            pulses.push({
+                id: Date.now() + Math.random(),
+                from: c.from,
+                to: c.to,
+                start: Date.now(),
+                dur: (60000 / bpm.value) * 0.5, // Duration based on BPM
+                x: node.x, y: node.y
+            });
+        });
+    };
+
+    // --- LOOP & ANIMATION ---
+    const tick = () => {
+        const now = Date.now();
+        // Update pulses
+        for (let i = pulses.length - 1; i >= 0; i--) {
+            const p = pulses[i];
+            const elapsed = now - p.start;
+            const progress = elapsed / p.dur;
+            
+            if (progress >= 1) {
+                // Arrived!
+                const targetNode = getNode(p.to);
+                if (targetNode.id) triggerNode(targetNode);
+                
+                // Add trail
+                trails.push({ x1: p.x, y1: p.y, x2: targetNode.x, y2: targetNode.y, age: 0 });
+                pulses.splice(i, 1);
+            } else {
+                // Move
+                const from = getNode(p.from);
+                const to = getNode(p.to);
+                if (!from.id || !to.id) { pulses.splice(i, 1); continue; }
+                
+                const prevX = p.x; const prevY = p.y;
+                p.x = from.x + (to.x - from.x) * progress;
+                p.y = from.y + (to.y - from.y) * progress;
+                
+                // Small trail segments for smoothness
+                if (Math.random()>0.7)
+                   trails.push({ x1: prevX, y1: prevY, x2: p.x, y2: p.y, age: 0 });
+            }
+        }
+        
+        // Update trails fading
+        for (let i = trails.length - 1; i >= 0; i--) {
+            trails[i].age++;
+            if (trails[i].age > 20) trails.splice(i, 1);
+        }
+        
+        requestAnimationFrame(tick);
+    };
+
+    const runSequencer = () => {
+        // Main metronome trigger
+        nodes.filter(n => n.type === 'trigger').forEach(n => triggerNode(n));
+    };
+
+    const enableAudio = () => {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx.resume();
+        audioReady.value = true;
+        
+        requestAnimationFrame(tick);
+        
+        if (mainTimer) clearInterval(mainTimer);
+        mainTimer = setInterval(runSequencer, 60000 / bpm.value);
+    };
+
+    const changeBpm = (delta) => {
+        bpm.value = Math.max(40, Math.min(300, bpm.value + delta));
+        if (audioReady.value) {
+            clearInterval(mainTimer);
+            mainTimer = setInterval(runSequencer, 60000 / bpm.value);
+        }
+    };
+
+    // --- PRESETS ---
+    const loadPreset = (idx) => {
+        currentPreset.value = idx;
+        nodes.length = 0;
+        connections.length = 0;
+        pulses.length = 0;
+        trails.length = 0;
+        
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const cx = w/2, cy = h/2;
+        
+        if (idx === 0) { // Loop
+            nodes.push({id:1, type:'trigger', x:cx-80, y:cy, freq:440, glowing:false});
+            nodes.push({id:2, type:'tone', x:cx+80, y:cy, freq:550, glowing:false});
+            connect(1,2); connect(2,1);
+        }
+        else if (idx === 1) { // Cascade
+            nodes.push({id:1, type:'trigger', x:cx, y:cy-100, freq:440, glowing:false});
+            nodes.push({id:2, type:'delay', x:cx-100, y:cy, freq:330, glowing:false});
+            nodes.push({id:3, type:'delay', x:cx+100, y:cy, freq:330, glowing:false});
+            nodes.push({id:4, type:'filter', x:cx, y:cy+100, freq:220, glowing:false});
+            connect(1,2); connect(1,3); connect(2,4); connect(3,4); connect(4,1);
+        }
+        else if (idx === 2) { // Swarm
+            nodes.push({id:1, type:'trigger', x:cx, y:cy, freq:110, glowing:false});
+            for(let i=0; i<5; i++) {
+                const angle = (i/5)*Math.PI*2;
+                nodes.push({id:10+i, type:'tone', x:cx+Math.cos(angle)*120, y:cy+Math.sin(angle)*120, freq:200+i*50, glowing:false});
+                connect(1, 10+i);
+                connect(10+i, 1);
+            }
+        }
+        else { // Pulse
+             nodes.push({id:1, type:'trigger', x:cx-120, y:cy-50, freq:110, glowing:false});
+             nodes.push({id:2, type:'trigger', x:cx+120, y:cy+50, freq:110, glowing:false});
+             nodes.push({id:3, type:'filter', x:cx, y:cy, freq:880, glowing:false});
+             connect(1,3); connect(2,3); connect(3,1); connect(3,2);
+        }
+        
+        // Close menu on mobile
+        if (w < 600) menuOpen.value = false;
+    };
+
+    return { 
+        audioReady, enableAudio, 
+        nodes, connections, pulses, trails, 
+        handleStart, handleMove, handleEnd, startDrag,
+        getPos, getNode, svgBoard,
+        menuOpen, bpm, changeBpm, loadPreset, currentPreset
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

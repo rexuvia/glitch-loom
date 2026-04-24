@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rexuvia — Secure Portal</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: rgba(255,255,255,0.03);
+    --surface-hover: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(232, 116, 97, 0.4);
+    --accent: #e87461;
+    --accent-glow: rgba(232, 116, 97, 0.15);
+    --text: #e0e0e0;
+    --text-dim: #777;
+    --text-faint: #444;
+    --green: #4ade80;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+
+  .page { position: relative; min-height: 100vh; overflow: hidden; }
+
+  .scanline {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.3;
+    animation: scan 4s ease-in-out infinite;
+    pointer-events: none; z-index: 100;
+  }
+  @keyframes scan {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(100vh); }
+  }
+
+  .grid-bg {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+
+  .content {
+    position: relative; z-index: 1;
+    max-width: 720px; margin: 0 auto;
+    padding: 48px 20px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 48px; }
+  .header-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.8; }
+  .header h1 {
+    font-family: 'Courier New', monospace;
+    font-size: clamp(1.2rem, 3vw, 1.6rem);
+    font-weight: 600; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .header .tagline {
+    font-size: 0.8rem; color: var(--text-dim); letter-spacing: 0.05em;
+  }
+  .status-bar {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 16px; padding: 6px 14px;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 20px; background: rgba(74, 222, 128, 0.05);
+    font-size: 0.75rem; color: var(--green); letter-spacing: 0.04em;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .section { margin-bottom: 36px; }
+  .section-label {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--text-faint);
+    margin-bottom: 12px; padding-left: 2px;
+  }
+
+  .card-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  @media (min-width: 540px) {
+    .card-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface); text-decoration: none; color: var(--text);
+    transition: all 0.2s ease;
+  }
+  .card:hover {
+    background: var(--surface-hover); border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+  .card-icon { font-size: 1.3rem; flex-shrink: 0; width: 36px; text-align: center; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 2px; }
+  .card-desc { font-size: 0.7rem; color: var(--text-dim); }
+  .card-badge {
+    font-size: 0.6rem; padding: 2px 8px; border-radius: 10px;
+    background: rgba(232, 116, 97, 0.12); color: var(--accent);
+    letter-spacing: 0.04em; flex-shrink: 0;
+  }
+
+  .footer {
+    text-align: center; padding-top: 36px;
+    border-top: 1px solid var(--border);
+    color: var(--text-faint); font-size: 0.7rem;
+  }
+  .footer .ip-info {
+    font-family: 'Courier New', monospace;
+    font-size: 0.65rem; margin-top: 8px; color: var(--text-faint);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="scanline"></div>
+  <div class="grid-bg"></div>
+
+  <div class="content">
+    <div class="header">
+      <div class="header-icon">&#x1f510;</div>
+      <h1>Secure Portal</h1>
+      <div class="tagline">Rexuvia Command Center</div>
+      <div class="status-bar">
+        <span class="status-dot"></span>
+        AUTHENTICATED &mdash; SECURE CHANNEL
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">// core systems</div>
+      <div class="card-grid">
+        <a class="card" href="https://gw.rexuvia.com/" target="_blank">
+          <span class="card-icon">&#x1f9e0;</span>
+          <div class="card-body">
+            <div class="card-title">OpenClaw Dashboard</div>
+            <div class="card-desc">Agent control &amp; chat interface</div>
+          </div>
+          <span class="card-badge">LIVE</span>
+        </a>
+        <a class="card" href="https://rexuvia.com/" target="_blank">
+          <span class="card-icon">&#x1f310;</span>
+          <div class="card-body">
+            <div class="card-title">Public Site</div>
+            <div class="card-desc">rexuvia.com as visitors see it</div>
+          </div>
+        </a>
+        <a class="card" href="https://rexuvia.com/api/sessions" target="_blank">
+          <span class="card-icon">&#x1f4dc;</span>
+          <div class="card-body">
+            <div class="card-title">Session Logs</div>
+            <div class="card-desc">Active &amp; archived transcripts</div>
+          </div>
+        </a>
+        <a class="card" href="https://rexuvia.com/api/skills" target="_blank">
+          <span class="card-icon">&#x2699;&#xfe0f;</span>
+          <div class="card-body">
+            <div class="card-title">Skills Registry</div>
+            <div class="card-desc">Installed skills &amp; status</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">// infrastructure</div>
+      <div class="card-grid">
+        <a class="card" href="https://us-east-1.console.aws.amazon.com/ec2/home" target="_blank">
+          <span class="card-icon">&#x2601;&#xfe0f;</span>
+          <div class="card-body">
+            <div class="card-title">AWS Console</div>
+            <div class="card-desc">EC2 instance management</div>
+          </div>
+        </a>
+        <a class="card" href="https://console.anthropic.com/" target="_blank">
+          <span class="card-icon">&#x1f4ca;</span>
+          <div class="card-body">
+            <div class="card-title">Anthropic Console</div>
+            <div class="card-desc">API usage &amp; billing</div>
+          </div>
+        </a>
+        <a class="card" href="https://openrouter.ai/activity" target="_blank">
+          <span class="card-icon">&#x1f6e0;&#xfe0f;</span>
+          <div class="card-body">
+            <div class="card-title">OpenRouter</div>
+            <div class="card-desc">Model routing &amp; credits</div>
+          </div>
+        </a>
+        <a class="card" href="https://github.com/" target="_blank">
+          <span class="card-icon">&#x1f4e6;</span>
+          <div class="card-body">
+            <div class="card-title">GitHub</div>
+            <div class="card-desc">Repositories &amp; actions</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">// monitoring</div>
+      <div class="card-grid">
+        <a class="card" href="https://rexuvia.com/api/health" target="_blank">
+          <span class="card-icon">&#x1f49a;</span>
+          <div class="card-body">
+            <div class="card-title">Health Check</div>
+            <div class="card-desc">Gateway health &amp; uptime</div>
+          </div>
+        </a>
+        <a class="card" href="https://rexuvia.com/api/status" target="_blank">
+          <span class="card-icon">&#x1f4e1;</span>
+          <div class="card-body">
+            <div class="card-title">Gateway Status</div>
+            <div class="card-desc">Channels, agents &amp; connections</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>&copy; Rexuvia &mdash; Secure access only</div>
+      <div class="ip-info">Clearance granted via IP allowlist</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

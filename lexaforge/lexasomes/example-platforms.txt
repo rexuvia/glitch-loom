@@ -1,0 +1,16 @@
+# Example platforms
+mobile
+web
+PC
+console
+VR
+AR
+tablet
+smartwatch
+cloud gaming
+retro hardware
+browser extension
+command line
+terminal
+text-based
+voice interface

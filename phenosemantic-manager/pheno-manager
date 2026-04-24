@@ -1,0 +1,784 @@
+#!/usr/bin/env python3
+"""
+Phenosemantic Manager - User-friendly wrapper for phenosemantic-py
+"""
+
+import os
+import sys
+import json
+import argparse
+import subprocess
+import sqlite3
+from datetime import datetime
+from pathlib import Path
+
+# Configuration
+BASE_DIR = Path(__file__).parent
+CONFIG_DIR = BASE_DIR / "config"
+LEXAPLASTS_DIR = CONFIG_DIR / "lexaplasts"
+LEXASOMES_DIR = CONFIG_DIR / "lexasomes"
+TEMPLATES_DIR = CONFIG_DIR / "templates"
+SCRIPTS_DIR = BASE_DIR / "scripts"
+DB_PATH = BASE_DIR / "db" / "pheno-manager.db"
+OUTPUTS_DIR = BASE_DIR / "outputs"
+RAW_OUTPUTS_DIR = OUTPUTS_DIR / "raw"
+RANKED_OUTPUTS_DIR = OUTPUTS_DIR / "ranked"
+CURATED_OUTPUTS_DIR = OUTPUTS_DIR / "curated"
+LOGS_DIR = BASE_DIR / "logs"
+
+# Phenosemantic-py paths
+PHENO_DIR = Path("/home/ubuntu/.openclaw/workspace/phenosemantic-py")
+PHENO_LEXAPLASTS_DIR = PHENO_DIR / "lexaplasts"
+PHENO_LEXASOMES_DIR = PHENO_DIR / "lexasomes"
+
+def ensure_directories():
+    """Create necessary directories if they don't exist."""
+    directories = [
+        CONFIG_DIR, LEXAPLASTS_DIR, LEXASOMES_DIR, TEMPLATES_DIR,
+        SCRIPTS_DIR, BASE_DIR / "db", OUTPUTS_DIR, RAW_OUTPUTS_DIR,
+        RANKED_OUTPUTS_DIR, CURATED_OUTPUTS_DIR, LOGS_DIR
+    ]
+    for directory in directories:
+        directory.mkdir(parents=True, exist_ok=True)
+
+def init_database():
+    """Initialize SQLite database."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Jobs table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS jobs (
+        id TEXT PRIMARY KEY,
+        name TEXT,
+        lexaplast TEXT,
+        lexasomes TEXT,
+        count INTEGER,
+        temperature REAL,
+        status TEXT,
+        start_time TIMESTAMP,
+        end_time TIMESTAMP,
+        output_file TEXT,
+        error TEXT
+    )
+    ''')
+    
+    # Scheduled jobs table
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS scheduled_jobs (
+        id TEXT PRIMARY KEY,
+        name TEXT UNIQUE,
+        lexaplast TEXT,
+        lexasomes TEXT,
+        count INTEGER,
+        schedule_time TEXT,
+        enabled BOOLEAN DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    ''')
+    
+    # Outputs table (for tracking individual outputs)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS outputs (
+        id TEXT PRIMARY KEY,
+        job_id TEXT,
+        text TEXT,
+        rating INTEGER,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (job_id) REFERENCES jobs (id)
+    )
+    ''')
+    
+    conn.commit()
+    conn.close()
+
+def log_message(message, level="INFO"):
+    """Log a message to the log file."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] [{level}] {message}\n"
+    
+    log_file = LOGS_DIR / "pheno-manager.log"
+    with open(log_file, "a") as f:
+        f.write(log_entry)
+    
+    if level in ["ERROR", "WARNING"]:
+        print(f"{level}: {message}")
+
+def check_phenosemantic():
+    """Check if phenosemantic-py is available."""
+    if not PHENO_DIR.exists():
+        log_message(f"phenosemantic-py not found at {PHENO_DIR}", "ERROR")
+        return False
+    
+    # Check if pheno command works
+    try:
+        result = subprocess.run(
+            ["cd", str(PHENO_DIR), "&&", "source", ".venv/bin/activate", "&&", "pheno", "--version"],
+            shell=True,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            log_message("pheno command failed. Make sure .venv is activated.", "ERROR")
+            return False
+    except Exception as e:
+        log_message(f"Error checking phenosemantic: {e}", "ERROR")
+        return False
+    
+    return True
+
+def init_command(args):
+    """Initialize the phenosemantic manager."""
+    print("Initializing Phenosemantic Manager...")
+    
+    ensure_directories()
+    init_database()
+    
+    # Copy default templates if they don't exist
+    default_templates = {
+        "creative.json": {
+            "name": "creative",
+            "description": "Creative writing and idea generation",
+            "system_prompt": "You are a creative assistant. Generate interesting and novel ideas.",
+            "user_prompt_template": "Generate a {domain} {task} with {constraint}",
+            "parameters": {
+                "temperature": 0.8,
+                "max_tokens": 500
+            }
+        },
+        "technical.json": {
+            "name": "technical",
+            "description": "Technical questions and problems",
+            "system_prompt": "You are a technical expert. Generate challenging and insightful technical content.",
+            "user_prompt_template": "Create a {domain} {task} that demonstrates {constraint}",
+            "parameters": {
+                "temperature": 0.7,
+                "max_tokens": 400
+            }
+        },
+        "game-concepts.json": {
+            "name": "game-concepts",
+            "description": "Game idea generation",
+            "system_prompt": "You are a game designer. Generate novel and engaging game concepts.",
+            "user_prompt_template": "Design a game that combines {mechanic1} with {mechanic2} for {platform}",
+            "parameters": {
+                "temperature": 0.85,
+                "max_tokens": 600
+            }
+        }
+    }
+    
+    for filename, template in default_templates.items():
+        template_path = TEMPLATES_DIR / filename
+        if not template_path.exists():
+            with open(template_path, "w") as f:
+                json.dump(template, f, indent=2)
+            print(f"  Created template: {filename}")
+    
+    # Check phenosemantic-py
+    if check_phenosemantic():
+        print("  ✓ phenosemantic-py is available")
+    else:
+        print("  ⚠️  phenosemantic-py not working properly")
+        print("     Make sure it's installed at:", PHENO_DIR)
+    
+    print("\nInitialization complete!")
+    print("Next steps:")
+    print("  1. Create a lexaplast: ./pheno-manager create-lexaplast <name>")
+    print("  2. Create lexasomes: ./pheno-manager create-lexasome <name>")
+    print("  3. Mine outputs: ./pheno-manager mine --lexaplast <name> --lexasome <name> --count 100")
+
+def create_lexaplast_command(args):
+    """Create a new lexaplast."""
+    name = args.name
+    lexaplast_path = LEXAPLASTS_DIR / f"{name}.json"
+    
+    if lexaplast_path.exists() and not args.force:
+        print(f"Lexaplast '{name}' already exists. Use --force to overwrite.")
+        return
+    
+    if args.template:
+        # Load from template
+        template_path = TEMPLATES_DIR / f"{args.template}.json"
+        if not template_path.exists():
+            print(f"Template '{args.template}' not found.")
+            print(f"Available templates: {[f.stem for f in TEMPLATES_DIR.glob('*.json')]}")
+            return
+        
+        with open(template_path, "r") as f:
+            template = json.load(f)
+        
+        # Customize template
+        template["name"] = name
+        if args.description:
+            template["description"] = args.description
+        
+        with open(lexaplast_path, "w") as f:
+            json.dump(template, f, indent=2)
+        
+        print(f"Created lexaplast '{name}' from template '{args.template}'")
+        
+    elif args.interactive:
+        # Interactive creation
+        print(f"Creating lexaplast '{name}' interactively...")
+        print("(Press Enter to use default values)")
+        
+        description = input("Description: ").strip() or f"Lexaplast for {name}"
+        system_prompt = input("System prompt: ").strip() or "You are a helpful assistant."
+        
+        print("\nUser prompt template uses placeholders like {domain}, {task}, etc.")
+        user_prompt = input("User prompt template: ").strip() or "Generate {domain} {task}"
+        
+        temperature = float(input("Temperature (0.0-1.0, default 0.8): ").strip() or "0.8")
+        max_tokens = int(input("Max tokens (default 500): ").strip() or "500")
+        
+        lexaplast = {
+            "name": name,
+            "description": description,
+            "system_prompt": system_prompt,
+            "user_prompt_template": user_prompt,
+            "parameters": {
+                "temperature": temperature,
+                "max_tokens": max_tokens
+            }
+        }
+        
+        with open(lexaplast_path, "w") as f:
+            json.dump(lexaplast, f, indent=2)
+        
+        print(f"\nCreated lexaplast '{name}'")
+        
+    else:
+        # Create minimal lexaplast
+        lexaplast = {
+            "name": name,
+            "description": args.description or f"Lexaplast for {name}",
+            "system_prompt": "You are a helpful assistant.",
+            "user_prompt_template": "Generate {domain} {task}",
+            "parameters": {
+                "temperature": 0.8,
+                "max_tokens": 500
+            }
+        }
+        
+        with open(lexaplast_path, "w") as f:
+            json.dump(lexaplast, f, indent=2)
+        
+        print(f"Created lexaplast '{name}'")
+    
+    # Also create in phenosemantic-py directory for compatibility
+    pheno_lexaplast_path = PHENO_LEXAPLASTS_DIR / f"{name}.json"
+    if not pheno_lexaplast_path.exists():
+        with open(lexaplast_path, "r") as src, open(pheno_lexaplast_path, "w") as dst:
+            dst.write(src.read())
+        print(f"  Also created in phenosemantic-py directory for compatibility")
+
+def list_lexaplasts_command(args):
+    """List all lexaplasts."""
+    lexaplasts = list(LEXAPLASTS_DIR.glob("*.json"))
+    
+    if not lexaplasts:
+        print("No lexaplasts found.")
+        return
+    
+    print(f"Found {len(lexaplasts)} lexaplasts:\n")
+    
+    for lexaplast_path in sorted(lexaplasts):
+        with open(lexaplast_path, "r") as f:
+            try:
+                data = json.load(f)
+                name = data.get("name", lexaplast_path.stem)
+                description = data.get("description", "No description")
+                print(f"  {name}: {description}")
+            except json.JSONDecodeError:
+                print(f"  {lexaplast_path.stem}: (invalid JSON)")
+
+def create_lexasome_command(args):
+    """Create a new lexasome."""
+    name = args.name
+    lexasome_path = LEXASOMES_DIR / f"{name}.{args.type}"
+    
+    if lexasome_path.exists() and not args.force:
+        print(f"Lexasome '{name}' already exists. Use --force to overwrite.")
+        return
+    
+    # Create empty lexasome file
+    if args.type == "txt":
+        with open(lexasome_path, "w") as f:
+            f.write("# Lexasome: {name}\n# Created: {datetime}\n\n".format(
+                name=name,
+                datetime=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ))
+    elif args.type == "csv":
+        with open(lexasome_path, "w") as f:
+            f.write("text,weight\n")
+    elif args.type == "json":
+        with open(lexasome_path, "w") as f:
+            json.dump({
+                "name": name,
+                "type": "text",
+                "entries": []
+            }, f, indent=2)
+    
+    print(f"Created {args.type} lexasome '{name}' at {lexasome_path}")
+    
+    # Also create in phenosemantic-py directory for compatibility
+    pheno_lexasome_path = PHENO_LEXASOMES_DIR / f"{name}.{args.type}"
+    if not pheno_lexasome_path.exists():
+        with open(lexasome_path, "r") as src, open(pheno_lexasome_path, "w") as dst:
+            dst.write(src.read())
+        print(f"  Also created in phenosemantic-py directory for compatibility")
+
+def add_to_lexasome_command(args):
+    """Add entries to a lexasome."""
+    name = args.name
+    
+    # Find lexasome file
+    lexasome_path = None
+    for ext in ["txt", "csv", "json"]:
+        path = LEXASOMES_DIR / f"{name}.{ext}"
+        if path.exists():
+            lexasome_path = path
+            break
+    
+    if not lexasome_path:
+        print(f"Lexasome '{name}' not found.")
+        return
+    
+    ext = lexasome_path.suffix[1:]  # Remove dot
+    
+    if ext == "txt":
+        with open(lexasome_path, "a") as f:
+            f.write(f"{args.text}\n")
+        print(f"Added '{args.text}' to lexasome '{name}'")
+    
+    elif ext == "csv":
+        weight = args.weight or 1.0
+        with open(lexasome_path, "a") as f:
+            f.write(f"{args.text},{weight}\n")
+        print(f"Added '{args.text}' with weight {weight} to lexasome '{name}'")
+    
+    elif ext == "json":
+        with open(lexasome_path, "r") as f:
+            data = json.load(f)
+        
+        if data.get("type") == "text":
+            if "entries" not in data:
+                data["entries"] = []
+            data["entries"].append(args.text)
+        elif data.get("type") == "combiner":
+            if "sources" not in data:
+                data["sources"] = []
+            data["sources"].append(args.text)
+        
+        with open(lexasome_path, "w") as f:
+            json.dump(data, f, indent=2)
+        
+        print(f"Added '{args.text}' to JSON lexasome '{name}'")
+    
+    # Also update in phenosemantic-py directory
+    pheno_lexasome_path = PHENO_LEXASOMES_DIR / f"{name}.{ext}"
+    with open(lexasome_path, "r") as src, open(pheno_lexasome_path, "w") as dst:
+        dst.write(src.read())
+
+def list_lexasomes_command(args):
+    """List all lexasomes."""
+    lexasomes = []
+    for ext in ["txt", "csv", "json"]:
+        lexasomes.extend(LEXASOMES_DIR.glob(f"*.{ext}"))
+    
+    if not lexasomes:
+        print("No lexasomes found.")
+        return
+    
+    print(f"Found {len(lexasomes)} lexasomes:\n")
+    
+    for lexasome_path in sorted(lexasomes):
+        size = lexasome_path.stat().st_size
+        if ext == "txt":
+            with open(lexasome_path, "r") as f:
+                lines = sum(1 for line in f if line.strip() and not line.startswith("#"))
+            print(f"  {lexasome_path.stem}.txt: {lines} entries ({size} bytes)")
+        elif ext == "csv":
+            with open(lexasome_path, "r") as f:
+                lines = sum(1 for line in f) - 1  # Subtract header
+            print(f"  {lexasome_path.stem}.csv: {lines} entries ({size} bytes)")
+        elif ext == "json":
+            print(f"  {lexasome_path.stem}.json: JSON lexasome ({size} bytes)")
+
+def mine_command(args):
+    """Mine outputs using phenosemantic-py."""
+    if not check_phenosemantic():
+        print("Cannot mine: phenosemantic-py not available.")
+        return
+    
+    # Generate job ID
+    job_id = datetime.now().strftime("%Y%m%d-%H%M%S")
+    output_file = RAW_OUTPUTS_DIR / f"{job_id}.jsonl"
+    
+    print(f"Starting mining job: {job_id}")
+    print(f"  Lexaplast: {args.lexaplast}")
+    print(f"  Lexasomes: {', '.join(args.lexasome)}")
+    print(f"  Count: {args.count}")
+    print(f"  Output: {output_file}")
+    
+    # Build pheno command
+    cmd = [
+        "cd", str(PHENO_DIR), "&&",
+        "source", ".venv/bin/activate", "&&",
+        "pheno", "--mine", str(args.count),
+        "--lexaplast", args.lexaplast
+    ]
+    
+    for lexasome in args.lexasome:
+        cmd.extend(["--lexasome", lexasome])
+    
+    if args.temperature:
+        cmd.extend(["--temperature", str(args.temperature)])
+    
+    if args.delay:
+        cmd.extend(["--delay", str(args.delay)])
+    
+    if args.provider:
+        cmd.extend(["--provider", args.provider])
+    
+    if args.random_temp:
+        cmd.append("--random-temp")
+    
+    cmd.append("--incognito")
+    cmd.extend([">", str(output_file)])
+    
+    cmd_str = " ".join(cmd)
+    
+    # Record job in database
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+    INSERT INTO jobs (id, name, lexaplast, lexasomes, count, temperature, status, start_time, output_file)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (
+        job_id,
+        args.name or f"mine-{job_id}",
+        args.lexaplast,
+        json.dumps(args.lexasome),
+        args.count,
+        args.temperature,
+        "running",
+        datetime.now().isoformat(),
+        str(output_file)
+    ))
+    conn.commit()
+    conn.close()
+    
+    # Run the mining command
+    print(f"\nRunning: pheno --mine {args.count} --lexaplast {args.lexaplast} ...")
+    print("This may take a while. Check status with: ./pheno-manager status")
+    
+    try:
+        # Run in background
+        import threading
+        
+        def run_mining():
+            try:
+                result = subprocess.run(
+                    cmd_str,
+                    shell=True,
+                    capture_output=True,
+                    text=True
+                )
+                
+                # Update job status
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                
+                if result.returncode == 0:
+                    cursor.execute('''
+                    UPDATE jobs 
+                    SET status = 'completed', end_time = ?
+                    WHERE id = ?
+                    ''', (datetime.now().isoformat(), job_id))
+                    print(f"\nMining completed: {job_id}")
+                else:
+                    cursor.execute('''
+                    UPDATE jobs 
+                    SET status = 'failed', error = ?, end_time = ?
+                    WHERE id = ?
+                    ''', (result.stderr, datetime.now().isoformat(), job_id))
+                    print(f"\nMining failed: {result.stderr}")
+                
+                conn.commit()
+                conn.close()
+                
+            except Exception as e:
+                log_message(f"Error in mining thread: {e}", "ERROR")
+        
+        # Start mining thread
+        thread = threading.Thread(target=run_mining)
+        thread.daemon = True
+        thread.start()
+        
+        print(f"\nJob {job_id} started in background.")
+        print(f"Check status with: ./pheno-manager status --job {job_id}")
+        
+    except Exception as e:
+        log_message(f"Error starting mining: {e}", "ERROR")
+        print(f"Error: {e}")
+
+def status_command(args):
+    """Check status of mining jobs."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    if args.job:
+        cursor.execute('''
+        SELECT id, name, lexaplast, lexasomes, count, status, start_time, end_time, error
+        FROM jobs WHERE id = ?
+        ''', (args.job,))
+    else:
+        cursor.execute('''
+        SELECT id, name, lexaplast, lexasomes, count, status, start_time, end_time, error
+        FROM jobs 
+        ORDER BY start_time DESC 
+        LIMIT 10
+        ''')
+    
+    jobs = cursor.fetchall()
+    conn.close()
+    
+    if not jobs:
+        print("No jobs found.")
+        return
+    
+    print(f"{'ID':<15} {'Name':<20} {'Lexaplast':<15} {'Count':<6} {'Status':<10} {'Started':<20}")
+    print("-" * 100)
+    
+    for job in jobs:
+        job_id, name, lexaplast, lexasomes, count, status, start_time, end_time, error = job
+        
+        # Truncate long names
+        if len(name) > 18:
+            name = name[:15] + "..."
+        
+        # Format start time
+        if start_time:
+            try:
+                start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                start_str = start_dt.strftime("%Y-%m-%d %H:%M")
+            except:
+                start_str = start_time[:16]
+        else:
+            start_str = "N/A"
+        
+        print(f"{job_id:<15} {name:<20} {lexaplast:<15} {count:<6} {status:<10} {start_str:<20}")
+        
+        if error and args.verbose:
+            print(f"    Error: {error[:100]}...")
+
+def list_jobs_command(args):
+    """List all mining jobs."""
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    query = '''
+    SELECT id, name, lexaplast, count, status, start_time, end_time
+    FROM jobs
+    '''
+    
+    if args.days:
+        cursor.execute(query + ' WHERE date(start_time) >= date(?, ?) ORDER BY start_time DESC', 
+                      (datetime.now().isoformat(), f"-{args.days} days"))
+    else:
+        cursor.execute(query + ' ORDER BY start_time DESC LIMIT ?', (args.limit or 20,))
+    
+    jobs = cursor.fetchall()
+    conn.close()
+    
+    if not jobs:
+        print("No jobs found.")
+        return
+    
+    print(f"{'ID':<15} {'Name':<20} {'Lexaplast':<15} {'Count':<6} {'Status':<10} {'Duration':<10}")
+    print("-" * 90)
+    
+    for job in jobs:
+        job_id, name, lexaplast, count, status, start_time, end_time = job
+        
+        # Calculate duration
+        duration = "N/A"
+        if start_time and end_time:
+            try:
+                start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+                seconds = (end_dt - start_dt).total_seconds()
+                if seconds < 60:
+                    duration = f"{seconds:.0f}s"
+                elif seconds < 3600:
+                    duration = f"{seconds/60:.0f}m"
+                else:
+                    duration = f"{seconds/3600:.1f}h"
+            except:
+                pass
+        
+        print(f"{job_id:<15} {name:<20} {lexaplast:<15} {count:<6} {status:<10} {duration:<10}")
+
+def view_outputs_command(args):
+    """View outputs from a mining job."""
+    if not args.job:
+        print("Please specify a job ID with --job")
+        return
+    
+    # Find output file
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT output_file FROM jobs WHERE id = ?', (args.job,))
+    result = cursor.fetchone()
+    conn.close()
+    
+    if not result:
+        print(f"Job {args.job} not found.")
+        return
+    
+    output_file = Path(result[0])
+    if not output_file.exists():
+        print(f"Output file not found: {output_file}")
+        return
+    
+    print(f"Outputs from job {args.job} ({output_file}):\n")
+    
+    count = 0
+    with open(output_file, "r") as f:
+        for line in f:
+            if count >= (args.limit or 10):
+                print(f"\n... and {sum(1 for _ in f)} more")
+                break
+            
+            try:
+                data = json.loads(line.strip())
+                text = data.get("text", "").replace("\n", " ")
+                if len(text) > 100:
+                    text = text[:97] + "..."
+                
+                rating = data.get("rating", "N/A")
+                print(f"{count+1:3d}. [{rating}] {text}")
+                count += 1
+            except json.JSONDecodeError:
+                print(f"{count+1:3d}. (Invalid JSON)")
+                count += 1
+    
+    if count == 0:
+        print("No outputs found.")
+
+def main():
+    """Main entry point."""
+    ensure_directories()
+    
+    parser = argparse.ArgumentParser(
+        description="Phenosemantic Manager - User-friendly wrapper for phenosemantic-py",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  ./pheno-manager init
+  ./pheno-manager create-lexaplast game-concepts --template creative
+  ./pheno-manager create-lexasome mechanics --type txt
+  ./pheno-manager add-to-lexasome mechanics --text "procedural generation"
+  ./pheno-manager mine --lexaplast game-concepts --lexasome mechanics --count 100
+  ./pheno-manager status
+        """
+    )
+    
+    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+    
+    # Init command
+    init_parser = subparsers.add_parser("init", help="Initialize phenosemantic manager")
+    
+    # Lexaplast commands
+    lexaplast_parser = subparsers.add_parser("create-lexaplast", help="Create a new lexaplast")
+    lexaplast_parser.add_argument("name", help="Name of the lexaplast")
+    lexaplast_parser.add_argument("--template", help="Template to use")
+    lexaplast_parser.add_argument("--description", help="Description of the lexaplast")
+    lexaplast_parser.add_argument("--interactive", action="store_true", help="Create interactively")
+    lexaplast_parser.add_argument("--force", action="store_true", help="Overwrite if exists")
+    
+    subparsers.add_parser("list-lexaplasts", help="List all lexaplasts")
+    
+    # Lexasome commands
+    lexasome_parser = subparsers.add_parser("create-lexasome", help="Create a new lexasome")
+    lexasome_parser.add_argument("name", help="Name of the lexasome")
+    lexasome_parser.add_argument("--type", choices=["txt", "csv", "json"], default="txt", 
+                                help="Type of lexasome (default: txt)")
+    lexasome_parser.add_argument("--force", action="store_true", help="Overwrite if exists")
+    
+    add_parser = subparsers.add_parser("add-to-lexasome", help="Add entries to a lexasome")
+    add_parser.add_argument("name", help="Name of the lexasome")
+    add_parser.add_argument("--text", required=True, help="Text to add")
+    add_parser.add_argument("--weight", type=float, help="Weight for CSV lexasomes")
+    
+    subparsers.add_parser("list-lexasomes", help="List all lexasomes")
+    
+    # Mining commands
+    mine_parser = subparsers.add_parser("mine", help="Mine outputs using phenosemantic-py")
+    mine_parser.add_argument("--lexaplast", required=True, help="Lexaplast to use")
+    mine_parser.add_argument("--lexasome", required=True, nargs="+", help="Lexasomes to use")
+    mine_parser.add_argument("--count", type=int, default=100, help="Number of outputs to generate")
+    mine_parser.add_argument("--temperature", type=float, help="Generation temperature")
+    mine_parser.add_argument("--delay", type=int, help="Delay between API calls (ms)")
+    mine_parser.add_argument("--provider", help="API provider to use")
+    mine_parser.add_argument("--random-temp", action="store_true", help="Use random temperature")
+    mine_parser.add_argument("--name", help="Name for this mining job")
+    
+    status_parser = subparsers.add_parser("status", help="Check status of mining jobs")
+    status_parser.add_argument("--job", help="Specific job ID to check")
+    status_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed output")
+    
+    list_jobs_parser = subparsers.add_parser("list-jobs", help="List mining jobs")
+    list_jobs_parser.add_argument("--days", type=int, help="Show jobs from last N days")
+    list_jobs_parser.add_argument("--limit", type=int, default=20, help="Maximum jobs to show")
+    
+    view_parser = subparsers.add_parser("view-outputs", help="View outputs from a mining job")
+    view_parser.add_argument("--job", required=True, help="Job ID")
+    view_parser.add_argument("--limit", type=int, default=10, help="Maximum outputs to show")
+    
+    # Parse arguments
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return
+    
+    # Execute command
+    try:
+        if args.command == "init":
+            init_command(args)
+        elif args.command == "create-lexaplast":
+            create_lexaplast_command(args)
+        elif args.command == "list-lexaplasts":
+            list_lexaplasts_command(args)
+        elif args.command == "create-lexasome":
+            create_lexasome_command(args)
+        elif args.command == "add-to-lexasome":
+            add_to_lexasome_command(args)
+        elif args.command == "list-lexasomes":
+            list_lexasomes_command(args)
+        elif args.command == "mine":
+            mine_command(args)
+        elif args.command == "status":
+            status_command(args)
+        elif args.command == "list-jobs":
+            list_jobs_command(args)
+        elif args.command == "view-outputs":
+            view_outputs_command(args)
+        else:
+            print(f"Unknown command: {args.command}")
+            parser.print_help()
+    
+    except KeyboardInterrupt:
+        print("\nInterrupted.")
+        sys.exit(1)
+    except Exception as e:
+        log_message(f"Error in command '{args.command}': {e}", "ERROR")
+        print(f"Error: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,15 @@
+{
+  "name": "creative_concept_generator",
+  "description": "Generate novel creative concepts by combining abstract ideas with application domains",
+  "codon": {
+    "lexasomes": [
+      "demo_lexasome_concepts.txt",
+      "demo_lexasome_domains.txt"
+    ],
+    "n": 2
+  },
+  "prompt": "Combine these two elements into a novel creative concept:\n\nConcept: {{codon[0]}}\nDomain: {{codon[1]}}\n\nDescribe a specific project or creation that emerges from this combination. Be concrete and imaginative. Include:\n1. What it is\n2. How it works\n3. Why it's interesting\n\nKeep it to 3-4 sentences.",
+  "model": "deepseek-chat",
+  "temperature": 0.8,
+  "max_tokens": 300
+}

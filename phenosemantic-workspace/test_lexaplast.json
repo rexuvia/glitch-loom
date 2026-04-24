@@ -1,0 +1,15 @@
+{
+  "name": "test_concept_generator",
+  "description": "Generate creative concepts from random word combinations",
+  "codon": {
+    "lexasomes": [
+      "lexasomes/default.txt",
+      "lexasomes/default.txt"
+    ],
+    "n": 2
+  },
+  "prompt": "Combine these two concepts into a single creative idea: {{codon[0]}} and {{codon[1]}}. Describe the resulting concept in 2-3 sentences.",
+  "model": "gpt-4o-mini",
+  "temperature": 0.8,
+  "max_tokens": 150
+}

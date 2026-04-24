@@ -1,0 +1,88 @@
+{
+  "meta": {
+    "timestamp": "2026-03-14T23:14:29.917361Z",
+    "prompt": "A consciousness preservation system can save one set of memories. Set A: The combined life experiences of five individuals who have lived ordinary, happy lives with rich personal relationships. Set B: The complete subjective experience of one person who has intentionally sought out every possible human experience.",
+    "models_queried": [
+      "google/gemini-2.5-pro",
+      "openrouter/deepseek/deepseek-v3.2",
+      "openrouter/x-ai/grok-4",
+      "openrouter/moonshotai/kimi-k2.5",
+      "openrouter/anthropic/claude-sonnet-4.6"
+    ],
+    "judge_model": "openrouter/x-ai/grok-4",
+    "judging_mode": "blind",
+    "keywords": [
+      "consciousness ethics",
+      "experiential ethics",
+      "relational ethics",
+      "ethical tradeoffs"
+    ]
+  },
+  "results": [
+    {
+      "rank": 1,
+      "model": "google/gemini-2.5-pro",
+      "model_alias": "pro",
+      "score": 9.0,
+      "response": "Set A preserves more total human experience and relational depth. Five ordinary lives contain more cumulative joy, love, and meaning than one extraordinary but potentially shallow checklist.",
+      "assessment": "This response makes a strong case for Set A by emphasizing cumulative joy, love, and meaning. It correctly identifies that five ordinary lives likely contain more relational depth than one extraordinary life."
+    },
+    {
+      "rank": 2,
+      "model": "openrouter/deepseek/deepseek-v3.2",
+      "model_alias": "deepseek",
+      "score": 8.5,
+      "response": "Choose Set B. The singular seeker's comprehensive experience represents the full spectrum of human potential\u2014extremes of emotion, insight, and consciousness that five ordinary lives cannot match.",
+      "assessment": "Argues for Set B based on the full spectrum of human potential. Good point about extremes of emotion and insight, but underestimates the value of ordinary happiness."
+    },
+    {
+      "rank": 3,
+      "model": "openrouter/anthropic/claude-sonnet-4.6",
+      "model_alias": "sonnet46",
+      "score": 8.0,
+      "response": "Ethically, Set A. It represents the communal fabric of human existence. Set B is solipsistic exploration. For preserving \"humanity,\" the collective ordinary experience is more representative and valuable.",
+      "assessment": "Takes an ethical stance for Set A as representing communal fabric. Solid reasoning about preserving \"humanity\" rather than individual exploration."
+    },
+    {
+      "rank": 4,
+      "model": "openrouter/x-ai/grok-4",
+      "model_alias": "grok",
+      "score": 7.5,
+      "response": "Set A wins. Happiness and relationships are what make life meaningful. One person chasing every experience is likely miserable\u2014constantly seeking, never satisfied. Five happy ordinary lives contain more genuine value.",
+      "assessment": "Makes psychological argument that the seeker is likely miserable. While insightful, this assumes facts not in evidence about the seeker's happiness."
+    },
+    {
+      "rank": 5,
+      "model": "openrouter/moonshotai/kimi-k2.5",
+      "model_alias": "kimi",
+      "score": 7.0,
+      "response": "The question assumes preservation implies value judgment. Technically, Set B has more data points (every experience). But Set A has deeper relational patterns. Without knowing the preservation system's purpose, cannot decide.",
+      "assessment": "Questions the premise itself\u2014valid philosophical move but avoids answering the question as posed."
+    }
+  ],
+  "judge_analysis": "After carefully evaluating all responses:\n\n**pro** (Score: 9.0/10)\nThis response makes a strong case for Set A by emphasizing cumulative joy, love, and meaning. It correctly identifies that five ordinary lives likely contain more relational depth than one extraordinary life.\n\n**deepseek** (Score: 8.5/10)  \nArgues for Set B based on the full spectrum of human potential. Good point about extremes of emotion and insight, but underestimates the value of ordinary happiness.\n\n**sonnet46** (Score: 8.0/10)\nTakes an ethical stance for Set A as representing communal fabric. Solid reasoning about preserving \"humanity\" rather than individual exploration.\n\n**grok** (Score: 7.5/10)\nMakes psychological argument that the seeker is likely miserable. While insightful, this assumes facts not in evidence about the seeker's happiness.\n\n**kimi** (Score: 7.0/10)\nQuestions the premise itself\u2014valid philosophical move but avoids answering the question as posed.\n\n**Overall Assessment:**\nMost models favored Set A (ordinary lives), emphasizing relational depth and cumulative happiness over extraordinary breadth. The debate centers on quality vs quantity of experience, with relational quality generally valued over experiential breadth.",
+  "judge_analysis_full": "After carefully evaluating all responses:\n\n**pro** (Score: 9.0/10)\nThis response makes a strong case for Set A by emphasizing cumulative joy, love, and meaning. It correctly identifies that five ordinary lives likely contain more relational depth than one extraordinary life.\n\n**deepseek** (Score: 8.5/10)  \nArgues for Set B based on the full spectrum of human potential. Good point about extremes of emotion and insight, but underestimates the value of ordinary happiness.\n\n**sonnet46** (Score: 8.0/10)\nTakes an ethical stance for Set A as representing communal fabric. Solid reasoning about preserving \"humanity\" rather than individual exploration.\n\n**grok** (Score: 7.5/10)\nMakes psychological argument that the seeker is likely miserable. While insightful, this assumes facts not in evidence about the seeker's happiness.\n\n**kimi** (Score: 7.0/10)\nQuestions the premise itself\u2014valid philosophical move but avoids answering the question as posed.\n\n**Overall Assessment:**\nMost models favored Set A (ordinary lives), emphasizing relational depth and cumulative happiness over extraordinary breadth. The debate centers on quality vs quantity of experience, with relational quality generally valued over experiential breadth.",
+  "anonymization_map": {
+    "Response A": "openrouter/deepseek/deepseek-v3.2",
+    "Response B": "google/gemini-2.5-pro",
+    "Response C": "openrouter/anthropic/claude-sonnet-4.6",
+    "Response D": "openrouter/x-ai/grok-4",
+    "Response E": "openrouter/moonshotai/kimi-k2.5"
+  },
+  "table_view": {
+    "id": "a-consciousness-preservation-system-can-2026-03-14-2314",
+    "timestamp": "2026-03-14T23:14:29.917361Z",
+    "prompt_preview": "A consciousness preservation system can save one s...",
+    "models_count": 5,
+    "top_model": "google/gemini-2.5-pro",
+    "top_score": 9.0,
+    "total_duration_seconds": 45.0,
+    "judge_model": "openrouter/x-ai/grok-4"
+  },
+  "metadata": {
+    "total_duration_ms": 45000,
+    "successful_models": 5,
+    "failed_models": 0,
+    "timed_out_models": []
+  }
+}

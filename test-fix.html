@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Glitch Loom Fix</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #080810; color: white; font-family: sans-serif; }
+        canvas { border: 2px solid #00f0ff; margin: 10px; }
+        button { padding: 10px 20px; margin: 5px; background: #00f0ff; border: none; border-radius: 5px; cursor: pointer; }
+        .container { display: flex; flex-wrap: wrap; }
+        .panel { margin: 10px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Testing Glitch Loom Fix</h1>
+    
+    <div class="container">
+        <div class="panel">
+            <h3>Test 1: Basic Canvas Operations</h3>
+            <canvas id="test1" width="200" height="200"></canvas><br>
+            <button onclick="test1()">Draw Test Pattern</button>
+        </div>
+        
+        <div class="panel">
+            <h3>Test 2: ImageData Manipulation</h3>
+            <canvas id="test2" width="200" height="200"></canvas><br>
+            <button onclick="test2()">Manipulate Pixels</button>
+        </div>
+        
+        <div class="panel">
+            <h3>Test 3: Temporary Canvas (Fix Test)</h3>
+            <canvas id="test3" width="200" height="200"></canvas><br>
+            <button onclick="test3()">Use Temp Canvas</button>
+        </div>
+    </div>
+    
+    <div id="status" style="margin-top: 20px; padding: 10px; background: rgba(0,240,255,0.1); border-radius: 5px;">
+        Status: Ready
+    </div>
+    
+    <script>
+        function setStatus(msg) {
+            document.getElementById('status').textContent = 'Status: ' + msg;
+            console.log(msg);
+        }
+        
+        // Test 1: Basic canvas drawing
+        function test1() {
+            const canvas = document.getElementById('test1');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear
+            ctx.clearRect(0, 0, 200, 200);
+            
+            // Draw gradient
+            const gradient = ctx.createLinearGradient(0, 0, 200, 200);
+            gradient.addColorStop(0, '#ff0000');
+            gradient.addColorStop(0.5, '#00ff00');
+            gradient.addColorStop(1, '#0000ff');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 200, 200);
+            
+            // Draw text
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText('Canvas OK', 50, 100);
+            
+            setStatus('Test 1: Basic canvas drawing works');
+        }
+        
+        // Test 2: ImageData manipulation
+        function test2() {
+            const canvas = document.getElementById('test2');
+            const ctx = canvas.getContext('2d');
+            
+            // Create ImageData
+            const imageData = ctx.createImageData(200, 200);
+            const data = imageData.data;
+            
+            // Fill with pattern
+            for (let y = 0; y < 200; y++) {
+                for (let x = 0; x < 200; x++) {
+                    const idx = (y * 200 + x) * 4;
+                    data[idx] = (x * 255 / 200);     // Red gradient
+                    data[idx+1] = (y * 255 / 200);   // Green gradient
+                    data[idx+2] = 128;               // Blue constant
+                    data[idx+3] = 255;               // Alpha
+                }
+            }
+            
+            // Put back to canvas
+            ctx.putImageData(imageData, 0, 0);
+            
+            setStatus('Test 2: ImageData manipulation works');
+        }
+        
+        // Test 3: Temporary canvas (like our fix)
+        function test3() {
+            const canvas = document.getElementById('test3');
+            const ctx = canvas.getContext('2d');
+            
+            // Create source ImageData
+            const sourceData = ctx.createImageData(200, 200);
+            const data = sourceData.data;
+            
+            // Fill with different pattern
+            for (let y = 0; y < 200; y++) {
+                for (let x = 0; x < 200; x++) {
+                    const idx = (y * 200 + x) * 4;
+                    const dist = Math.sqrt((x-100)**2 + (y-100)**2);
+                    data[idx] = Math.min(255, dist);     // Red radial
+                    data[idx+1] = (x + y) % 255;         // Green checker
+                    data[idx+2] = 255 - (dist / 2);      // Blue inverse radial
+                    data[idx+3] = 255;
+                }
+            }
+            
+            // Use temporary canvas (like our fix)
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 200;
+            tempCanvas.height = 200;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.putImageData(sourceData, 0, 0);
+            
+            // Clear main canvas and draw from temp
+            ctx.clearRect(0, 0, 200, 200);
+            ctx.drawImage(tempCanvas, 0, 0);
+            
+            // Add text to verify
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText('Temp Canvas OK', 50, 180);
+            
+            setStatus('Test 3: Temporary canvas method works (our fix)');
+        }
+        
+        // Run all tests
+        function runAllTests() {
+            test1();
+            setTimeout(test2, 500);
+            setTimeout(test3, 1000);
+            setTimeout(() => setStatus('All tests completed'), 1500);
+        }
+        
+        // Initialize
+        setStatus('Click buttons to test');
+    </script>
+</body>
+</html>

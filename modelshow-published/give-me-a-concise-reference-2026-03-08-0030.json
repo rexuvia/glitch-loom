@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "timestamp": "2026-03-08T00:30:00Z",
+    "prompt": "Give me a concise reference guide for a long time windows user switching to macOS",
+    "models_queried": [
+      "google/gemini-2.5-pro",
+      "openrouter/openai/gpt-5",
+      "openrouter/x-ai/grok-4",
+      "openrouter/moonshotai/kimi-k2.5"
+    ],
+    "judge_model": "openrouter/google/gemini-3.1-pro-preview",
+    "judging_mode": "blind",
+    "keywords": [
+      "macOS",
+      "windows",
+      "transition-guide"
+    ]
+  },
+  "results": [
+    {
+      "rank": 1,
+      "model": "openrouter/openai/gpt-5",
+      "model_alias": "gpt5",
+      "score": 9.5,
+      "response": "# macOS Quick Reference for Windows Switchers\n\n## Core Concepts\n| Windows | macOS |\n|---------|-------|\n| Start Menu | Spotlight (⌘Space) or Launchpad |\n| Task Manager | Activity Monitor |\n| File Explorer | Finder |\n| Control Panel | System Settings |\n| Right-click | Right-click or Ctrl+click |\n| Alt+F4 | ⌘Q (quit), ⌘W (close window) |\n| Ctrl+Z/X/C/V | ⌘Z/X/C/V |\n| Windows key | Command (⌘) key |\n| Alt | Option (⌥) |\n\n## Essential Shortcuts\n- **⌘Space** — Spotlight search (find anything)\n- **⌘Tab** — Switch apps (like Alt+Tab)\n- **⌘`** — Switch windows within same app\n- **⌘,** — Open app Preferences\n- **⌘Shift+3/4/5** — Screenshot tools\n- **⌃⌘Space** — Emoji picker\n- **⌘Option+Esc** — Force quit (like Ctrl+Alt+Del)\n\n## File System\n- No drive letters (C:, D:). One unified file tree at /\n- Home folder: /Users/yourname (like C:\\Users\\yourname)\n- Apps go in /Applications (drag to install from .dmg)\n- Uninstall: drag app from /Applications to Trash\n- Hidden files: ⌘Shift+. to toggle in Finder\n\n## App Equivalents\n| Windows App | macOS App |\n|-------------|----------|\n| Notepad | TextEdit |\n| Paint | Preview (basic) / Pixelmator |\n| Windows Media Player | QuickTime / Music |\n| IE/Edge | Safari |\n| Outlook | Mail / Outlook for Mac |\n| Word/Excel/PPT | Pages/Numbers/Keynote or Office for Mac |\n\n## Tips for Switchers\n1. **Window management**: Use Mission Control (F3 or swipe up with 3 fingers)\n2. **Closing ≠ Quitting**: Red X closes the window but app stays running. Use ⌘Q to quit.\n3. **Install apps**: Mac App Store or .dmg files (mount, drag to Applications)\n4. **Clipboard**: Same Ctrl+C/V but with ⌘ instead\n5. **Terminal**: Fully-featured Unix terminal at Applications > Utilities > Terminal\n6. **iCloud integration**: Desktop and Documents can sync across devices\n7. **Homebrew**: Package manager for developer tools (brew.sh)",
+      "assessment": "Exceptional organization and clarity. Covers all essential transition concepts with the right level of detail — not too basic for a power user, not overwhelming. The parallel structure (Windows term → macOS equivalent) is exactly what a switcher needs. Includes keyboard shortcuts, file system differences, and app ecosystem differences in a scannable format."
+    },
+    {
+      "rank": 2,
+      "model": "google/gemini-2.5-pro",
+      "model_alias": "pro",
+      "score": 8.5,
+      "response": "# Switching from Windows to macOS: Reference Guide\n\n## The Basics\nmacOS is Unix-based, which means the file system and many conventions differ from Windows. The learning curve is real but manageable.\n\n## Key Keyboard Differences\nThe biggest adjustment is the ⌘ (Command) key replacing Ctrl for most shortcuts:\n- Copy/Paste: ⌘C / ⌘V\n- Undo: ⌘Z\n- Select All: ⌘A\n- Save: ⌘S\n- Find: ⌘F\n- New window/tab: ⌘N / ⌘T\n\nThe Option key (Alt equivalent) adds functionality, and Control still exists but is used less.\n\n## Window & App Management\n- **Traffic lights**: Red = close window, Yellow = minimize, Green = fullscreen\n- **⌘Q** quits an app entirely (red X does NOT quit)\n- **⌘Tab**: Switch between open apps\n- **Mission Control** (F3): See all open windows\n- **Spaces**: Virtual desktops, create in Mission Control\n\n## Finding Things\n- **Spotlight** (⌘Space): Universal search — apps, files, calculations, web\n- **Finder**: File manager (like Explorer). Sidebar has favorites, Locations\n- Recent items: Apple menu > Recent Items\n\n## System Settings\n- Equivalent to Control Panel: Apple menu > System Settings\n- App-specific settings: In each app, use ⌘, (Preferences)\n\n## Installing & Removing Apps\n- Drag .dmg-based apps to /Applications folder to install\n- Delete by dragging to Trash (for simple apps)\n- Complex apps: use their uninstaller or AppCleaner\n\n## File System Highlights\n- No drive letters\n- User home: ~/  (expands to /Users/username)\n- Show hidden files: ⌘⇧. in Finder",
+      "assessment": "Very comprehensive coverage with good depth. Excellent on system-level differences and keyboard shortcuts. Slightly verbose in places — could be tighter for a 'concise' guide. The section on Finder vs Explorer is particularly well-done."
+    },
+    {
+      "rank": 3,
+      "model": "openrouter/x-ai/grok-4",
+      "model_alias": "grok",
+      "score": 8.0,
+      "response": "# Windows → macOS Switcher Guide\n\n## Mental Model Shift\n- macOS is Unix. No registry, no drive letters, permissions matter.\n- Apps are self-contained bundles. Installing = copying to /Applications.\n- The Dock is permanent (like taskbar), not just active apps.\n\n## Keyboard Remapping\n| Action | Windows | macOS |\n|--------|---------|-------|\n| Copy | Ctrl+C | ⌘C |\n| Paste | Ctrl+V | ⌘V |\n| Undo | Ctrl+Z | ⌘Z |\n| Find | Ctrl+F | ⌘F |\n| Switch apps | Alt+Tab | ⌘Tab |\n| Lock screen | Win+L | ⌃⌘Q |\n| Task manager | Ctrl+Shift+Esc | ⌘⌥Esc |\n| Screenshot | PrtSc | ⌘⇧3 (full) / ⌘⇧4 (region) |\n\n## Navigation\n- **Spotlight** (⌘Space): Your new best friend\n- **Finder** = Explorer, but more limited by default\n- **Cmd+Delete**: Move to Trash (like Delete key in Explorer)\n\n## Common Gotchas\n1. Closing a window doesn't quit the app (watch the Dock dot)\n2. macOS updates are smooth, no restart loops\n3. Right-click works fine, or use two-finger tap on trackpad\n4. No maximize button by default (green = fullscreen)\n5. Fonts look different due to sub-pixel rendering differences",
+      "assessment": "Clean, readable structure with good Windows-to-macOS mapping. Strong on the conceptual differences. Misses some important power-user shortcuts and the app ecosystem section is thinner than the top two. Good overall but not as complete."
+    },
+    {
+      "rank": 4,
+      "model": "openrouter/moonshotai/kimi-k2.5",
+      "model_alias": "kimi",
+      "score": 7.5,
+      "response": "# macOS Reference for Windows Users\n\n## Key Differences at a Glance\n\n**System Navigation**\n- Start Menu → Spotlight Search (⌘ + Space)\n- Taskbar → Dock (bottom of screen)\n- File Explorer → Finder\n- Control Panel → System Preferences/Settings\n- Task Manager → Activity Monitor\n\n**Keyboard Shortcuts**\n- Ctrl → ⌘ (Command) for most shortcuts\n- Alt → ⌥ (Option)\n- Windows Key → no direct equivalent (⌘ handles most functions)\n- Alt+F4 → ⌘Q (quit app) or red dot\n- Ctrl+Alt+Del → ⌘⌥Esc (Force Quit)\n\n**File Management**\n- No C: drive; everything under /\n- Right-click in Finder for context menu\n- Drag apps to Applications to install\n- Delete = move to Trash, then empty\n\n**Common Apps**\n- Notepad → TextEdit\n- Calculator → Calculator (same!)\n- Paint → Preview\n- IE/Edge → Safari\n\n## Quick Tips\n- ⌘Tab switches apps, ⌘` switches windows in same app\n- Spotlight can do math, search files, open apps\n- iCloud Drive integrates like OneDrive\n- Homebrew for command-line tools",
+      "assessment": "Decent coverage of the basics. Well-organized but lacks depth in several areas. The shortcuts table is a nice touch. Skips several important topics (file system navigation, app installation, developer tools) that a long-time Windows power user would need. Adequate but not comprehensive enough for the stated goal."
+    }
+  ],
+  "judge_analysis": "All four models produced useful macOS switcher guides, but there's a clear performance gradient. The top performer (GPT-5) distinguished itself by combining exhaustive coverage with genuinely scannable formatting — the side-by-side tables work extremely well for this use case. It's the only response that explicitly addresses the 'long-time power user' aspect of the prompt by including Terminal access and Homebrew.\n\nThe middle tier (Claude Pro, Grok) shows strong fundamentals but doesn't fully address the power-user dimension. Both cover the keyboard remapping and conceptual shift well, but stop short of the developer-adjacent tips that distinguish a casual switcher guide from a power-user reference.\n\nKimi's response is the weakest, feeling more like a checklist than a reference guide. It covers the surface but lacks the depth needed to actually help someone make the transition smoothly.\n\nKey differentiator: The best responses acknowledged that macOS's 'close window ≠ quit app' behavior is the #1 gotcha for Windows switchers, and addressed it prominently. All four mentioned it, which shows good domain awareness across the board.\n\nNote: deepseek timed out and was not evaluated.",
+  "judge_analysis_full": "## Judge's Evaluation: Windows to macOS Reference Guide\n\n### Response A → gpt5\n**Score: 9.5/10**\nExceptional organization and clarity. Covers all essential transition concepts with the right level of detail — not too basic for a power user, not overwhelming. The parallel structure (Windows term → macOS equivalent) is exactly what a switcher needs. Includes keyboard shortcuts, file system differences, and app ecosystem differences in a scannable format. The Homebrew mention is a great touch for power users.\n\n### Response B → pro\n**Score: 8.5/10**\nVery comprehensive coverage with good depth. Excellent on system-level differences and keyboard shortcuts. Slightly verbose in places — could be tighter for a 'concise' guide. The section on Finder vs Explorer is particularly well-done. Missing some of the power-user tips that gpt5 included.\n\n### Response C → grok\n**Score: 8.0/10**\nClean, readable structure with good Windows-to-macOS mapping. Strong on the conceptual differences. Misses some important power-user shortcuts and the app ecosystem section is thinner than the top two. Good overall but not as complete.\n\n### Response D → kimi\n**Score: 7.5/10**\nDecent coverage of the basics. Well-organized but lacks depth in several areas. The shortcuts table is a nice touch. Skips several important topics (file system navigation, app installation, developer tools) that a long-time Windows power user would need. Adequate but not comprehensive enough for the stated goal.\n\n## Overall Assessment\n\nAll four models produced useful macOS switcher guides, but there's a clear performance gradient. The top performer (GPT-5) distinguished itself by combining exhaustive coverage with genuinely scannable formatting — the side-by-side tables work extremely well for this use case. It's the only response that explicitly addresses the 'long-time power user' aspect of the prompt by including Terminal access and Homebrew.\n\nThe middle tier (Claude Pro, Grok) shows strong fundamentals but doesn't fully address the power-user dimension. Both cover the keyboard remapping and conceptual shift well, but stop short of the developer-adjacent tips that distinguish a casual switcher guide from a power-user reference.\n\nKimi's response is the weakest, feeling more like a checklist than a reference guide. It covers the surface but lacks the depth needed to actually help someone make the transition smoothly.\n\nKey differentiator: The best responses acknowledged that macOS's 'close window ≠ quit app' behavior is the #1 gotcha for Windows switchers, and addressed it prominently. All four mentioned it, which shows good domain awareness across the board.\n\nNote: deepseek timed out and was not evaluated.",
+  "anonymization_map": {
+    "Response A": "openrouter/openai/gpt-5",
+    "Response B": "google/gemini-2.5-pro",
+    "Response C": "openrouter/x-ai/grok-4",
+    "Response D": "openrouter/moonshotai/kimi-k2.5"
+  },
+  "table_view": {
+    "id": "give-me-a-concise-reference-2026-03-08-0030",
+    "timestamp": "2026-03-08T00:30:00Z",
+    "prompt_preview": "Give me a concise reference guide for a long time ...",
+    "models_count": 4,
+    "top_model": "openrouter/openai/gpt-5",
+    "top_score": 9.5,
+    "total_duration_seconds": 68.0,
+    "judge_model": "openrouter/google/gemini-3.1-pro-preview"
+  },
+  "metadata": {
+    "total_duration_ms": 68000,
+    "successful_models": 4,
+    "failed_models": 0,
+    "timed_out_models": [
+      "deepseek"
+    ]
+  }
+}

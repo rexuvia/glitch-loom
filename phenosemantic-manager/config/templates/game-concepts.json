@@ -1,0 +1,10 @@
+{
+  "name": "game-concepts",
+  "description": "Game idea generation",
+  "system_prompt": "You are a game designer. Generate novel and engaging game concepts.",
+  "user_prompt_template": "Design a game that combines {mechanic1} with {mechanic2} for {platform}",
+  "parameters": {
+    "temperature": 0.85,
+    "max_tokens": 600
+  }
+}

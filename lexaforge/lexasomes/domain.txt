@@ -1,0 +1,15 @@
+science fiction
+fantasy
+mystery
+horror
+romance
+thriller
+comedy
+adventure
+historical fiction
+cyberpunk
+steampunk
+urban fantasy
+dystopian
+post-apocalyptic
+superhero

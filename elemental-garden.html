@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Elemental Garden</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0f;
+            touch-action: none;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 90vw;
+        }
+
+        .ui-group {
+            background: rgba(15, 15, 25, 0.85);
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            gap: 6px;
+            backdrop-filter: blur(10px);
+        }
+
+        button {
+            background: rgba(30, 30, 50, 0.9);
+            border: 2px solid rgba(100, 100, 150, 0.4);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+
+        button:hover {
+            background: rgba(50, 50, 80, 0.9);
+            border-color: rgba(150, 150, 200, 0.6);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.active {
+            border-width: 3px;
+            box-shadow: 0 0 20px currentColor;
+        }
+
+        .element-btn {
+            width: 48px;
+            height: 48px;
+            padding: 0;
+            font-size: 24px;
+            position: relative;
+        }
+
+        .element-btn.fire { border-color: #ff4500; color: #ff4500; }
+        .element-btn.ice { border-color: #00ffff; color: #00ffff; }
+        .element-btn.lightning { border-color: #ffff00; color: #ffff00; }
+        .element-btn.void { border-color: #9400ff; color: #9400ff; }
+
+        .element-btn.active.fire { background: rgba(255, 69, 0, 0.3); }
+        .element-btn.active.ice { background: rgba(0, 255, 255, 0.3); }
+        .element-btn.active.lightning { background: rgba(255, 255, 0, 0.3); }
+        .element-btn.active.void { background: rgba(148, 0, 255, 0.3); }
+
+        .mode-btn {
+            min-width: 100px;
+        }
+
+        .mode-btn.plant.active { border-color: #4caf50; color: #4caf50; }
+        .mode-btn.gravity.active { border-color: #ff9800; color: #ff9800; }
+
+        #info {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 15, 25, 0.85);
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            button {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+            .element-btn {
+                width: 42px;
+                height: 42px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div id="ui">
+        <div class="ui-group">
+            <button class="element-btn fire active" data-element="fire">🔥</button>
+            <button class="element-btn ice" data-element="ice">❄️</button>
+            <button class="element-btn lightning" data-element="lightning">⚡</button>
+            <button class="element-btn void" data-element="void">🌀</button>
+        </div>
+        
+        <div class="ui-group">
+            <button class="mode-btn plant active" data-mode="plant">🌱 Plant</button>
+            <button class="mode-btn gravity" data-mode="gravity">🌊 Gravity</button>
+        </div>
+        
+        <div class="ui-group">
+            <button id="pauseBtn">⏸️ Pause</button>
+            <button id="clearBtn">🗑️ Clear</button>
+            <button id="soundBtn">🔊 Sound</button>
+        </div>
+    </div>
+
+    <div id="info">
+        <span id="infoText">Plant seeds or drag to create gravity wells • Right-click wells to toggle polarity</span>
+    </div>
+
+    <script>
+        // ===== AUDIO CONTEXT =====
+        let audioCtx = null;
+        let soundEnabled = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            soundEnabled = true;
+            document.getElementById('soundBtn').textContent = '🔊 Sound';
+        }
+
+        function playTone(freq, duration, type = 'sine', volume = 0.1) {
+            if (!soundEnabled || !audioCtx) return;
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.value = freq;
+            
+            gain.gain.value = volume;
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // ===== CANVAS SETUP =====
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        function resizeCanvas() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // ===== CONSTANTS =====
+        const ELEMENTS = {
+            fire: { colors: ['#ff4500', '#ff8c00', '#ff6347'], name: 'Fire', freq: 220 },
+            ice: { colors: ['#00ffff', '#00bfff', '#87ceeb'], name: 'Ice', freq: 440 },
+            lightning: { colors: ['#ffff00', '#ffffff', '#fffacd'], name: 'Lightning', freq: 880 },
+            void: { colors: ['#9400ff', '#8b00ff', '#4b0082'], name: 'Void', freq: 110 }
+        };
+
+        // ===== STATE =====
+        let currentElement = 'fire';
+        let currentMode = 'plant';
+        let isPaused = false;
+        let plants = [];
+        let particles = [];
+        let gravityWells = [];
+        let isDragging = false;
+        let dragStart = null;
+        let tempWell = null;
+
+        // ===== CLASSES =====
+        class Plant {
+            constructor(x, y, element) {
+                this.x = x;
+                this.y = y;
+                this.element = element;
+                this.segments = [{ x, y, angle: -Math.PI / 2 }];
+                this.length = 0;
+                this.maxLength = 80 + Math.random() * 60;
+                this.thickness = 1;
+                this.maxThickness = 4 + Math.random() * 4;
+                this.growthRate = 0.5 + Math.random() * 0.5;
+                this.age = 0;
+                this.mature = false;
+                this.particleTimer = 0;
+                this.swayOffset = Math.random() * Math.PI * 2;
+                this.hybrid = null;
+            }
+
+            grow(gravityWells) {
+                if (this.length >= this.maxLength) {
+                    this.mature = true;
+                    return;
+                }
+
+                this.age++;
+                this.length += this.growthRate;
+                this.thickness = Math.min(this.maxThickness, (this.length / this.maxLength) * this.maxThickness);
+
+                const lastSegment = this.segments[this.segments.length - 1];
+                let angle = lastSegment.angle;
+
+                // Gravity influence
+                let totalForceX = 0;
+                let totalForceY = 0;
+
+                gravityWells.forEach(well => {
+                    const dx = well.x - lastSegment.x;
+                    const dy = well.y - lastSegment.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < well.radius) {
+                        const force = (well.radius - dist) / well.radius * (well.attractive ? 1 : -1);
+                        totalForceX += (dx / dist) * force * 0.05;
+                        totalForceY += (dy / dist) * force * 0.05;
+                    }
+                });
+
+                // Ambient sway
+                const sway = Math.sin(this.age * 0.02 + this.swayOffset) * 0.02;
+                angle += sway;
+
+                // Apply gravity forces
+                if (totalForceX !== 0 || totalForceY !== 0) {
+                    const targetAngle = Math.atan2(totalForceY, totalForceX);
+                    angle += (targetAngle - angle) * 0.1;
+                }
+
+                // Slight upward bias
+                angle += ((-Math.PI / 2) - angle) * 0.02;
+
+                const segmentLength = 3;
+                const newX = lastSegment.x + Math.cos(angle) * segmentLength;
+                const newY = lastSegment.y + Math.sin(angle) * segmentLength;
+
+                this.segments.push({ x: newX, y: newY, angle });
+
+                // Keep segment count reasonable
+                if (this.segments.length > 50) {
+                    this.segments.shift();
+                }
+            }
+
+            emitParticle() {
+                if (!this.mature) return;
+
+                this.particleTimer++;
+                if (this.particleTimer < 10) return;
+                this.particleTimer = 0;
+
+                const tip = this.segments[this.segments.length - 1];
+                const angle = tip.angle + (Math.random() - 0.5) * 0.5;
+                
+                particles.push(new Particle(
+                    tip.x, tip.y, angle, 
+                    this.hybrid || this.element,
+                    this
+                ));
+
+                if (soundEnabled && Math.random() < 0.1) {
+                    const freq = ELEMENTS[this.element].freq * (1 + Math.random() * 0.2);
+                    playTone(freq, 0.05, 'sine', 0.02);
+                }
+            }
+
+            draw() {
+                if (this.segments.length < 2) return;
+
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                const colors = ELEMENTS[this.hybrid || this.element].colors;
+                const gradient = ctx.createLinearGradient(
+                    this.x, this.y,
+                    this.segments[this.segments.length - 1].x,
+                    this.segments[this.segments.length - 1].y
+                );
+                gradient.addColorStop(0, colors[2]);
+                gradient.addColorStop(0.5, colors[1]);
+                gradient.addColorStop(1, colors[0]);
+
+                ctx.strokeStyle = gradient;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = colors[0];
+
+                ctx.beginPath();
+                ctx.moveTo(this.segments[0].x, this.segments[0].y);
+                
+                for (let i = 1; i < this.segments.length; i++) {
+                    ctx.lineTo(this.segments[i].x, this.segments[i].y);
+                }
+                
+                ctx.stroke();
+
+                // Bloom effect when mature
+                if (this.mature && this.age % 60 < 30) {
+                    const tip = this.segments[this.segments.length - 1];
+                    const pulse = Math.sin(this.age * 0.1) * 0.5 + 0.5;
+                    ctx.shadowBlur = 20 + pulse * 10;
+                    ctx.fillStyle = colors[0];
+                    ctx.beginPath();
+                    ctx.arc(tip.x, tip.y, 3 + pulse * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class Particle {
+            constructor(x, y, angle, element, source) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * (2 + Math.random());
+                this.vy = Math.sin(angle) * (2 + Math.random());
+                this.element = element;
+                this.source = source;
+                this.life = 1.0;
+                this.size = 2 + Math.random() * 2;
+                this.trail = [];
+                this.maxTrail = 10;
+            }
+
+            update(gravityWells) {
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > this.maxTrail) this.trail.shift();
+
+                // Apply gravity
+                gravityWells.forEach(well => {
+                    const dx = well.x - this.x;
+                    const dy = well.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist < well.radius && dist > 1) {
+                        const force = (well.radius - dist) / well.radius * (well.attractive ? 1 : -1) * 0.3;
+                        this.vx += (dx / dist) * force;
+                        this.vy += (dy / dist) * force;
+                    }
+                });
+
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Fade
+                this.life -= 0.01;
+
+                // Velocity damping
+                this.vx *= 0.99;
+                this.vy *= 0.99;
+            }
+
+            draw() {
+                const colors = ELEMENTS[this.element].colors;
+                const alpha = this.life;
+
+                // Trail
+                if (this.trail.length > 1) {
+                    ctx.strokeStyle = colors[1] + Math.floor(alpha * 100).toString(16).padStart(2, '0');
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                }
+
+                // Particle
+                ctx.fillStyle = colors[0] + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = colors[0];
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            isDead() {
+                return this.life <= 0 || this.x < 0 || this.x > width || this.y < 0 || this.y > height;
+            }
+        }
+
+        class GravityWell {
+            constructor(x, y, radius, attractive = true) {
+                this.x = x;
+                this.y = y;
+                this.radius = radius;
+                this.attractive = attractive;
+                this.pulse = 0;
+            }
+
+            draw() {
+                this.pulse += 0.05;
+                const pulseSize = Math.sin(this.pulse) * 5 + 5;
+
+                const gradient = ctx.createRadialGradient(
+                    this.x, this.y, 0,
+                    this.x, this.y, this.radius
+                );
+
+                if (this.attractive) {
+                    gradient.addColorStop(0, 'rgba(255, 150, 0, 0.4)');
+                    gradient.addColorStop(0.5, 'rgba(255, 150, 0, 0.2)');
+                    gradient.addColorStop(1, 'rgba(255, 150, 0, 0)');
+                } else {
+                    gradient.addColorStop(0, 'rgba(0, 150, 255, 0.4)');
+                    gradient.addColorStop(0.5, 'rgba(0, 150, 255, 0.2)');
+                    gradient.addColorStop(1, 'rgba(0, 150, 255, 0)');
+                }
+
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Pulsing edge
+                ctx.strokeStyle = this.attractive ? 
+                    `rgba(255, 150, 0, ${0.5 + Math.sin(this.pulse) * 0.3})` :
+                    `rgba(0, 150, 255, ${0.5 + Math.sin(this.pulse) * 0.3})`;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius - pulseSize, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // ===== PARTICLE INTERACTIONS =====
+        function checkParticleCollisions() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p1 = particles[i];
+                    const p2 = particles[j];
+                    
+                    const dx = p2.x - p1.x;
+                    const dy = p2.y - p1.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 10) {
+                        handleCollision(p1, p2);
+                    }
+                }
+            }
+        }
+
+        function handleCollision(p1, p2) {
+            const e1 = p1.element;
+            const e2 = p2.element;
+
+            if (e1 === e2) {
+                // Amplification
+                p1.size = Math.min(p1.size * 1.2, 8);
+                p2.size = Math.min(p2.size * 1.2, 8);
+                return;
+            }
+
+            // Create interaction effect
+            const x = (p1.x + p2.x) / 2;
+            const y = (p1.y + p2.y) / 2;
+
+            if ((e1 === 'fire' && e2 === 'ice') || (e1 === 'ice' && e2 === 'fire')) {
+                createSteamEffect(x, y);
+            } else if ((e1 === 'lightning' && e2 === 'void') || (e1 === 'void' && e2 === 'lightning')) {
+                createPlasmaArc(x, y);
+            } else if ((e1 === 'fire' && e2 === 'lightning') || (e1 === 'lightning' && e2 === 'fire')) {
+                createExplosion(x, y);
+            } else if ((e1 === 'ice' && e2 === 'void') || (e1 === 'void' && e2 === 'ice')) {
+                createCrystallization(x, y);
+            }
+
+            // Cross-pollination
+            if (p1.source && p2.source && p1.source !== p2.source) {
+                const dist = Math.sqrt(Math.pow(p1.source.x - p2.source.x, 2) + 
+                                      Math.pow(p1.source.y - p2.source.y, 2));
+                if (dist < 150 && Math.random() < 0.01) {
+                    p1.source.hybrid = e2;
+                    p2.source.hybrid = e1;
+                }
+            }
+        }
+
+        function createSteamEffect(x, y) {
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(x + (Math.random() - 0.5) * 20, 
+                           y + (Math.random() - 0.5) * 20, 
+                           5 + Math.random() * 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }, i * 50);
+            }
+            if (soundEnabled) playTone(800, 0.1, 'sine', 0.05);
+        }
+
+        function createPlasmaArc(x, y) {
+            ctx.strokeStyle = '#9400ff';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#9400ff';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            for (let i = 0; i < 5; i++) {
+                ctx.lineTo(x + (Math.random() - 0.5) * 60, y + (Math.random() - 0.5) * 60);
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            if (soundEnabled) playTone(660, 0.1, 'square', 0.05);
+        }
+
+        function createExplosion(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI * 2 * i) / 8;
+                ctx.strokeStyle = '#ffff00';
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ffff00';
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + Math.cos(angle) * 30, y + Math.sin(angle) * 30);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            if (soundEnabled) playTone(1200, 0.05, 'sawtooth', 0.08);
+        }
+
+        function createCrystallization(x, y) {
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00ffff';
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI * 2 * i) / 6;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + Math.cos(angle) * 15, y + Math.sin(angle) * 15);
+                ctx.stroke();
+            }
+            ctx.shadowBlur = 0;
+            if (soundEnabled) playTone(1760, 0.15, 'triangle', 0.03);
+        }
+
+        // ===== INPUT HANDLING =====
+        function getPointerPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            return {
+                x: (touch.clientX - rect.left) * (width / rect.width),
+                y: (touch.clientY - rect.top) * (height / rect.height)
+            };
+        }
+
+        function handlePointerDown(e) {
+            e.preventDefault();
+            const pos = getPointerPosition(e);
+
+            if (currentMode === 'plant') {
+                plants.push(new Plant(pos.x, pos.y, currentElement));
+                if (soundEnabled) {
+                    const freq = ELEMENTS[currentElement].freq;
+                    playTone(freq, 0.2, 'sine', 0.1);
+                }
+            } else {
+                isDragging = true;
+                dragStart = pos;
+            }
+        }
+
+        function handlePointerMove(e) {
+            if (!isDragging || currentMode !== 'gravity') return;
+            e.preventDefault();
+            
+            const pos = getPointerPosition(e);
+            const dx = pos.x - dragStart.x;
+            const dy = pos.y - dragStart.y;
+            const radius = Math.sqrt(dx * dx + dy * dy);
+
+            tempWell = new GravityWell(dragStart.x, dragStart.y, Math.max(radius, 50), true);
+        }
+
+        function handlePointerUp(e) {
+            if (isDragging && tempWell) {
+                gravityWells.push(tempWell);
+                if (soundEnabled) playTone(150, 0.3, 'sine', 0.05);
+            }
+            isDragging = false;
+            dragStart = null;
+            tempWell = null;
+        }
+
+        function handleContextMenu(e) {
+            e.preventDefault();
+            const pos = getPointerPosition(e);
+            
+            // Toggle polarity of nearest well
+            let nearest = null;
+            let minDist = Infinity;
+            
+            gravityWells.forEach(well => {
+                const dist = Math.sqrt(Math.pow(well.x - pos.x, 2) + Math.pow(well.y - pos.y, 2));
+                if (dist < well.radius && dist < minDist) {
+                    nearest = well;
+                    minDist = dist;
+                }
+            });
+
+            if (nearest) {
+                nearest.attractive = !nearest.attractive;
+                if (soundEnabled) playTone(nearest.attractive ? 300 : 200, 0.2, 'triangle', 0.05);
+            }
+        }
+
+        canvas.addEventListener('mousedown', handlePointerDown);
+        canvas.addEventListener('mousemove', handlePointerMove);
+        canvas.addEventListener('mouseup', handlePointerUp);
+        canvas.addEventListener('touchstart', handlePointerDown);
+        canvas.addEventListener('touchmove', handlePointerMove);
+        canvas.addEventListener('touchend', handlePointerUp);
+        canvas.addEventListener('contextmenu', handleContextMenu);
+
+        // ===== UI CONTROLS =====
+        document.querySelectorAll('.element-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.element-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentElement = btn.dataset.element;
+            });
+        });
+
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+                canvas.style.cursor = currentMode === 'plant' ? 'crosshair' : 'grab';
+            });
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', (e) => {
+            isPaused = !isPaused;
+            e.target.textContent = isPaused ? '▶️ Play' : '⏸️ Pause';
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            plants = [];
+            particles = [];
+            gravityWells = [];
+            if (soundEnabled) playTone(100, 0.1, 'sawtooth', 0.05);
+        });
+
+        document.getElementById('soundBtn').addEventListener('click', (e) => {
+            if (!soundEnabled) {
+                initAudio();
+                playTone(440, 0.2, 'sine', 0.1);
+            } else {
+                soundEnabled = false;
+                e.target.textContent = '🔇 Sound';
+            }
+        });
+
+        // ===== GAME LOOP =====
+        function update() {
+            if (!isPaused) {
+                // Update plants
+                plants.forEach(plant => {
+                    plant.grow(gravityWells);
+                    plant.emitParticle();
+                });
+
+                // Update particles
+                particles.forEach(particle => particle.update(gravityWells));
+                particles = particles.filter(p => !p.isDead());
+
+                // Check collisions
+                checkParticleCollisions();
+            }
+        }
+
+        function draw() {
+            // Clear with fade effect
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.15)';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw gravity wells
+            gravityWells.forEach(well => well.draw());
+            if (tempWell) tempWell.draw();
+
+            // Draw plants
+            plants.forEach(plant => plant.draw());
+
+            // Draw particles
+            particles.forEach(particle => particle.draw());
+
+            // Draw drag indicator
+            if (isDragging && dragStart) {
+                const mousePos = { x: canvas.mouseX || dragStart.x, y: canvas.mouseY || dragStart.y };
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                ctx.moveTo(dragStart.x, dragStart.y);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getPointerPosition(e);
+            canvas.mouseX = pos.x;
+            canvas.mouseY = pos.y;
+        });
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game
+        gameLoop();
+
+        // Info text updates
+        setInterval(() => {
+            const infoText = document.getElementById('infoText');
+            const messages = [
+                `Plants: ${plants.length} | Particles: ${particles.length} | Wells: ${gravityWells.length}`,
+                'Plant seeds or drag to create gravity wells • Right-click wells to toggle polarity',
+                'Watch for particle interactions and cross-pollination!',
+                'Try creating gravity wells to shape your garden'
+            ];
+            infoText.textContent = messages[Math.floor(Date.now() / 5000) % messages.length];
+        }, 5000);
+    </script>
+</body>
+</html>

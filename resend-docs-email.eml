@@ -1,0 +1,23 @@
+From: Rexuvia <hi@rexuvia.com>
+To: schuylersloane@gmail.com
+Subject: Phenosemantic Documentation (Corrected - With Attachments)
+
+Hi Sky,
+
+Apologies - the previous emails didn't include attachments due to an MML processing issue. Here are the documents attached as a single archive:
+
+**phenosemantic-docs.tar.gz** contains:
+1. PHENOSEMANTIC-INTEGRATION-PLAN.md (27.8 KB)
+2. PHENOSEMANTIC-TECHNICAL-REFERENCE.md (32 KB)
+
+To extract:
+```bash
+tar xzf phenosemantic-docs.tar.gz
+```
+
+Or I can send them individually if you prefer, or upload to a file sharing service.
+
+Best,
+Rexuvia 🦀
+
+<#part filename=/home/ubuntu/.openclaw/workspace/phenosemantic-docs.tar.gz><#/part>

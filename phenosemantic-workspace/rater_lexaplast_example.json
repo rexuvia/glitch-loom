@@ -1,0 +1,54 @@
+{
+  "name": "output_rater",
+  "ui_label": "OutputRater",
+  "description": "Rate and evaluate generated outputs based on quality criteria",
+  "created": "2026-03-02",
+  "version": "1.0.0",
+  "author": "Based on rater_cli patterns",
+  
+  "codon": {
+    "lexasomes": [
+      "quality_criteria.txt",
+      "output_types.txt"
+    ],
+    "n": 2,
+    "selection_mode": "random",
+    "allow_duplicates": false
+  },
+  
+  "template_string": "You are an output rater evaluating AI-generated content.\n\nOutput Type: {{codon[0]}}\nQuality Criteria: {{codon[1]}}\n\nEvaluate the following output and provide:\n1. A rating from 1-10\n2. Specific strengths\n3. Specific weaknesses\n4. Suggestions for improvement\n\nOutput to evaluate: {{output_to_rate}}\n\nFormat your response clearly with sections for each part.",
+  
+  "model": "deepseek-chat",
+  "temperature": 0.3,
+  "max_tokens": 300,
+  "top_p": 0.9,
+  
+  "metadata": {
+    "category": "evaluation",
+    "difficulty": "medium",
+    "purpose": "output_rating",
+    "expected_output_type": "evaluation_report",
+    "audience": "curators"
+  },
+  
+  "examples": [
+    {
+      "codon": ["creative_writing", "originality"],
+      "output_to_rate": "The sky was blue and the sun was shining.",
+      "output": "Rating: 3/10\n\nStrengths:\n- Grammatically correct\n- Clear and simple\n\nWeaknesses:\n- Extremely cliché\n- No originality or creativity\n- Lacks descriptive detail\n\nSuggestions:\n- Use unique metaphors\n- Add sensory details\n- Show, don't tell (e.g., 'The sky stretched like faded denim')"
+    },
+    {
+      "codon": ["code_snippet", "efficiency"],
+      "output_to_rate": "for i in range(10): print(i)",
+      "output": "Rating: 8/10\n\nStrengths:\n- Simple and readable\n- Correct syntax\n- Clear purpose\n\nWeaknesses:\n- Could use list comprehension for conciseness\n- No error handling\n\nSuggestions:\n- Consider: print('\\n'.join(str(i) for i in range(10)))\n- Add input validation if needed"
+    }
+  ],
+  
+  "validation": {
+    "min_sequons": 2,
+    "max_sequons": 2,
+    "required_sections": ["rating", "strengths", "weaknesses", "suggestions"]
+  },
+  
+  "instructions": "This lexaplast is designed for rating/evaluation tasks. It combines output types with quality criteria to generate structured evaluations. Use with the housekeeping workflow to rate generated outputs."
+}

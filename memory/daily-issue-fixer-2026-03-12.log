@@ -1,0 +1,6 @@
+[2026-03-12 11:00:24] === Daily Issue Fixer Started ===
+[2026-03-12 11:00:24] Version: 2.0.0 (with model selection)
+[2026-03-12 11:00:24] Checking prerequisites...
+[2026-03-12 11:00:24] Prerequisites check passed.
+[2026-03-12 11:00:24] Found waiting response files. Skipping new issue search.
+[2026-03-12 11:00:24] Use the response handler to process waiting responses first.

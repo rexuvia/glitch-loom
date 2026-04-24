@@ -1,0 +1,29 @@
+# Poem Quality Focus Areas
+# Weighted for varied selection
+# sequon,weight
+
+# Core poetic qualities
+rhythm,0.15
+rhyme,0.15
+meter,0.12
+imagery,0.10
+metaphor,0.10
+
+# Humor-specific qualities
+wordplay,0.08
+punchline,0.07
+absurdity,0.06
+irony,0.05
+exaggeration,0.04
+
+# Style adherence
+form_correctness,0.03
+tone_consistency,0.02
+genre_conventions,0.02
+historical_accuracy,0.01
+
+# Creative elements
+originality,0.02
+creativity,0.02
+surprise,0.01
+cleverness,0.01

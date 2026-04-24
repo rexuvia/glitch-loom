@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Echo Weaver</title>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { 
+      margin: 0; 
+      background: #0a0a1e; 
+      color: #fff; 
+      font-family: 'Courier New', monospace; 
+      overflow: hidden; 
+      touch-action: none;
+    }
+    #app { width: 100vw; height: 100vh; position: relative; }
+    svg { 
+      width: 100%; 
+      height: 100%; 
+      background: radial-gradient(circle at center, #1a1a3a, #0a0a1e);
+      display: block;
+    }
+    .node { 
+      cursor: pointer; 
+      transition: transform 0.2s; 
+      filter: drop-shadow(0 0 10px currentColor);
+    }
+    .node:hover { transform: scale(1.15); }
+    .node.tone { fill: #ff00ff; --glow: #ff00ff; }
+    .node.delay { fill: #00ffff; --glow: #00ffff; }
+    .node.filter { fill: #ffff00; --glow: #ffff00; }
+    .node.trigger { fill: #00ff00; --glow: #00ff00; }
+    .connection { 
+      stroke: rgba(255,255,255,0.4); 
+      stroke-width: 2; 
+      stroke-dasharray: 8 4; 
+      animation: dash 1.5s linear infinite; 
+    }
+    @keyframes dash { to { stroke-dashoffset: -12; } }
+    .pulse { 
+      r: 6; 
+      fill: #ffffff; 
+      filter: blur(3px) drop-shadow(0 0 8px #fff);
+    }
+    .glow { 
+      animation: glow-pulse 0.5s ease-in-out; 
+    }
+    @keyframes glow-pulse { 
+      0%, 100% { filter: drop-shadow(0 0 10px var(--glow)); }
+      50% { filter: drop-shadow(0 0 25px var(--glow)) drop-shadow(0 0 35px var(--glow)); }
+    }
+    .trail { 
+      stroke: #ffffff; 
+      stroke-width: 3; 
+      opacity: 0.6; 
+      stroke-linecap: round;
+      animation: fade-out 0.8s ease-out forwards; 
+    }
+    @keyframes fade-out { 
+      to { opacity: 0; stroke-width: 0; } 
+    }
+    #controls { 
+      position: absolute; 
+      top: 15px; 
+      left: 15px; 
+      z-index: 10; 
+      background: rgba(10, 10, 30, 0.85); 
+      padding: 15px; 
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    button { 
+      background: linear-gradient(135deg, #2a2a4a, #1a1a3a); 
+      color: #fff; 
+      border: 1px solid rgba(255, 255, 255, 0.2); 
+      padding: 8px 14px; 
+      margin: 3px; 
+      cursor: pointer; 
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    button:hover { 
+      background: linear-gradient(135deg, #3a3a5a, #2a2a4a); 
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    input[type="number"] {
+      width: 60px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      margin-left: 8px;
+    }
+    #audio-prompt {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(10, 10, 30, 0.95);
+      padding: 30px 40px;
+      border-radius: 15px;
+      border: 2px solid #00ffff;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+      z-index: 100;
+      text-align: center;
+    }
+    #audio-prompt button {
+      margin-top: 15px;
+      padding: 12px 30px;
+      font-size: 16px;
+      background: linear-gradient(135deg, #00ffff, #0088ff);
+      border: none;
+      color: #000;
+      font-weight: bold;
+    }
+    .instructions {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-top: 10px;
+      max-width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script>
+    const { createApp, ref, reactive, onMounted, onUnmounted, computed, watch } = Vue;
+
+    createApp({
+      template: `
+        <div>
+          <div v-if="!audioReady" id="audio-prompt">
+            <h2 style="margin: 0 0 10px 0; color: #00ffff;">🎵 Echo Weaver</h2>
+            <p style="margin: 0;">Click to enable audio</p>
+            <button @click="enableAudio">Start</button>
+          </div>
+          
+          <div id="controls" v-show="audioReady">
+            <div style="margin-bottom: 8px;">
+              <button @click="loadPreset(0)">Basic Loop</button>
+              <button @click="loadPreset(1)">Echo Cascade</button>
+            </div>
+            <div style="margin-bottom: 8px;">
+              <button @click="loadPreset(2)">Harmonic Swarm</button>
+              <button @click="loadPreset(3)">Rhythmic Pulse</button>
+            </div>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+              <label>
+                <input v-model.number="bpm" type="number" min="60" max="240" step="10" /> BPM
+              </label>
+            </div>
+            <div class="instructions">
+              💡 Tap/click to add nodes<br>
+              🔗 Drag to connect<br>
+              🗑️ Hold to delete
+            </div>
+          </div>
+          
+          <svg 
+            @mousedown="onPointerDown" 
+            @touchstart.prevent="onPointerDown"
+            @mousemove="onPointerMove"
+            @touchmove.prevent="onPointerMove"
+            @mouseup="onPointerEnd"
+            @touchend.prevent="onPointerEnd"
+            @touchcancel.prevent="onPointerEnd"
+          >
+            <!-- Connections -->
+            <line 
+              v-for="c in connections" 
+              :key="'conn-' + c.from + '-' + c.to" 
+              :x1="getNode(c.from)?.x || 0" 
+              :y1="getNode(c.from)?.y || 0" 
+              :x2="getNode(c.to)?.x || 0" 
+              :y2="getNode(c.to)?.y || 0" 
+              class="connection" 
+            />
+            
+            <!-- Trails -->
+            <line 
+              v-for="(t, i) in trails" 
+              :key="'trail-' + i" 
+              :x1="t.x1" 
+              :y1="t.y1" 
+              :x2="t.x2" 
+              :y2="t.y2" 
+              class="trail" 
+            />
+            
+            <!-- Pulses -->
+            <circle 
+              v-for="p in pulses" 
+              :key="'pulse-' + p.id" 
+              :cx="getPulsePosition(p).x" 
+              :cy="getPulsePosition(p).y" 
+              class="pulse" 
+            />
+            
+            <!-- Nodes -->
+            <circle 
+              v-for="node in nodes" 
+              :key="'node-' + node.id" 
+              :cx="node.x" 
+              :cy="node.y" 
+              r="22" 
+              :class="['node', node.type, {glow: node.glowing}]"
+              @mousedown.stop="startDrag(node, $event)"
+              @touchstart.stop.prevent="startDrag(node, $event)"
+            />
+          </svg>
+        </div>
+      `,
+      setup() {
+        const nodes = reactive([]);
+        const connections = reactive([]);
+        const pulses = reactive([]);
+        const trails = reactive([]);
+        const audioCtx = ref(null);
+        const audioReady = ref(false);
+        const bpm = ref(120);
+        const dragging = ref(null);
+        const longPressTimer = ref(null);
+        const mainInterval = ref(null);
+        const activeOscillators = new Set();
+        
+        const pulseInterval = computed(() => 60000 / bpm.value / 4); // 16th notes
+
+        const presets = [
+          { 
+            name: 'Basic Loop', 
+            nodes: [
+              {id:0, type:'trigger', x:150, y:200},
+              {id:1, type:'tone', x:400, y:200, freq:440}
+            ], 
+            connections: [{from:0, to:1}, {from:1, to:0}] 
+          },
+          { 
+            name: 'Echo Cascade', 
+            nodes: [
+              {id:0, type:'trigger', x:150, y:200},
+              {id:1, type:'delay', x:350, y:200},
+              {id:2, type:'tone', x:550, y:200, freq:523},
+              {id:3, type:'filter', x:350, y:350}
+            ], 
+            connections: [{from:0, to:1}, {from:1, to:2}, {from:1, to:3}, {from:3, to:1}] 
+          },
+          { 
+            name: 'Harmonic Swarm', 
+            nodes: [
+              {id:0, type:'trigger', x:150, y:250},
+              {id:1, type:'tone', x:400, y:150, freq:440},
+              {id:2, type:'tone', x:400, y:250, freq:554},
+              {id:3, type:'tone', x:400, y:350, freq:659}
+            ], 
+            connections: [{from:0, to:1}, {from:0, to:2}, {from:0, to:3}] 
+          },
+          { 
+            name: 'Rhythmic Pulse', 
+            nodes: [
+              {id:0, type:'trigger', x:150, y:200},
+              {id:1, type:'delay', x:300, y:300},
+              {id:2, type:'filter', x:450, y:200},
+              {id:3, type:'tone', x:600, y:300, freq:330}
+            ], 
+            connections: [{from:0, to:1}, {from:1, to:2}, {from:2, to:3}, {from:3, to:1}] 
+          }
+        ];
+
+        function enableAudio() {
+          try {
+            audioCtx.value = new (window.AudioContext || window.webkitAudioContext)();
+            audioCtx.value.resume().then(() => {
+              audioReady.value = true;
+              startMainLoop();
+            }).catch(err => {
+              console.error('AudioContext resume failed:', err);
+            });
+          } catch (err) {
+            console.error('AudioContext creation failed:', err);
+            audioReady.value = true; // Continue without audio
+          }
+        }
+
+        function getNode(id) {
+          return nodes.find(n => n.id === id);
+        }
+
+        function getPulsePosition(pulse) {
+          const from = getNode(pulse.from);
+          const to = getNode(pulse.to);
+          if (!from || !to) return { x: 0, y: 0 };
+          return {
+            x: from.x + (to.x - from.x) * pulse.progress,
+            y: from.y + (to.y - from.y) * pulse.progress
+          };
+        }
+
+        function addNode(type, x, y) {
+          const id = nodes.length ? Math.max(...nodes.map(n => n.id)) + 1 : 0;
+          const freq = type === 'tone' ? 330 + Math.random() * 440 : null;
+          nodes.push({ id, type, x, y, freq, glowing: false });
+        }
+
+        function connectNodes(from, to) {
+          if (from.id === to.id) return;
+          if (!connections.some(c => c.from === from.id && c.to === to.id)) {
+            connections.push({ from: from.id, to: to.id });
+          }
+        }
+
+        function deleteNode(id) {
+          const idx = nodes.findIndex(n => n.id === id);
+          if (idx !== -1) {
+            nodes.splice(idx, 1);
+            // Remove connections involving this node
+            for (let i = connections.length - 1; i >= 0; i--) {
+              if (connections[i].from === id || connections[i].to === id) {
+                connections.splice(i, 1);
+              }
+            }
+          }
+        }
+
+        function getPointerPos(e) {
+          if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }
+          return { x: e.clientX, y: e.clientY };
+        }
+
+        function startDrag(node, e) {
+          dragging.value = node;
+          longPressTimer.value = setTimeout(() => {
+            if (dragging.value) {
+              deleteNode(node.id);
+              dragging.value = null;
+            }
+          }, 800);
+        }
+
+        function onPointerDown(e) {
+          if (e.target.tagName === 'svg' && !dragging.value) {
+            const pos = getPointerPos(e);
+            const types = ['tone', 'delay', 'filter', 'trigger'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            addNode(type, pos.x, pos.y);
+          }
+        }
+
+        function onPointerMove(e) {
+          if (dragging.value) {
+            clearTimeout(longPressTimer.value);
+            const pos = getPointerPos(e);
+            dragging.value.x = pos.x;
+            dragging.value.y = pos.y;
+          }
+        }
+
+        function onPointerEnd(e) {
+          if (dragging.value) {
+            clearTimeout(longPressTimer.value);
+            const pos = e.changedTouches ? 
+              { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY } :
+              { x: e.clientX, y: e.clientY };
+            
+            const target = nodes.find(n => 
+              n !== dragging.value && 
+              Math.hypot(n.x - pos.x, n.y - pos.y) < 50
+            );
+            
+            if (target) {
+              connectNodes(dragging.value, target);
+            }
+            dragging.value = null;
+          }
+        }
+
+        function emitPulse(fromId, toId) {
+          const from = getNode(fromId);
+          const to = getNode(toId);
+          if (!from || !to) return;
+          
+          const id = Date.now() + Math.random();
+          const pulse = { id, from: fromId, to: toId, progress: 0 };
+          pulses.push(pulse);
+          animatePulse(pulse);
+        }
+
+        function animatePulse(pulse) {
+          const animate = () => {
+            const idx = pulses.findIndex(p => p.id === pulse.id);
+            if (idx === -1) return;
+            
+            pulse.progress += 0.025;
+            
+            const from = getNode(pulse.from);
+            const to = getNode(pulse.to);
+            if (!from || !to) {
+              pulses.splice(idx, 1);
+              return;
+            }
+            
+            const pos = getPulsePosition(pulse);
+            const prevProgress = pulse.progress - 0.025;
+            const prevPos = {
+              x: from.x + (to.x - from.x) * prevProgress,
+              y: from.y + (to.y - from.y) * prevProgress
+            };
+            
+            // Add trail (limit array size)
+            if (trails.length < 100) {
+              trails.push({ x1: prevPos.x, y1: prevPos.y, x2: pos.x, y2: pos.y });
+              setTimeout(() => {
+                const tIdx = trails.findIndex(t => t.x1 === prevPos.x && t.y1 === prevPos.y);
+                if (tIdx !== -1) trails.splice(tIdx, 1);
+              }, 800);
+            }
+            
+            if (pulse.progress >= 1) {
+              pulses.splice(idx, 1);
+              triggerNode(to);
+            } else {
+              requestAnimationFrame(animate);
+            }
+          };
+          requestAnimationFrame(animate);
+        }
+
+        function triggerNode(node) {
+          if (!audioCtx.value || audioCtx.value.state !== 'running') return;
+
+          // Visual feedback
+          node.glowing = true;
+          setTimeout(() => { node.glowing = false; }, 500);
+
+          try {
+            if (node.type === 'tone') {
+              const osc = audioCtx.value.createOscillator();
+              const gain = audioCtx.value.createGain();
+              
+              osc.type = 'sine';
+              osc.frequency.value = node.freq || 440;
+              gain.gain.value = 0.3;
+              
+              osc.connect(gain);
+              gain.connect(audioCtx.value.destination);
+              
+              osc.start();
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.value.currentTime + 0.4);
+              osc.stop(audioCtx.value.currentTime + 0.4);
+              
+              activeOscillators.add(osc);
+              setTimeout(() => activeOscillators.delete(osc), 500);
+              
+            } else if (node.type === 'delay') {
+              // Delay produces a short ping and re-triggers after delay
+              const osc = audioCtx.value.createOscillator();
+              const gain = audioCtx.value.createGain();
+              
+              osc.type = 'sine';
+              osc.frequency.value = 880;
+              gain.gain.value = 0.15;
+              
+              osc.connect(gain);
+              gain.connect(audioCtx.value.destination);
+              
+              osc.start();
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.value.currentTime + 0.1);
+              osc.stop(audioCtx.value.currentTime + 0.1);
+              
+              activeOscillators.add(osc);
+              setTimeout(() => activeOscillators.delete(osc), 200);
+              
+              setTimeout(() => {
+                connections.filter(c => c.from === node.id).forEach(c => {
+                  emitPulse(node.id, c.to);
+                });
+              }, 400);
+              
+            } else if (node.type === 'filter') {
+              // Filter modulates frequency
+              const osc = audioCtx.value.createOscillator();
+              const filter = audioCtx.value.createBiquadFilter();
+              const gain = audioCtx.value.createGain();
+              
+              osc.type = 'sawtooth';
+              osc.frequency.value = 220;
+              
+              filter.type = 'lowpass';
+              filter.frequency.value = 800;
+              filter.Q.value = 5;
+              
+              gain.gain.value = 0.2;
+              
+              osc.connect(filter);
+              filter.connect(gain);
+              gain.connect(audioCtx.value.destination);
+              
+              osc.start();
+              filter.frequency.exponentialRampToValueAtTime(2000, audioCtx.value.currentTime + 0.3);
+              gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.value.currentTime + 0.3);
+              osc.stop(audioCtx.value.currentTime + 0.3);
+              
+              activeOscillators.add(osc);
+              setTimeout(() => activeOscillators.delete(osc), 400);
+              
+            } else if (node.type === 'trigger') {
+              // Trigger doesn't make sound, just emits pulses
+              connections.filter(c => c.from === node.id).forEach(c => {
+                emitPulse(node.id, c.to);
+              });
+            }
+          } catch (err) {
+            console.error('Audio error:', err);
+          }
+        }
+
+        function startMainLoop() {
+          if (mainInterval.value) clearInterval(mainInterval.value);
+          
+          mainInterval.value = setInterval(() => {
+            nodes.filter(n => n.type === 'trigger').forEach(trigger => {
+              triggerNode(trigger);
+            });
+          }, pulseInterval.value);
+        }
+
+        function loadPreset(index) {
+          if (index < 0 || index >= presets.length) return;
+          
+          // Clear existing
+          nodes.length = 0;
+          connections.length = 0;
+          pulses.length = 0;
+          trails.length = 0;
+          
+          // Load preset
+          const preset = presets[index];
+          preset.nodes.forEach(n => {
+            nodes.push({ ...n, glowing: false });
+          });
+          preset.connections.forEach(c => {
+            connections.push({ ...c });
+          });
+        }
+
+        // Watch BPM changes and restart interval
+        watch(bpm, () => {
+          if (audioReady.value && mainInterval.value) {
+            startMainLoop();
+          }
+        });
+
+        onMounted(() => {
+          // Load first preset by default (but don't start until audio enabled)
+          loadPreset(0);
+        });
+
+        onUnmounted(() => {
+          if (mainInterval.value) {
+            clearInterval(mainInterval.value);
+          }
+          if (longPressTimer.value) {
+            clearTimeout(longPressTimer.value);
+          }
+          // Stop all active oscillators
+          activeOscillators.forEach(osc => {
+            try {
+              osc.stop();
+            } catch (e) {
+              // Already stopped
+            }
+          });
+          activeOscillators.clear();
+          
+          if (audioCtx.value) {
+            audioCtx.value.close();
+          }
+        });
+
+        return {
+          nodes,
+          connections,
+          pulses,
+          trails,
+          bpm,
+          audioReady,
+          getNode,
+          getPulsePosition,
+          enableAudio,
+          loadPreset,
+          onPointerDown,
+          onPointerMove,
+          onPointerEnd,
+          startDrag
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>

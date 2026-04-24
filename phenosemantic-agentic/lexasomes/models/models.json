@@ -1,0 +1,71 @@
+{
+  "models": [
+    {
+      "id": "gpt5",
+      "provider": "openrouter/openai/gpt-5",
+      "alias": "gpt5",
+      "strengths": ["reasoning", "analysis", "technical", "complex-problems"],
+      "weaknesses": ["creative-writing", "humor", "unconventional-thinking"],
+      "cost_per_1k_input": 0.15,
+      "cost_per_1k_output": 0.60,
+      "speed": "medium",
+      "context_window": 128000,
+      "best_for": ["technical-analysis", "logical-reasoning", "complex-explanations"]
+    },
+    {
+      "id": "sonnet",
+      "provider": "anthropic/claude-sonnet-4-5",
+      "alias": "sonnet",
+      "strengths": ["balanced", "creative", "instruction-following", "safety"],
+      "weaknesses": ["extreme-technical-depth", "coding-specialization"],
+      "cost_per_1k_input": 0.03,
+      "cost_per_1k_output": 0.15,
+      "speed": "fast",
+      "context_window": 200000,
+      "best_for": ["general-purpose", "creative-tasks", "instruction-following"]
+    },
+    {
+      "id": "grok",
+      "provider": "openrouter/x-ai/grok-4",
+      "alias": "grok",
+      "strengths": ["creative", "unconventional", "humor", "out-of-box-thinking"],
+      "weaknesses": ["technical-precision", "safety-filters", "consistency"],
+      "cost_per_1k_input": 0.10,
+      "cost_per_1k_output": 0.40,
+      "speed": "medium",
+      "context_window": 128000,
+      "best_for": ["creative-writing", "brainstorming", "unconventional-ideas"]
+    },
+    {
+      "id": "deepseek",
+      "provider": "deepseek/deepseek-chat",
+      "alias": "deepchat",
+      "strengths": ["coding", "technical", "cost-effective", "long-context"],
+      "weaknesses": ["creative-writing", "nuanced-language", "cultural-context"],
+      "cost_per_1k_input": 0.00014,
+      "cost_per_1k_output": 0.00028,
+      "speed": "fast",
+      "context_window": 160000,
+      "best_for": ["coding-tasks", "technical-docs", "cost-sensitive-batch"]
+    },
+    {
+      "id": "haiku",
+      "provider": "anthropic/claude-haiku-4-5",
+      "alias": "haiku",
+      "strengths": ["speed", "cost-effective", "simple-tasks", "summarization"],
+      "weaknesses": ["complex-reasoning", "creative-depth", "nuanced-analysis"],
+      "cost_per_1k_input": 0.0008,
+      "cost_per_1k_output": 0.0040,
+      "speed": "very-fast",
+      "context_window": 200000,
+      "best_for": ["summarization", "simple-tasks", "auto-ranking", "batch-processing"]
+    }
+  ],
+  "selection_rules": {
+    "technical_tasks": ["gpt5", "deepseek", "sonnet"],
+    "creative_tasks": ["grok", "sonnet", "gpt5"],
+    "analysis_tasks": ["gpt5", "sonnet", "deepseek"],
+    "cost_sensitive": ["haiku", "deepseek", "sonnet"],
+    "speed_critical": ["haiku", "deepseek", "sonnet"]
+  }
+}

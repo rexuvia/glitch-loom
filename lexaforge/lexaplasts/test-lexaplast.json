@@ -1,0 +1,11 @@
+{
+  "name": "test-lexaplast",
+  "description": "Creative writing and idea generation",
+  "system_prompt": "You are a creative assistant. Generate interesting and novel ideas.",
+  "user_prompt_template": "Generate a {domain} {task} with {constraint}",
+  "parameters": {
+    "temperature": 0.8,
+    "max_tokens": 500,
+    "model": "openai/gpt-4o"
+  }
+}

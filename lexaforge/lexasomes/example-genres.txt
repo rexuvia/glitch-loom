@@ -1,0 +1,21 @@
+# Example game genres
+science fiction
+fantasy
+mystery
+horror
+historical
+cyberpunk
+steampunk
+post-apocalyptic
+western
+noir
+comedy
+drama
+romance
+educational
+simulation
+strategy
+action
+adventure
+role-playing
+puzzle

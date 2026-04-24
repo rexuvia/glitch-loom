@@ -1,0 +1,62 @@
+# Game Mechanics Lexasome
+# For generating novel game concepts
+
+# Core Mechanics
+procedural generation
+emergent behavior
+resource management
+skill trees
+crafting systems
+base building
+territory control
+diplomacy systems
+trade economies
+faction reputation
+
+# Interaction Patterns
+cooperative puzzles
+competitive scoring
+asymmetric roles
+real-time strategy
+turn-based tactics
+roguelike progression
+metroidvania exploration
+souls-like combat
+simulation elements
+physics-based interactions
+
+# Player Abilities
+teleportation
+time manipulation
+shape-shifting
+elemental control
+possession mechanics
+gravity manipulation
+perspective shifting
+memory alteration
+reality warping
+probability influence
+
+# Game States
+perma-death
+procedural death
+save point systems
+checkpoint resurrection
+multiple timelines
+parallel universes
+dream sequences
+flashback mechanics
+premonition systems
+alternate endings
+
+# Social Mechanics
+player-driven economies
+emergent storytelling
+community governance
+reputation systems
+mentorship programs
+rivalry dynamics
+alliance formation
+betrayal mechanics
+trust building
+social deduction

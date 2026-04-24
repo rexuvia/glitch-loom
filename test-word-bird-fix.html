@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Bird Fix Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; }
+        .test-case { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .iframe-container { margin: 10px 0; border: 2px solid #666; }
+        iframe { border: none; }
+        .dimensions { background: #f0f0f0; padding: 5px; margin: 5px 0; }
+        .issue { color: #d00; }
+        .fix { color: #090; }
+    </style>
+</head>
+<body>
+    <h1>Word Bird Obstacle Spacing Fix Test</h1>
+    
+    <div class="test-case">
+        <h2>Original Issue:</h2>
+        <p class="issue">"on taller screens it can be impossible or near impossible to reach the farthest spaces in time for the next obstacle. Also when the game begins on a large screen width it takes a long time for the bird to reach the first obstacle column"</p>
+    </div>
+    
+    <div class="test-case">
+        <h2>Changes Made:</h2>
+        <ol>
+            <li><span class="fix">Responsive spacing:</span> SPACING_BASE and SPACING_MIN now scale with screen width (25% and 12.5% of width respectively, with caps)</li>
+            <li><span class="fix">Responsive initial wall placement:</span> First wall appears at 70% of screen width or 800px max (was: screen width + 100px)</li>
+            <li><span class="fix">Responsive box height:</span> Box height limited between 120px and 200px (was: screen height / 5)</li>
+            <li><span class="fix">Centered boxes:</span> Boxes are centered vertically when they don't fill entire screen</li>
+        </ol>
+    </div>
+    
+    <div class="test-case">
+        <h2>Test Different Screen Sizes:</h2>
+        
+        <div class="dimensions">Mobile: 375×667</div>
+        <div class="iframe-container">
+            <iframe src="word-bird/index.html" width="375" height="667"></iframe>
+        </div>
+        
+        <div class="dimensions">Tablet: 768×1024</div>
+        <div class="iframe-container">
+            <iframe src="word-bird/index.html" width="768" height="1024"></iframe>
+        </div>
+        
+        <div class="dimensions">Desktop: 1366×768</div>
+        <div class="iframe-container">
+            <iframe src="word-bird/index.html" width="1366" height="768"></iframe>
+        </div>
+        
+        <div class="dimensions">Wide Desktop: 1920×1080</div>
+        <div class="iframe-container">
+            <iframe src="word-bird/index.html" width="1920" height="1080"></iframe>
+        </div>
+        
+        <div class="dimensions">Ultra-wide: 2560×1440</div>
+        <div class="iframe-container">
+            <iframe src="word-bird/index.html" width="2560" height="1440"></iframe>
+        </div>
+    </div>
+    
+    <div class="test-case">
+        <h2>Expected Improvements:</h2>
+        <ul>
+            <li><strong>Wide screens:</strong> First obstacle should appear within 2-3 seconds instead of 30+ seconds</li>
+            <li><strong>Tall screens:</strong> Vertical gaps between boxes should be reasonable (not too large)</li>
+            <li><strong>All screens:</strong> Game should feel responsive and playable regardless of screen size</li>
+        </ul>
+    </div>
+    
+    <script>
+        // Add some styling to iframes
+        document.querySelectorAll('iframe').forEach(iframe => {
+            iframe.onload = function() {
+                // Try to start the game automatically for testing
+                try {
+                    iframe.contentWindow.postMessage('startGame', '*');
+                } catch(e) {
+                    console.log('Could not auto-start game:', e);
+                }
+            };
+        });
+        
+        // Message listener for iframe communication
+        window.addEventListener('message', function(event) {
+            if (event.data === 'gameStarted') {
+                console.log('Game started in iframe');
+            }
+        });
+    </script>
+</body>
+</html>

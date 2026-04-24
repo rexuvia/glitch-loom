@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echo Weaver</title>
+  <style>
+    body { margin: 0; background: #0a0a1e; color: #fff; font-family: sans-serif; overflow: hidden; }
+    #app { width: 100vw; height: 100vh; position: relative; }
+    svg { width: 100%; height: 100%; background: radial-gradient(circle, #1a1a3a, #0a0a1e); }
+    .node { cursor: pointer; transition: transform 0.2s; filter: drop-shadow(0 0 10px currentColor); }
+    .node:hover { transform: scale(1.1); }
+    .node.tone { fill: #ff00ff; --glow: #ff00ff; }
+    .node.delay { fill: #00ffff; --glow: #00ffff; }
+    .node.filter { fill: #ffff00; --glow: #ffff00; }
+    .node.trigger { fill: #00ff00; --glow: #00ff00; }
+    .connection { stroke: #ffffff; stroke-width: 2; stroke-dasharray: 5; animation: dash 2s linear infinite; }
+    @keyframes dash { to { stroke-dashoffset: -10; } }
+    .pulse { r: 5; fill: #ffffff; animation: pulse-travel 1s linear; filter: blur(2px); }
+    @keyframes pulse-travel { 0% { opacity: 1; } 100% { opacity: 0; } }
+    .glow { animation: glow 1s ease-in-out infinite alternate; }
+    @keyframes glow { from { filter: drop-shadow(0 0 5px var(--glow)); } to { filter: drop-shadow(0 0 15px var(--glow)); } }
+    .trail { stroke: #ffffff; stroke-width: 3; opacity: 0.5; animation: fade 1s ease-out; }
+    @keyframes fade { to { opacity: 0; stroke-width: 0; } }
+    #controls { position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; }
+    button { background: #333; color: #fff; border: 1px solid #666; padding: 5px 10px; margin: 5px; cursor: pointer; }
+    button:hover { background: #555; }
+  </style>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const { createApp, ref, reactive, onMounted, computed } = Vue;
+
+    createApp({
+      setup() {
+        const nodes = reactive([]);
+        const connections = reactive([]);
+        const pulses = reactive([]);
+        const trails = reactive([]);
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const bpm = ref(120);
+        const pulseInterval = computed(() => 60000 / bpm.value / 4); // 16th notes
+        const dragging = ref(null);
+        const longPressTimer = ref(null);
+        const presets = [
+          { name: 'Basic Loop', nodes: [{id:0,type:'trigger',x:100,y:100},{id:1,type:'tone',x:300,y:100}], connections: [{from:0,to:1},{from:1,to:0}] },
+          { name: 'Echo Cascade', nodes: [{id:0,type:'trigger',x:100,y:100},{id:1,type:'delay',x:300,y:100},{id:2,type:'tone',x:500,y:100},{id:3,type:'filter',x:300,y:300}], connections: [{from:0,to:1},{from:1,to:2},{from:1,to:3},{from:3,to:1}] },
+          { name: 'Harmonic Swarm', nodes: [{id:0,type:'trigger',x:100,y:100},{id:1,type:'tone',x:300,y:50},{id:2,type:'tone',x:300,y:150},{id:3,type:'tone',x:300,y:250}], connections: [{from:0,to:1},{from:0,to:2},{from:0,to:3}] },
+          { name: 'Rhythmic Pulse', nodes: [{id:0,type:'trigger',x:100,y:100},{id:1,type:'delay',x:250,y:200},{id:2,type:'filter',x:400,y:100},{id:3,type:'tone',x:550,y:200}], connections: [{from:0,to:1},{from:1,to:2},{from:2,to:3},{from:3,to:1}] }
+        ];
+
+        function addNode(type, x, y) {
+          nodes.push({ id: nodes.length, type, x, y, freq: type === 'tone' ? 440 + Math.random()*200 : null });
+        }
+
+        function connectNodes(from, to) {
+          if (!connections.some(c => c.from === from.id && c.to === to.id)) connections.push({ from: from.id, to: to.id });
+        }
+
+        function deleteNode(id) {
+          nodes.splice(nodes.findIndex(n => n.id === id), 1);
+          connections = connections.filter(c => c.from !== id && c.to !== id);
+        }
+
+        function startDrag(node, e) {
+          e.preventDefault();
+          dragging.value = node;
+          longPressTimer.value = setTimeout(() => deleteNode(node.id), 800);
+        }
+
+        function onTouchMove(e) {
+          if (dragging.value) {
+            clearTimeout(longPressTimer.value);
+            const touch = e.touches[0];
+            dragging.value.x = touch.clientX;
+            dragging.value.y = touch.clientY;
+          }
+        }
+
+        function onTouchEnd(e) {
+          if (dragging.value) {
+            clearTimeout(longPressTimer.value);
+            // Check for connection
+            const touch = e.changedTouches[0];
+            const target = nodes.find(n => n !== dragging.value && Math.hypot(n.x - touch.clientX, n.y - touch.clientY) < 50);
+            if (target) connectNodes(dragging.value, target);
+            dragging.value = null;
+          }
+        }
+
+        function onTap(e) {
+          if (!dragging.value && e.target.tagName === 'svg') {
+            const types = ['tone', 'delay', 'filter', 'trigger'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            addNode(type, e.clientX || e.touches[0].clientX, e.clientY || e.touches[0].clientY);
+          }
+        }
+
+        function emitPulse(fromId, toId, progress = 0) {
+          const from = nodes.find(n => n.id === fromId);
+          const to = nodes.find(n => n.id === toId);
+          if (!from || !to) return;
+          const id = pulses.length;
+          pulses.push({ id, from: fromId, to: toId, progress });
+          requestAnimationFrame(() => animatePulse(id));
+        }
+
+        function animatePulse(id) {
+          const pulse = pulses.find(p => p.id === id);
+          if (!pulse) return;
+          pulse.progress += 0.02; // Speed based on animation frame
+          const from = nodes.find(n => n.id === pulse.from);
+          const to = nodes.find(n => n.id === pulse.to);
+          const dx = to.x - from.x, dy = to.y - from.y;
+          const x = from.x + dx * pulse.progress;
+          const y = from.y + dy * pulse.progress;
+          // Add trail
+          trails.push({ x1: x - dx*0.02, y1: y - dy*0.02, x2: x, y2: y });
+          setTimeout(() => trails.shift(), 1000);
+          if (pulse.progress >= 1) {
+            pulses.splice(pulses.findIndex(p => p.id === id), 1);
+            triggerNode(to);
+          } else {
+            requestAnimationFrame(() => animatePulse(id));
+          }
+        }
+
+        function triggerNode(node) {
+          // Glow effect
+          node.glowing = true;
+          setTimeout(() => node.glowing = false, 500);
+
+          // Sound
+          if (node.type === 'tone') {
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = node.freq || 440;
+            const gain = audioCtx.createGain();
+            gain.gain.value = 0.5;
+            osc.connect(gain).connect(audioCtx.destination);
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.5);
+            osc.stop(audioCtx.currentTime + 0.5);
+          } else if (node.type === 'delay') {
+            // Delay re-triggers connected nodes after delay
+            setTimeout(() => connections.filter(c => c.from === node.id).forEach(c => emitPulse(node.id, c.to)), 500);
+          } else if (node.type === 'filter') {
+            // Placeholder for filter effect (e.g., lowpass)
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+            // Would connect to chain, but simplified
+          } else if (node.type === 'trigger') {
+            // Start pulse chain
+            connections.filter(c => c.from === node.id).forEach(c => emitPulse(node.id, c.to));
+          }
+        }
+
+        onMounted(() => {
+          setInterval(() => {
+            nodes.filter(n => n.type === 'trigger').forEach(trigger => triggerNode(trigger));
+          }, pulseInterval.value);
+        });
+
+        function loadPreset(index) {
+          nodes.length = 0;
+          connections.length = 0;
+          presets[index].nodes.forEach(n => nodes.push({ ...n, glowing: false }));
+          presets[index].connections.forEach(c => connections.push(c));
+        }
+
+        return { nodes, connections, pulses, trails, bpm, addNode, onTap, startDrag, onTouchMove, onTouchEnd, loadPreset };
+      }
+    }).mount('#app');
+  </script>
+  <template>
+    <div id="controls">
+      <button @click="loadPreset(0)">Basic Loop</button>
+      <button @click="loadPreset(1)">Echo Cascade</button>
+      <button @click="loadPreset(2)">Harmonic Swarm</button>
+      <button @click="loadPreset(3)">Rhythmic Pulse</button>
+      <input v-model="bpm" type="number" min="60" max="200" style="width: 50px;" /> BPM
+    </div>
+    <svg @touchstart="onTap" @touchmove="onTouchMove" @touchend="onTouchEnd">
+      <line v-for="c in connections" :key="`${c.from}-${c.to}`" :x1="nodes.find(n=>n.id===c.from).x" :y1="nodes.find(n=>n.id===c.from).y" :x2="nodes.find(n=>n.id===c.to).x" :y2="nodes.find(n=>n.id===c.to).y" class="connection" />
+      <line v-for="(t, i) in trails" :key="`trail${i}`" :x1="t.x1" :y1="t.y1" :x2="t.x2" :y2="t.y2" class="trail" />
+      <circle v-for="p in pulses" :key="p.id" :cx="nodes.find(n=>n.id===p.from).x + (nodes.find(n=>n.id===p.to).x - nodes.find(n=>n.id===p.from).x) * p.progress" :cy="nodes.find(n=>n.id===p.from).y + (nodes.find(n=>n.id===p.to).y - nodes.find(n=>n.id===p.from).y) * p.progress" class="pulse" />
+      <circle v-for="node in nodes" :key="node.id" :cx="node.x" :cy="node.y" r="20" :class="['node', node.type, {glow: node.glowing}]" @touchstart="startDrag(node, $event)" />
+    </svg>
+  </template>
+</body>
+</html>

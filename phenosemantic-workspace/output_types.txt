@@ -1,0 +1,74 @@
+# Output Types for Rating
+# Covers various AI-generated content types
+
+# Text/Content types
+creative_writing
+technical_writing
+business_writing
+academic_writing
+journalistic_writing
+copywriting
+scriptwriting
+poetry
+fiction
+non_fiction
+
+# Code/Technical types
+code_snippet
+algorithm
+data_structure
+api_design
+system_architecture
+database_schema
+ui_component
+backend_service
+devops_script
+configuration_file
+
+# Visual/Design types
+ui_design
+ux_flow
+logo_design
+illustration
+icon_set
+color_palette
+typography_system
+layout_design
+wireframe
+mockup
+
+# Strategic/Planning types
+business_plan
+project_proposal
+marketing_strategy
+product_roadmap
+research_proposal
+investment_pitch
+content_strategy
+seo_plan
+social_media_calendar
+crisis_management_plan
+
+# Educational types
+lesson_plan
+curriculum
+assessment
+exercise
+tutorial
+explanation
+example_problem
+study_guide
+flashcards
+interactive_activity
+
+# Creative types
+story_idea
+character_concept
+world_setting
+plot_twist
+dialogue_exchange
+song_lyrics
+art_concept
+game_mechanic
+interactive_narrative
+immersive_experience

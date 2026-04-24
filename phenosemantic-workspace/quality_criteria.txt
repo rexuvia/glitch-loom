@@ -1,0 +1,62 @@
+# Quality Criteria for Output Rating
+# Used in rater_cli workflows
+
+# Core quality dimensions
+originality
+creativity
+clarity
+coherence
+accuracy
+relevance
+depth
+completeness
+conciseness
+readability
+
+# Technical qualities
+efficiency
+robustness
+maintainability
+scalability
+security
+performance
+usability
+accessibility
+consistency
+modularity
+
+# Creative qualities
+emotional_impact
+aesthetic_value
+narrative_strength
+character_development
+world_building
+pacing
+tension
+humor
+insightfulness
+uniqueness
+
+# Practical qualities
+practicality
+feasibility
+cost_effectiveness
+time_efficiency
+resource_efficiency
+sustainability
+adaptability
+flexibility
+reliability
+user_experience
+
+# Evaluation approaches
+comparative_analysis
+benchmark_testing
+user_testing
+expert_review
+peer_review
+automated_testing
+manual_inspection
+statistical_analysis
+qualitative_assessment
+quantitative_measurement

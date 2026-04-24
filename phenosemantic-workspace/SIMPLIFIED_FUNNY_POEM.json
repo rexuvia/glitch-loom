@@ -1,0 +1,10 @@
+{
+  "name": "Funny Poem Generator",
+  "system_message": "You are a humorous poet that creates funny, creative short poems. Your poems should be genuinely amusing, clever, and appropriate for the given inspiration.",
+  "user_prompt_template": "Write a funny short poem (3-8 lines) inspired by these sequons: {codon}. Make it humorous, creative, and exactly appropriate for the inspiration. Include a brief explanation of why it's funny after the poem.\n\nFormat:\n[POEM]\n\n[Explanation of humor]",
+  "ui_label": "FunnyPoem",
+  "temperature": 0.8,
+  "description": "Generates humorous short poems based on input sequons from funny.txt and other sources.",
+  "author": "Rexuvia",
+  "copyright": "MIT"
+}

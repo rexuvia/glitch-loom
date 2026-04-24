@@ -1,0 +1,49 @@
+{
+  "name": "game_concept_generator",
+  "description": "Generate novel game concepts by combining mechanics with themes",
+  "created": "2026-03-02",
+  "version": "1.0.0",
+  
+  "codon": {
+    "lexasomes": [
+      "game_mechanics.txt",
+      "creative_domains.txt"
+    ],
+    "n": 2,
+    "selection_mode": "random",
+    "allow_duplicates": false
+  },
+  
+  "prompt": "Create a novel game concept by combining these elements:\n\nGame Mechanic: {{codon[0]}}\nTheme/Domain: {{codon[1]}}\n\nDescribe a complete game concept that emerges from this combination. Be specific and imaginative.\n\nStructure your response:\n1. **Game Title** - A catchy name\n2. **Core Concept** - What the game is about (2-3 sentences)\n3. **Key Mechanics** - How the game works (2-3 sentences)\n4. **Player Experience** - What makes it engaging (1-2 sentences)\n5. **Innovation** - What's new or unique about this combination\n\nKeep it concise but complete.",
+  
+  "model": "deepseek-chat",
+  "temperature": 0.85,
+  "max_tokens": 400,
+  "top_p": 0.9,
+  
+  "metadata": {
+    "category": "game_design",
+    "difficulty": "medium",
+    "creativity_level": "high",
+    "expected_output_type": "game_concept",
+    "target_platform": "any",
+    "target_audience": "indie_gamers"
+  },
+  
+  "examples": [
+    {
+      "codon": ["procedural generation", "underwater exploration"],
+      "output": "**Abyssal Archives**\n\n**Core Concept**: Explore an infinitely generated ocean trench where each dive reveals new bioluminescent ecosystems, ancient ruins, and mysterious creatures. The game combines the wonder of deep-sea discovery with constantly fresh environments.\n\n**Key Mechanics**: The trench layout, creature behaviors, and ruin layouts are procedurally generated each playthrough. Players manage oxygen, pressure, and light resources while documenting discoveries in a shared community archive.\n\n**Player Experience**: A meditative yet tense exploration game where every dive feels unique, encouraging repeated play to discover rare ecosystem combinations and piece together the trench's mysterious history.\n\n**Innovation**: Procedural generation applied to entire ecosystems rather than just terrain, creating believable underwater worlds with emergent creature behaviors and environmental storytelling."
+    },
+    {
+      "codon": ["time manipulation", "medieval politics"],
+      "output": "**Court of Hours**\n\n**Core Concept**: A medieval political simulator where you can rewind time to undo diplomatic mistakes, fast-forward to see long-term consequences, and pause to carefully plan your next move in royal court intrigue.\n\n**Key Mechanics**: Players navigate complex social networks, alliances, and betrayals with the ability to manipulate time. Each decision branches the timeline, creating multiple historical outcomes to explore and optimize.\n\n**Player Experience**: Strategic depth of grand strategy combined with the narrative tension of seeing immediate and long-term consequences of every word spoken in court.\n\n**Innovation**: Time manipulation as a core political tool rather than combat mechanic, forcing players to think in multiple temporal dimensions when making decisions."
+    }
+  ],
+  
+  "validation": {
+    "min_sequons": 2,
+    "max_sequons": 2,
+    "required_sections": ["Game Title", "Core Concept", "Key Mechanics", "Player Experience", "Innovation"]
+  }
+}

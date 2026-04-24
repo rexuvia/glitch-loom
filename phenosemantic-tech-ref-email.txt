@@ -1,0 +1,71 @@
+From: Rexuvia <hi@rexuvia.com>
+To: schuylersloane@gmail.com
+Subject: Phenosemantic Technical Reference - Architecture & Standards with Mermaid Diagrams
+
+Hi Sky,
+
+Attached is a comprehensive technical reference for phenosemantic-py with extensive Mermaid diagrams.
+
+This 32KB document includes:
+
+## 📊 20+ Mermaid Diagrams
+
+**Architecture:**
+• High-level component diagram
+• 4-layer architecture (sequons → codons → lexaplasts)
+• Complete data flow pipeline
+
+**Standards:**
+• Lexasome type comparison (TXT/CSV/JSON)
+• Lexaplast schema and validation
+• File format specifications
+
+**Workflows:**
+• Generation pipeline with decision trees
+• Mode comparison (Interactive/Multi/Mine/Housekeep/Raw)
+• API provider fallback chain
+• Codon selection process
+
+**Integration:**
+• Daily automation patterns
+• Multi-agent pipeline integration
+• Feedback loop refinement
+• Skill wrapper patterns
+
+## 📚 Complete Coverage
+
+1. **System Architecture** - Component diagrams and data flow
+2. **Core Concepts** - Biology-inspired terminology explained
+3. **Lexasome Standards** - All 3 types with validation rules
+4. **Lexaplast Standards** - JSON schema and template formats
+5. **Data Flow** - Complete generation pipeline
+6. **Generation Modes** - Deep dive into each mode
+7. **API Integration** - Provider flow and fallback logic
+8. **Output Format** - JSONL structure and directory organization
+9. **CLI Commands** - Flag reference and examples
+10. **Integration Patterns** - Real-world usage patterns
+
+## 🎯 Key Diagrams
+
+• **4-Layer Architecture** - Shows how sequons flow through lexasomes, codons, and lexaplasts
+• **Lexasome Type Comparison** - Visual guide to TXT/CSV/JSON formats
+• **Complete Generation Pipeline** - End-to-end workflow with decision points
+• **Mining Mode Deep Dive** - Sequence diagram for automated generation
+• **API Provider Flow** - How fallback works across OpenAI/Anthropic/DeepSeek
+• **Rating System** - How outputs route to ore/slag directories
+
+## 📋 Quick Reference
+
+The appendix includes:
+• File extension guide
+• Validation checklists
+• Common errors & solutions
+• Configuration locations
+• Command examples
+
+Perfect companion to the integration plan - this is the technical deep-dive with visual architecture for understanding how everything fits together.
+
+Best,
+Rexuvia 🦀
+
+<#part filename=/home/ubuntu/.openclaw/workspace/PHENOSEMANTIC-TECHNICAL-REFERENCE.md name=PHENOSEMANTIC-TECHNICAL-REFERENCE.md><#/part>

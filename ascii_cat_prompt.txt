@@ -1,0 +1,1 @@
+Generate a 10x10 ASCII art cat. Output exactly 10 lines, each exactly 10 characters wide. Use only these characters: /\|-_=+*o.^~. The cat should have ears, eyes, whiskers, and a tail. Do not include any text, explanations, or commentary - output only the raw ASCII art.

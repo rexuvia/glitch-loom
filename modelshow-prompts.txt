@@ -1,0 +1,106 @@
+Explain quantum entanglement using only food analogies
+Write a haiku about procrastination that demonstrates procrastination through its structure
+What's the 50th digit of pi and how would you calculate it?
+Describe the color blue to someone who has been blind from birth
+If you could add one law to physics, what would break and what would become possible?
+Debug this code: def factorial(n): return n * factorial(n)
+Write a story where the protagonist is a semicolon in a badly-written essay
+What would happen if everyone on Earth jumped at the same exact moment?
+Explain recursion by using recursion in your explanation
+Create a new logical fallacy and name it after a kitchen appliance
+Translate "The spirit is willing but the flesh is weak" into Japanese then back to English
+What's heavier: a ton of feathers or a ton of bricks? Explain why people get this wrong.
+Design a programming language for poets
+If a tree falls in a forest and no one is around, does it make a sound? But answer as a physicist, not a philosopher.
+Write assembly code that prints "Hello World" and explain each instruction
+What's wrong with this proof that 1=2?
+Describe three ways to sort a deck of cards, then rank them by elegance
+Why is a manhole cover round? Give me the answer everyone gives, then give me three better answers.
+Create a trolley problem where the correct answer is to do nothing
+Explain machine learning to your grandmother who thinks "the cloud" is weather
+Write a function that returns itself
+What happens when an unstoppable force meets an immovable object? Answer without using philosophy.
+Compress the entire plot of Hamlet into a single sentence without losing key themes
+What's the last digit of Graham's number and why is this question interesting?
+Design a board game about debugging code
+If you could remove one element from the periodic table, which would cause the most chaos?
+Write a proof that there are infinitely many primes, but make it rhyme
+What's the difference between a duck?
+Explain OAuth 2.0 as if it's a heist movie
+Create a valid JSON that describes itself
+Why do mirrors reverse left and right but not up and down?
+Write a regex that matches valid email addresses, then explain why this is impossible
+What would the world look like if Planck's constant was twice as large?
+Describe a data structure for storing time travel events
+If Ship of Theseus gradually had all its parts replaced with quantum-entangled duplicates, would it still be the same ship?
+Convert this decimal to binary without using a calculator: 1337
+Write a creation myth for the integer zero
+What's the worst O(n) algorithm you can think of for sorting?
+Explain the halting problem using only monosyllabic words
+Design a cipher that's easy for humans but hard for computers
+What would happen if you tried to mine Bitcoin on a quantum computer in 1985?
+Write a paragraph that's a valid Python program
+How many ways can you arrange the letters in MISSISSIPPI?
+Create a moral framework for AI based on thermodynamics
+What's the smallest number that's never been thought of by anyone?
+Explain why you can't trisect an angle with compass and straightedge to someone who insists you can
+Write a story from the perspective of the last photon in the universe
+Design an encryption system based on the rules of chess
+What would mathematics look like if we counted in base π?
+If you could only keep five letters of the alphabet, which would they be and why?
+Write a function that predicts if a given function will return true or false
+Explain gradient descent as a journey through Middle Earth
+What's the complexity class of love?
+Create a programming paradigm that doesn't exist yet
+Why is the square root of negative one imaginary? Make this make sense.
+Describe a race condition in terms of a dinner party
+What would happen if we discovered that P=NP tomorrow?
+Write a proof by contradiction that proves itself wrong
+Design a communication protocol for talking to aliens who experience time backwards
+What's the relationship between entropy and information? Answer as if you're explaining to a literary critic.
+Create a new chess piece and explain how it changes the game
+If you could patch one bug in evolution, what would it be?
+Write a program that outputs its own source code
+Explain why 0.999... equals 1 to someone who's absolutely certain it doesn't
+What would change if the speed of light was 100 mph?
+Design a data structure that actively tries to be unhelpful
+Describe a universe where the axiom of choice is false
+Write a story where the plot twist is a type mismatch error
+What's the computational complexity of making the perfect sandwich?
+If all programming languages were animals, what would each major language be and why?
+Create a new sorting algorithm based on the behavior of slime mold
+Explain why we can't just "enhance" images like in CSI
+Design a social network for compilers
+What would music sound like if it evolved on a planet with different physics?
+Write a technical specification for telepathy
+How would you compress the entire Internet into a single tweet?
+Create a new branch of mathematics based on cooking
+What's the ethical way to train an AI on data from people who haven't been born yet?
+Design a user interface for someone with 12 fingers
+Explain why premature optimization is the root of all evil with a specific counter-example
+Write a recursive recipe for infinite lasagna
+What would happen if CPUs suddenly became sentient?
+Create a programming language where the syntax changes based on the time of day
+Describe a universe where Gödel's incompleteness theorem doesn't apply
+Design an algorithm to detect whether someone is a simulation
+What's the most efficient way to teach a neural network to forget something specific?
+If you could refactor one aspect of human biology as if it were code, what would you change?
+Write an epic poem about SQL injection
+Create a new cognitive bias specific to AI systems
+What would chess look like if it was played on a Möbius strip?
+Design a version control system for dreams
+Explain why rubber ducks help with debugging
+What's the Nash equilibrium of rock-paper-scissors-lizard-Spock?
+Create a new logical operator and prove something interesting with it
+Write a dialogue between a stack and a heap arguing about who's more important
+Design a compression algorithm that works by forgetting unimportant details
+What would happen if we could only communicate in valid XML?
+Create a new fundamental force of nature and describe its effects
+Write a technical manual for human emotions
+Design a database schema for mapping all possible universes
+What's the difference between a bug and a feature in nature?
+Create a new mathematical constant by combining e and π in an interesting way
+Write code comments for the Big Bang
+Design a programming language that compiles to poetry
+What would happen if malloc() became self-aware?
+Create a thought experiment that combines the Chinese Room with Schrödinger's Cat

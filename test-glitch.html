@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Glitch Loom</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #080810; color: white; font-family: sans-serif; }
+        canvas { border: 2px solid #00f0ff; margin: 10px; }
+        button { padding: 10px 20px; background: #00f0ff; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Test Glitch Loom Core Functions</h1>
+    
+    <div>
+        <button onclick="testPixelSort()">Test Pixel Sort</button>
+        <button onclick="testDatamosh()">Test Datamosh</button>
+        <button onclick="testWeave()">Test Weave</button>
+        <button onclick="testFull()">Test Full Process</button>
+    </div>
+    
+    <div>
+        <h3>Original Image:</h3>
+        <canvas id="original" width="256" height="256"></canvas>
+        
+        <h3>Warp (Pixel Sorted):</h3>
+        <canvas id="warp" width="256" height="256"></canvas>
+        
+        <h3>Weft (Datamoshed):</h3>
+        <canvas id="weft" width="256" height="256"></canvas>
+        
+        <h3>Result (Woven):</h3>
+        <canvas id="result" width="256" height="256"></canvas>
+    </div>
+    
+    <div id="status">Ready</div>
+    
+    <script>
+        // Simple test functions from glitch-loom
+        function setStatus(msg) {
+            document.getElementById('status').textContent = msg;
+            console.log(msg);
+        }
+        
+        function cloneImageData(src) {
+            const canvas = document.createElement('canvas');
+            canvas.width = src.width;
+            canvas.height = src.height;
+            const ctx = canvas.getContext('2d');
+            ctx.putImageData(src, 0, 0);
+            return ctx.getImageData(0, 0, src.width, src.height);
+        }
+        
+        function applyPixelSort(imageData, metric, intensity, threshold, direction, reverse) {
+            console.log('Pixel sort called with:', {metric, intensity, threshold, direction, reverse});
+            const {data, width, height} = imageData;
+            
+            // Simple test: just invert some pixels to see if function runs
+            for (let i = 0; i < data.length; i += 4) {
+                if (Math.random() < intensity) {
+                    data[i] = 255 - data[i]; // Invert red
+                    data[i+1] = 255 - data[i+1]; // Invert green
+                    data[i+2] = 255 - data[i+2]; // Invert blue
+                }
+            }
+            
+            return imageData;
+        }
+        
+        function applyDatamosh(imageData, type, intensity, blockSize, shiftX, shiftY, chaos) {
+            console.log('Datamosh called with:', {type, intensity, blockSize, shiftX, shiftY, chaos});
+            const {data, width, height} = imageData;
+            
+            // Simple test: shift pixels
+            for (let y = 0; y < height; y += blockSize) {
+                for (let x = 0; x < width; x += blockSize) {
+                    const srcIdx = (y * width + x) * 4;
+                    const destX = Math.max(0, Math.min(width-1, x + shiftX));
+                    const destY = Math.max(0, Math.min(height-1, y + shiftY));
+                    const destIdx = (destY * width + destX) * 4;
+                    
+                    if (Math.random() < intensity) {
+                        data[destIdx] = data[srcIdx];
+                        data[destIdx+1] = data[srcIdx+1];
+                        data[destIdx+2] = data[srcIdx+2];
+                        data[destIdx+3] = data[srcIdx+3];
+                    }
+                }
+            }
+            
+            return imageData;
+        }
+        
+        function applyWeave(warpData, weftData, pattern, warpSize, weftSize, warpRatio, blend) {
+            console.log('Weave called with:', {pattern, warpSize, weftSize, warpRatio, blend});
+            const {width, height} = warpData;
+            const result = cloneImageData(warpData);
+            
+            // Simple weave: alternate between warp and weft
+            for (let y = 0; y < height; y += weftSize) {
+                for (let x = 0; x < width; x += warpSize) {
+                    const idx = (y * width + x) * 4;
+                    
+                    // Alternate pattern
+                    const useWarp = ((x / warpSize) + (y / weftSize)) % 2 === 0;
+                    
+                    if (useWarp) {
+                        // Use warp pixel
+                        result.data[idx] = warpData.data[idx];
+                        result.data[idx+1] = warpData.data[idx+1];
+                        result.data[idx+2] = warpData.data[idx+2];
+                        result.data[idx+3] = warpData.data[idx+3];
+                    } else {
+                        // Use weft pixel
+                        result.data[idx] = weftData.data[idx];
+                        result.data[idx+1] = weftData.data[idx+1];
+                        result.data[idx+2] = weftData.data[idx+2];
+                        result.data[idx+3] = weftData.data[idx+3];
+                    }
+                }
+            }
+            
+            return result;
+        }
+        
+        // Create test image
+        function createTestImage() {
+            const canvas = document.getElementById('original');
+            const ctx = canvas.getContext('2d');
+            
+            // Draw gradient
+            const gradient = ctx.createLinearGradient(0, 0, 256, 256);
+            gradient.addColorStop(0, '#ff0000');
+            gradient.addColorStop(0.5, '#00ff00');
+            gradient.addColorStop(1, '#0000ff');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            
+            // Draw some circles
+            ctx.fillStyle = '#ffff00';
+            ctx.beginPath();
+            ctx.arc(64, 64, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ff00ff';
+            ctx.beginPath();
+            ctx.arc(192, 64, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(128, 192, 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            return ctx.getImageData(0, 0, 256, 256);
+        }
+        
+        function drawImageData(canvasId, imageData) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        let originalImageData;
+        
+        function init() {
+            originalImageData = createTestImage();
+            drawImageData('original', originalImageData);
+            setStatus('Test image created');
+        }
+        
+        function testPixelSort() {
+            const warpData = cloneImageData(originalImageData);
+            applyPixelSort(warpData, 'brightness', 0.5, 128, 'horizontal', false);
+            drawImageData('warp', warpData);
+            setStatus('Pixel sort applied to warp');
+        }
+        
+        function testDatamosh() {
+            const weftData = cloneImageData(originalImageData);
+            applyDatamosh(weftData, 'block', 0.3, 16, 10, 5, 0.2);
+            drawImageData('weft', weftData);
+            setStatus('Datamosh applied to weft');
+        }
+        
+        function testWeave() {
+            const warpData = cloneImageData(originalImageData);
+            const weftData = cloneImageData(originalImageData);
+            applyPixelSort(warpData, 'brightness', 0.5, 128, 'horizontal', false);
+            applyDatamosh(weftData, 'block', 0.3, 16, 10, 5, 0.2);
+            
+            const result = applyWeave(warpData, weftData, 'plain', 16, 16, 0.5, 0.5);
+            drawImageData('result', result);
+            setStatus('Weave applied');
+        }
+        
+        function testFull() {
+            testPixelSort();
+            testDatamosh();
+            testWeave();
+            setStatus('Full process complete');
+        }
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
