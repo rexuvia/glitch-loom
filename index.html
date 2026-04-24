@@ -280,6 +280,7 @@ select option {
       <input type="text" id="state-string" readonly>
       <button id="btn-copy-state" style="width:100%; margin-top: 4px;">Copy State</button>
       <button id="btn-share-link" class="btn-primary" style="width:100%; margin-top: 4px;">🔗 Share Link</button>
+      <button id="btn-copy-prompt" style="width:100%; margin-top: 4px;">Copy Agent Prompt</button>
     </div>
     <div style="margin-top: 5px;">
       <label>Load State:</label>
@@ -350,6 +351,7 @@ function encodeState() {
   const str = parts.join('');
   uiElements.stateString.value = str;
   history.replaceState(null, '', '#' + str);
+  document.title = `Glitch Loom - State: ${str}`;
   return str;
 }
 
@@ -509,6 +511,50 @@ document.getElementById('btn-share-link').addEventListener('click', () => {
     const btn = document.getElementById('btn-share-link');
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+});
+
+function generatePrompt() {
+  const patternName = uiElements.pattern.options[uiElements.pattern.selectedIndex].text;
+  const prompt = `
+Create a browser-based animation with the following properties, suitable for an AI agent to interpret and render:
+
+- Animation Speed: ${state.speed} (out of 100)
+- Density: ${state.density} (out of 200)
+- Color Shift: ${state.colorShift} degrees (0-360)
+- Glitch Intensity: ${state.glitchIntensity} (out of 100)
+- Pattern Type: "${patternName}" (value: ${state.pattern})
+- Scale Modifier: ${state.scaleMod} (out of 100)
+- Jitter Modifier: ${state.jitterMod} (out of 100)
+- Variable A: ${state.varA} (specific meaning depends on pattern, e.g., frequency, arm count)
+- Variable B: ${state.varB} (specific meaning depends on pattern, e.g., amplitude, tightness)
+- Color Intensity: ${state.colorIntensity} (out of 100)
+- Noise Intensity: ${state.noiseIntensity} (out of 100)
+
+The animation should dynamically change based on these parameters, rendering a unique visual experience.
+  `;
+  return prompt.trim();
+}
+
+document.getElementById('btn-copy-prompt').addEventListener('click', () => {
+  const promptText = generatePrompt();
+  navigator.clipboard.writeText(promptText).then(() => {
+    const btn = document.getElementById('btn-copy-prompt');
+    const orig = btn.textContent;
+    btn.textContent = 'Prompt Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  }).catch(() => {
+    // Fallback for older browsers or if writeText is not available
+    const ta = document.createElement('textarea');
+    ta.value = promptText;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById('btn-copy-prompt');
+    const orig = btn.textContent;
+    btn.textContent = 'Prompt Copied!';
     setTimeout(() => { btn.textContent = orig; }, 1500);
   });
 });
