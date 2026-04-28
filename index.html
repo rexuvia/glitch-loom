@@ -280,7 +280,7 @@ select option {
       <input type="text" id="state-string" readonly>
       <button id="btn-copy-state" style="width:100%; margin-top: 4px;">Copy State</button>
       <button id="btn-share-link" class="btn-primary" style="width:100%; margin-top: 4px;">🔗 Share Link</button>
-      <button id="btn-copy-prompt" style="width:100%; margin-top: 4px;">Copy Agent Prompt</button>
+      <button id="btn-copy-embed" style="width:100%; margin-top: 4px;">📋 Copy Embed Code</button>
     </div>
     <div style="margin-top: 5px;">
       <label>Load State:</label>
@@ -515,46 +515,52 @@ document.getElementById('btn-share-link').addEventListener('click', () => {
   });
 });
 
-function generatePrompt() {
-  const patternName = uiElements.pattern.options[uiElements.pattern.selectedIndex].text;
-  const prompt = `
-Create a browser-based animation with the following properties, suitable for an AI agent to interpret and render:
+function generateEmbedCode() {
+  const stateStr = encodeState();
+  const baseUrl = window.location.origin + window.location.pathname;
+  
+  // Generate iframe embed code
+  const iframeCode = `<!-- Glitch Loom Background -->
+<iframe 
+  src="${baseUrl}#${stateStr}" 
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; border: none; z-index: -1;"
+  title="Glitch Loom Background Animation"
+></iframe>`;
 
-- Animation Speed: ${state.speed} (out of 100)
-- Density: ${state.density} (out of 200)
-- Color Shift: ${state.colorShift} degrees (0-360)
-- Glitch Intensity: ${state.glitchIntensity} (out of 100)
-- Pattern Type: "${patternName}" (value: ${state.pattern})
-- Scale Modifier: ${state.scaleMod} (out of 100)
-- Jitter Modifier: ${state.jitterMod} (out of 100)
-- Variable A: ${state.varA} (specific meaning depends on pattern, e.g., frequency, arm count)
-- Variable B: ${state.varB} (specific meaning depends on pattern, e.g., amplitude, tightness)
-- Color Intensity: ${state.colorIntensity} (out of 100)
-- Noise Intensity: ${state.noiseIntensity} (out of 100)
+  // Generate JavaScript snippet alternative
+  const jsCode = `<!-- Glitch Loom Background (JavaScript) -->
+<div id="glitch-loom-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+<script>
+(function() {
+  const iframe = document.createElement('iframe');
+  iframe.src = '${baseUrl}#${stateStr}';
+  iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+  iframe.title = 'Glitch Loom Background Animation';
+  document.getElementById('glitch-loom-bg').appendChild(iframe);
+})();
+</script>`;
 
-The animation should dynamically change based on these parameters, rendering a unique visual experience.
-  `;
-  return prompt.trim();
+  return `${iframeCode}\n\n${jsCode}`;
 }
 
-document.getElementById('btn-copy-prompt').addEventListener('click', () => {
-  const promptText = generatePrompt();
-  navigator.clipboard.writeText(promptText).then(() => {
-    const btn = document.getElementById('btn-copy-prompt');
+document.getElementById('btn-copy-embed').addEventListener('click', () => {
+  const embedCode = generateEmbedCode();
+  navigator.clipboard.writeText(embedCode).then(() => {
+    const btn = document.getElementById('btn-copy-embed');
     const orig = btn.textContent;
-    btn.textContent = 'Prompt Copied!';
+    btn.textContent = '✓ Copied!';
     setTimeout(() => { btn.textContent = orig; }, 1500);
   }).catch(() => {
     // Fallback for older browsers or if writeText is not available
     const ta = document.createElement('textarea');
-    ta.value = promptText;
+    ta.value = embedCode;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    const btn = document.getElementById('btn-copy-prompt');
+    const btn = document.getElementById('btn-copy-embed');
     const orig = btn.textContent;
-    btn.textContent = 'Prompt Copied!';
+    btn.textContent = '✓ Copied!';
     setTimeout(() => { btn.textContent = orig; }, 1500);
   });
 });
