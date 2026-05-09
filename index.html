@@ -274,6 +274,7 @@ select option {
     </div>
 
     <button id="btn-randomize" class="btn-primary">Randomize</button>
+    <button id="btn-autobrowse" class="btn-primary" style="margin-top: 4px;">✨ Auto-Browse</button>
     
     <div style="margin-top: 10px;">
       <label>Share State String:</label>
@@ -486,6 +487,51 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.colorIntensity.value = Math.floor(Math.random() * 101);
   uiElements.noiseIntensity.value = Math.floor(Math.random() * 101);
   updateStateFromUI();
+});
+
+let autoBrowseInterval = null;
+let lastAutoBrowseStart = 0;
+
+function stopAutoBrowse() {
+  if (autoBrowseInterval) {
+    clearInterval(autoBrowseInterval);
+    autoBrowseInterval = null;
+    document.getElementById('ui-layer').style.display = '';
+  }
+}
+
+function handleInteraction(e) {
+  if (Date.now() - lastAutoBrowseStart < 500) return; // Prevent immediate cancel
+  stopAutoBrowse();
+}
+
+window.addEventListener('click', handleInteraction, true);
+window.addEventListener('touchstart', handleInteraction, true);
+window.addEventListener('keydown', handleInteraction, true);
+
+document.getElementById('btn-autobrowse').addEventListener('click', () => {
+  lastAutoBrowseStart = Date.now();
+  document.getElementById('ui-layer').style.display = 'none';
+  
+  const triggerRandom = () => {
+    uiElements.speed.value = Math.floor(Math.random() * 100) + 1;
+    uiElements.density.value = Math.floor(Math.random() * 190) + 10;
+    uiElements.colorShift.value = Math.floor(Math.random() * 360);
+    uiElements.glitchIntensity.value = Math.floor(Math.random() * 100);
+    uiElements.pattern.value = Math.floor(Math.random() * PATTERN_COUNT);
+    uiElements.scaleMod.value = Math.floor(Math.random() * 100) + 1;
+    uiElements.jitterMod.value = Math.floor(Math.random() * 100);
+    uiElements.varA.value = Math.floor(Math.random() * 101);
+    uiElements.varB.value = Math.floor(Math.random() * 101);
+    uiElements.colorIntensity.value = Math.floor(Math.random() * 101);
+    uiElements.noiseIntensity.value = Math.floor(Math.random() * 101);
+    updateStateFromUI();
+  };
+  
+  triggerRandom(); // Initial hit
+  
+  if (autoBrowseInterval) clearInterval(autoBrowseInterval);
+  autoBrowseInterval = setInterval(triggerRandom, 3000);
 });
 
 document.getElementById('btn-copy-state').addEventListener('click', () => {
