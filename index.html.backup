@@ -22,8 +22,8 @@
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow-x:hidden}
 
 /* ─── LAYOUT ─── */
-#app{display:flex;flex-direction:column;min-height:100vh;max-width:1200px;margin:0 auto;padding:0 12px}
-@media(min-width:860px){#app{display:grid;grid-template-columns:260px minmax(0, 1fr);grid-template-rows:auto 1fr;}}
+#app{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;max-width:1200px;margin:0 auto;padding:0 12px}
+@media(min-width:860px){#app{grid-template-columns:260px 1fr;grid-template-rows:auto 1fr;}}
 
 /* ─── HEADER ─── */
 #header{grid-column:1/-1;padding:14px 0 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--border)}
@@ -32,14 +32,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 #header-actions{display:flex;gap:6px;flex-wrap:wrap}
 
 /* ─── SIDEBAR ─── */
-#sidebar{padding:12px 0 12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;order:2}
-@media(min-width:860px){#sidebar{padding:16px 16px 16px 0;border-right:1px solid var(--border);grid-column:1;grid-row:2;order:unset}}
+#sidebar{padding:12px 0 12px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+@media(min-width:860px){#sidebar{padding:16px 16px 16px 0;border-right:1px solid var(--border);grid-column:1;grid-row:2}}
 
 /* ─── CANVAS ZONE ─── */
-#canvas-zone{display:flex;flex-direction:column;gap:10px;padding:12px 0;order:1}
-@media(min-width:860px){#canvas-zone{padding:16px 0 16px 16px;height:100%;grid-column:2;grid-row:2;display:flex;flex-direction:column;align-items:center;justify-content:center;order:unset}}
-#canvas-wrap{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;border:1px solid var(--border);box-shadow:0 0 40px rgba(0,240,255,.06);flex:0 0 auto;min-height:250px;max-height:400px;aspect-ratio:1/1}
-@media(min-width:860px){#canvas-wrap{aspect-ratio:1/1;max-height:min(500px, calc(100vh - 250px));max-width:min(500px, calc(100vh - 250px));width:auto;height:auto}}
+#canvas-zone{display:flex;flex-direction:column;gap:10px;padding:12px 0}
+@media(min-width:860px){#canvas-zone{padding:16px 0 16px 16px;height:100%;grid-column:2;grid-row:2}}
+#canvas-wrap{position:relative;border-radius:var(--radius);overflow:hidden;background:#000;border:1px solid var(--border);box-shadow:0 0 40px rgba(0,240,255,.06);flex:1;min-height:300px;max-height:600px;aspect-ratio:1/1}
+@media(min-width:860px){#canvas-wrap{aspect-ratio:unset;max-height:unset;width:100%;height:100%;}}
 #main-canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 #overlay-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.6}
 #canvas-status{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);padding:4px 10px;border-radius:20px;font-size:11px;color:var(--muted);pointer-events:none;white-space:nowrap;transition:.3s}
@@ -106,10 +106,7 @@ select option{background:#111}
 
 /* mobile bottom action bar */
 #mobile-actions{display:flex;gap:6px;padding:8px 0}
-@media(min-width:860px){
-  #mobile-actions{display:none}
-  #btn-apply{display:block}
-}
+@media(min-width:860px){#mobile-actions{display:none}}
 </style>
 </head>
 <body>
@@ -120,7 +117,6 @@ select option{background:#111}
   <div id="logo">GLITCH LOOM<span>pixel art tapestry engine</span></div>
   <div id="header-actions">
     <button class="btn btn-sm" id="btn-randomize">🎲 Random</button>
-    <button class="btn btn-sm" id="btn-autobrowse">✨ Auto-Browse</button>
     <button class="btn btn-sm btn-success" id="btn-export-png">⬇ PNG</button>
     <button class="btn btn-sm btn-success" id="btn-export-gif">⬇ GIF (Static)</button>
     <button class="btn btn-sm btn-success" id="btn-export-webm">⬇ WebM (Static)</button>
@@ -329,6 +325,8 @@ select option{background:#111}
     </div>
   </div>
 
+  <!-- APPLY -->
+  <button class="btn btn-primary" id="btn-apply" style="width:100%;padding:12px;font-size:14px">✦ Weave Glitch</button>
 </aside>
 
 <!-- CANVAS ZONE -->
@@ -342,8 +340,6 @@ select option{background:#111}
     <canvas id="overlay-canvas"></canvas>
     <div id="canvas-status">Upload image or click Generate</div>
   </div>
-  <!-- Desktop Weave Glitch button - positioned below canvas -->
-  <button class="btn btn-primary" id="btn-apply" style="width:100%;max-width:600px;margin-top:16px;padding:12px;font-size:14px;display:none">✦ Weave Glitch</button>
 </main>
 
 <!-- STATUS BAR -->
@@ -1473,68 +1469,6 @@ function randomize() {
   drawWeavePreview();
 }
 
-let autoBrowseInterval = null;
-let lastAutoBrowseClick = 0;
-
-function stopAutoBrowse() {
-  if (autoBrowseInterval) {
-    clearInterval(autoBrowseInterval);
-    autoBrowseInterval = null;
-    
-    // Show UI
-    $('header').style.display = '';
-    $('sidebar').style.display = '';
-    $('controls-mobile').style.display = '';
-    $('btn-apply').style.display = 'none'; // Revert back to proper mobile/desktop logic if needed, but easier to just adjust panels logic:
-    // Actually the layout uses flex, let's just remove the inline display overrides.
-    $('header').style.display = '';
-    $('sidebar').style.display = '';
-    $('controls-mobile').style.display = '';
-    if (window.innerWidth <= 800) {
-      $('controls-mobile').style.display = '';
-      $('btn-apply').style.display = 'none';
-    } else {
-      $('controls-mobile').style.display = 'none';
-      // btn-apply will handle itself via css usually, unless inline
-      $('btn-apply').style.display = '';
-    }
-  }
-}
-
-function handleAutoBrowseInterrupt(e) {
-  // Ignore the click that started it if it's too soon
-  if (Date.now() - lastAutoBrowseClick < 500) return;
-  
-  if (autoBrowseInterval !== null) {
-    stopAutoBrowse();
-  }
-}
-
-function startAutoBrowse() {
-  lastAutoBrowseClick = Date.now();
-  
-  // Hide UI
-  $('header').style.display = 'none';
-  $('sidebar').style.display = 'none';
-  $('controls-mobile').style.display = 'none';
-  $('btn-apply').style.display = 'none';
-  
-  // Start loop immediately and set interval
-  randomize();
-  applyAll();
-  
-  if (autoBrowseInterval) clearInterval(autoBrowseInterval);
-  autoBrowseInterval = setInterval(() => {
-    randomize();
-    applyAll();
-  }, 3000);
-}
-
-// Add global listeners for interruption
-window.addEventListener('click', handleAutoBrowseInterrupt, true);
-window.addEventListener('touchstart', handleAutoBrowseInterrupt, true);
-window.addEventListener('keydown', handleAutoBrowseInterrupt, true);
-
 // ─── EXPORT PNG ───────────────────────────────────────
 function exportPng() {
   const link=document.createElement('a');
@@ -1622,9 +1556,6 @@ function init() {
 
   // Randomize
   $('btn-randomize').addEventListener('click',randomize);
-
-  // Auto-Browse
-  $('btn-autobrowse').addEventListener('click',startAutoBrowse);
 
   // Export
   $('btn-export-png').addEventListener('click',exportPng);
