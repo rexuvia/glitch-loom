@@ -288,6 +288,18 @@ select option {
       <input type="text" id="load-string" style="width:100%; padding:4px; background:#111; color:white; border:1px solid #444;">
       <button id="btn-load-state" style="width:100%; margin-top: 4px;">Load State</button>
     </div>
+    
+    <div style="margin-top: 10px; border-top: 1px solid var(--panel-border); padding-top: 10px;">
+      <label>Save Local State:</label>
+      <input type="text" id="save-state-name" placeholder="Name this state..." style="width:100%; padding:4px; background:#111; color:white; border:1px solid #444; margin-bottom:4px;">
+      <button id="btn-save-state" class="btn-primary" style="width:100%;">Save State</button>
+      <label style="margin-top: 10px;">Saved States:</label>
+      <select id="saved-states-list" style="width:100%; padding:4px; background:#111; color:white; border:1px solid #444; margin-bottom:4px;">
+        <option value="">-- Select a saved state --</option>
+      </select>
+      <button id="btn-load-saved-state" style="width:100%; margin-top: 4px;">Load Selected</button>
+      <button id="btn-delete-saved-state" style="width:100%; margin-top: 4px; background: rgba(255, 0, 0, 0.2);">Delete Selected</button>
+    </div>
 
   </div>
 </div>
@@ -614,6 +626,48 @@ document.getElementById('btn-copy-embed').addEventListener('click', () => {
 document.getElementById('btn-load-state').addEventListener('click', () => {
   decodeState(uiElements.loadString.value.trim());
 });
+
+// Saved States Logic
+const STORAGE_KEY = 'glitch_loom_saved_states';
+const uiSavedStatesList = document.getElementById('saved-states-list');
+const uiSaveStateName = document.getElementById('save-state-name');
+
+function loadSavedStates() {
+  const states = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  uiSavedStatesList.innerHTML = '<option value="">-- Select a saved state --</option>';
+  for (const name in states) {
+    const opt = document.createElement('option');
+    opt.value = states[name];
+    opt.textContent = name;
+    uiSavedStatesList.appendChild(opt);
+  }
+}
+
+document.getElementById('btn-save-state').addEventListener('click', () => {
+  const name = uiSaveStateName.value.trim();
+  if (!name) return alert('Please enter a name for the state.');
+  const states = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  states[name] = encodeState();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(states));
+  uiSaveStateName.value = '';
+  loadSavedStates();
+});
+
+document.getElementById('btn-load-saved-state').addEventListener('click', () => {
+  const str = uiSavedStatesList.value;
+  if (str) decodeState(str);
+});
+
+document.getElementById('btn-delete-saved-state').addEventListener('click', () => {
+  if (uiSavedStatesList.selectedIndex <= 0) return;
+  const name = uiSavedStatesList.options[uiSavedStatesList.selectedIndex].text;
+  const states = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  delete states[name];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(states));
+  loadSavedStates();
+});
+
+loadSavedStates();
 
 uiElements.toggleBtn.addEventListener('click', () => {
   uiElements.panel.classList.toggle('hidden');
