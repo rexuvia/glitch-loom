@@ -328,27 +328,6 @@ body.warning-active {
       </div>
     </div>
 
-    <div class="ctrl-group" id="autobrowse-group">
-      <label for="autobrowse-interval">Autobrowse Interval</label>
-      <div id="autobrowse-controls">
-        <select id="autobrowse-interval">
-          <option value="0">Off</option>
-          <option value="1000">1 second</option>
-          <option value="2000">2 seconds</option>
-          <option value="3000">3 seconds</option>
-          <option value="4000">4 seconds</option>
-          <option value="5000">5 seconds</option>
-          <option value="6000">6 seconds</option>
-          <option value="7000">7 seconds</option>
-          <option value="8000">8 seconds</option>
-          <option value="9000">9 seconds</option>
-          <option value="10000">10 seconds</option>
-        </select>
-        <button id="autobrowse-toggle">Start</button>
-      </div>
-      <span id="autobrowse-status">Autobrowse is stopped.</span>
-    </div>
-
     <div class="ctrl-group">
       <label>Scale</label>
       <input type="range" id="scale-mod" min="1" max="100" value="50">
@@ -451,6 +430,35 @@ body.warning-active {
 
     <button id="btn-randomize" class="btn-primary">Randomize</button>
     <button id="btn-autobrowse" class="btn-primary" style="margin-top: 4px;">✨ Auto-Browse</button>
+
+    <div class="ctrl-group" id="autobrowse-group" style="margin-top: 4px;">
+      <label for="autobrowse-interval">Autobrowse Interval</label>
+      <div id="autobrowse-controls">
+        <select id="autobrowse-interval">
+          <option value="0">Off</option>
+          <option value="1000">1 second</option>
+          <option value="2000">2 seconds</option>
+          <option value="3000">3 seconds</option>
+          <option value="4000">4 seconds</option>
+          <option value="5000">5 seconds</option>
+          <option value="6000">6 seconds</option>
+          <option value="7000">7 seconds</option>
+          <option value="8000">8 seconds</option>
+          <option value="9000">9 seconds</option>
+          <option value="10000">10 seconds</option>
+        </select>
+        <button id="autobrowse-toggle">Start</button>
+      </div>
+      <span id="autobrowse-status">Autobrowse is stopped.</span>
+    </div>
+
+    <div class="ctrl-group" id="autobrowse-history-group" style="margin-top: 4px; display: none;">
+      <label for="autobrowse-history">Recent Autobrowse States</label>
+      <select id="autobrowse-history" style="width:100%; padding:4px; background:#111; color:var(--green); border:1px solid #333; border-radius:4px; font-family:monospace; font-size:11px;">
+        <option value="">-- Select a recent state --</option>
+      </select>
+      <button id="btn-load-autobrowse-history" style="width:100%; margin-top: 4px;">Load Selected State</button>
+    </div>
     
     <div style="margin-top: 10px;">
       <label>Share State String:</label>
@@ -524,6 +532,9 @@ const uiElements = {
   autobrowseToggle: document.getElementById('autobrowse-toggle'),
   autobrowseStatus: document.getElementById('autobrowse-status'),
   autobrowsePopup: document.getElementById('autobrowse-popup'),
+  autobrowseHistory: document.getElementById('autobrowse-history'),
+  autobrowseHistoryGroup: document.getElementById('autobrowse-history-group'),
+  btnLoadAutobrowseHistory: document.getElementById('btn-load-autobrowse-history'),
   warningOverlay: document.getElementById('epilepsy-warning'),
   warningAccept: document.getElementById('warning-accept'),
   warningDecline: document.getElementById('warning-decline'),
@@ -669,6 +680,8 @@ let autobrowseTimer = null;
 let autobrowseStartTime = null;
 let popupTimeout = null;
 const AUTOPOPUP_DURATION = 2500;
+const AUTOBROWSE_HISTORY_MAX = 5;
+let autobrowseHistory = [];
 const WARNING_KEY = 'glitchLoomWarningAcknowledged';
 const AUTOBROWSE_KEY = 'glitchLoomAutobrowseInterval';
 
@@ -745,6 +758,7 @@ document.getElementById('btn-autobrowse').addEventListener('click', () => {
   document.getElementById('ui-layer').style.display = 'none';
   
   const triggerRandom = () => {
+    recordAutobrowseState();
     uiElements.speed.value = Math.floor(Math.random() * 100) + 1;
     uiElements.density.value = Math.floor(Math.random() * 190) + 10;
     uiElements.colorShift.value = Math.floor(Math.random() * 360);
@@ -896,6 +910,47 @@ uiElements.toggleBtn.addEventListener('click', () => {
   uiElements.toggleBtn.textContent = uiElements.panel.classList.contains('hidden') ? 'Show UI' : 'Hide UI';
 });
 
+// Autobrowse state history tracking
+function recordAutobrowseState() {
+  const stateStr = encodeState();
+  // Avoid duplicates at the front
+  if (autobrowseHistory.length > 0 && autobrowseHistory[0] === stateStr) return;
+  autobrowseHistory.unshift(stateStr);
+  if (autobrowseHistory.length > AUTOBROWSE_HISTORY_MAX) {
+    autobrowseHistory.pop();
+  }
+  updateAutobrowseHistoryUI();
+}
+
+function updateAutobrowseHistoryUI() {
+  const sel = uiElements.autobrowseHistory;
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Select a recent state --</option>';
+  autobrowseHistory.forEach((s, i) => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = `${i + 1}. ${s}`;
+    sel.appendChild(opt);
+  });
+  // Show/hide the history group
+  if (uiElements.autobrowseHistoryGroup) {
+    uiElements.autobrowseHistoryGroup.style.display = autobrowseHistory.length > 0 ? '' : 'none';
+  }
+}
+
+// Load autobrowse history state button
+if (uiElements.btnLoadAutobrowseHistory) {
+  uiElements.btnLoadAutobrowseHistory.addEventListener('click', () => {
+    const val = uiElements.autobrowseHistory.value;
+    if (val) {
+      // Stop autobrowse if running so user can examine the state
+      if (autobrowseTimer) stopAutobrowse(true);
+      if (autoBrowseInterval) stopAutoBrowse();
+      decodeState(val);
+    }
+  });
+}
+
 function showAutobrowsePopup(message) {
   if (!uiElements.autobrowsePopup) return;
   uiElements.autobrowsePopup.innerHTML = `<strong>Autobrowse</strong><p>${message}</p>`;
@@ -911,6 +966,7 @@ function startAutobrowse(interval, showMessage = false) {
   if (!interval || interval <= 0) return;
 
   autobrowseTimer = setInterval(() => {
+    recordAutobrowseState();
     const nextPattern = Math.floor(Math.random() * PATTERN_COUNT);
     uiElements.pattern.value = nextPattern;
     updateStateFromUI();
