@@ -141,6 +141,143 @@ select option {
   color: white;
 }
 
+#autobrowse-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#autobrowse-interval {
+  flex: 1;
+  padding: 4px;
+  background: #111;
+  color: var(--text);
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+#autobrowse-controls button {
+  margin-top: 0;
+  white-space: nowrap;
+}
+
+#autobrowse-status {
+  display: block;
+  font-size: 11px;
+  color: #9aa0aa;
+  margin-top: 4px;
+}
+
+.autobrowse-popup {
+  position: fixed;
+  right: 20px;
+  bottom: 110px;
+  max-width: 280px;
+  background: rgba(12, 18, 32, 0.92);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  z-index: 25;
+  pointer-events: none;
+}
+
+.autobrowse-popup.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.autobrowse-popup strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--cyan);
+  font-size: 13px;
+}
+
+.autobrowse-popup p {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.warning-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 2, 8, 0.94);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.warning-overlay.active {
+  display: flex;
+}
+
+.warning-content {
+  max-width: 520px;
+  background: rgba(14, 20, 36, 0.95);
+  border: 1px solid rgba(255, 0, 170, 0.35);
+  border-radius: 12px;
+  padding: 28px;
+  text-align: left;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.warning-content h2 {
+  color: var(--pink);
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.warning-content p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.warning-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.warning-actions button {
+  width: 100%;
+}
+
+.warning-actions a {
+  color: var(--cyan);
+  font-size: 12px;
+  text-align: center;
+  text-decoration: underline;
+}
+
+.warning-link {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--cyan);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.warning-link:hover {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--pink);
+}
+
+body.warning-active {
+  overflow: hidden;
+}
+
 </style>
 </head>
 <body>
@@ -152,6 +289,20 @@ select option {
 <div id="ui-layer">
   <div id="controls-panel" class="panel">
     <h2 style="font-size: 16px; margin-bottom: 10px; color: var(--cyan)">Glitch Loom</h2>
+
+    <div id="epilepsy-warning" class="warning-overlay" role="alert" aria-live="assertive">
+      <div class="warning-content">
+        <h2>Sensitive Visual Warning</h2>
+        <p>Glitch Loom generates rapidly changing colors, motion, and strobe-like effects that may trigger seizures, migraines, or other adverse reactions in people with photosensitive epilepsy or other visual sensitivities.</p>
+        <p>If you are unsure, please consult a medical professional before continuing. You can revisit this warning anytime via the menu.</p>
+        <div class="warning-actions">
+          <button id="warning-accept" class="btn-primary">I Understand &amp; Wish to Continue</button>
+          <button id="warning-decline">Leave This Page</button>
+          <a href="#" id="warning-learn-more">Learn about photosensitive epilepsy</a>
+        </div>
+      </div>
+    </div>
+    <button id="warning-reopen" class="warning-link" style="margin-bottom: 16px;">View Safety Warning</button>
     
     <div class="ctrl-group">
       <label>Animation Speed</label>
@@ -169,8 +320,33 @@ select option {
     </div>
     
     <div class="ctrl-group">
-      <label>Glitch Intensity</label>
-      <input type="range" id="glitch-intensity" min="0" max="100" value="20">
+      <div class="ctrl-row" style="justify-content: space-between; gap: 10px; align-items: flex-end;">
+        <div style="flex:1;">
+          <label>Glitch Intensity</label>
+          <input type="range" id="glitch-intensity" min="0" max="100" value="20">
+        </div>
+      </div>
+    </div>
+
+    <div class="ctrl-group" id="autobrowse-group">
+      <label for="autobrowse-interval">Autobrowse Interval</label>
+      <div id="autobrowse-controls">
+        <select id="autobrowse-interval">
+          <option value="0">Off</option>
+          <option value="1000">1 second</option>
+          <option value="2000">2 seconds</option>
+          <option value="3000">3 seconds</option>
+          <option value="4000">4 seconds</option>
+          <option value="5000">5 seconds</option>
+          <option value="6000">6 seconds</option>
+          <option value="7000">7 seconds</option>
+          <option value="8000">8 seconds</option>
+          <option value="9000">9 seconds</option>
+          <option value="10000">10 seconds</option>
+        </select>
+        <button id="autobrowse-toggle">Start</button>
+      </div>
+      <span id="autobrowse-status">Autobrowse is stopped.</span>
     </div>
 
     <div class="ctrl-group">
@@ -305,6 +481,7 @@ select option {
 </div>
 
 <button id="toggle-ui" class="toggle-ui-btn">Hide UI</button>
+<div id="autobrowse-popup" class="autobrowse-popup" role="status" aria-live="polite"></div>
 
 <script>
 const PATTERN_COUNT = 45;
@@ -342,7 +519,16 @@ const uiElements = {
   stateString: document.getElementById('state-string'),
   loadString: document.getElementById('load-string'),
   panel: document.getElementById('controls-panel'),
-  toggleBtn: document.getElementById('toggle-ui')
+  toggleBtn: document.getElementById('toggle-ui'),
+  autobrowseInterval: document.getElementById('autobrowse-interval'),
+  autobrowseToggle: document.getElementById('autobrowse-toggle'),
+  autobrowseStatus: document.getElementById('autobrowse-status'),
+  autobrowsePopup: document.getElementById('autobrowse-popup'),
+  warningOverlay: document.getElementById('epilepsy-warning'),
+  warningAccept: document.getElementById('warning-accept'),
+  warningDecline: document.getElementById('warning-decline'),
+  warningLearn: document.getElementById('warning-learn-more'),
+  warningReopen: document.getElementById('warning-reopen')
 };
 
 // Encode state to string
@@ -479,12 +665,42 @@ function updateStateFromUI() {
   encodeState();
 }
 
+let autobrowseTimer = null;
+let autobrowseStartTime = null;
+let popupTimeout = null;
+const AUTOPOPUP_DURATION = 2500;
+const WARNING_KEY = 'glitchLoomWarningAcknowledged';
+const AUTOBROWSE_KEY = 'glitchLoomAutobrowseInterval';
+
 // Event Listeners
 ['speed', 'density', 'colorShift', 'glitchIntensity', 'pattern', 'scaleMod', 'jitterMod', 'varA', 'varB', 'colorIntensity', 'noiseIntensity'].forEach(key => {
   uiElements[key].addEventListener('input', updateStateFromUI);
 });
 // Also update descriptions on pattern change
 uiElements.pattern.addEventListener('change', updateVarDescriptions);
+
+uiElements.autobrowseInterval.addEventListener('change', () => {
+  const interval = parseInt(uiElements.autobrowseInterval.value, 10);
+  if (window.localStorage) {
+    localStorage.setItem(AUTOBROWSE_KEY, interval.toString());
+  }
+  if (autobrowseTimer) {
+    startAutobrowse(interval);
+  }
+});
+
+uiElements.autobrowseToggle.addEventListener('click', () => {
+  if (autobrowseTimer) {
+    stopAutobrowse(true);
+  } else {
+    const interval = parseInt(uiElements.autobrowseInterval.value, 10) || 0;
+    if (interval > 0) {
+      startAutobrowse(interval, true);
+    } else {
+      showAutobrowsePopup('Select a timespan above to enable autobrowse.');
+    }
+  }
+});
 
 document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.speed.value = Math.floor(Math.random() * 100) + 1;
@@ -499,6 +715,9 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.colorIntensity.value = Math.floor(Math.random() * 101);
   uiElements.noiseIntensity.value = Math.floor(Math.random() * 101);
   updateStateFromUI();
+  if (autobrowseTimer) {
+    restartAutobrowseCycle();
+  }
 });
 
 let autoBrowseInterval = null;
@@ -624,7 +843,10 @@ document.getElementById('btn-copy-embed').addEventListener('click', () => {
 });
 
 document.getElementById('btn-load-state').addEventListener('click', () => {
-  decodeState(uiElements.loadString.value.trim());
+  const loaded = decodeState(uiElements.loadString.value.trim());
+  if (autobrowseTimer && loaded) {
+    restartAutobrowseCycle();
+  }
 });
 
 // Saved States Logic
@@ -673,6 +895,105 @@ uiElements.toggleBtn.addEventListener('click', () => {
   uiElements.panel.classList.toggle('hidden');
   uiElements.toggleBtn.textContent = uiElements.panel.classList.contains('hidden') ? 'Show UI' : 'Hide UI';
 });
+
+function showAutobrowsePopup(message) {
+  if (!uiElements.autobrowsePopup) return;
+  uiElements.autobrowsePopup.innerHTML = `<strong>Autobrowse</strong><p>${message}</p>`;
+  uiElements.autobrowsePopup.classList.add('visible');
+  clearTimeout(popupTimeout);
+  popupTimeout = setTimeout(() => {
+    uiElements.autobrowsePopup.classList.remove('visible');
+  }, AUTOPOPUP_DURATION);
+}
+
+function startAutobrowse(interval, showMessage = false) {
+  stopAutobrowse();
+  if (!interval || interval <= 0) return;
+
+  autobrowseTimer = setInterval(() => {
+    const nextPattern = Math.floor(Math.random() * PATTERN_COUNT);
+    uiElements.pattern.value = nextPattern;
+    updateStateFromUI();
+    encodeState();
+  }, interval);
+  autobrowseStartTime = performance.now();
+  uiElements.autobrowseToggle.textContent = 'Stop';
+  uiElements.autobrowseStatus.textContent = `Autobrowse running every ${(interval / 1000).toFixed(1)}s.`;
+
+  if (showMessage) {
+    showAutobrowsePopup(`Autobrowse is cycling patterns every ${(interval / 1000).toFixed(1)} seconds. Use the "Stop" button or set the interval to "Off" to end autobrowse.`);
+  }
+}
+
+function stopAutobrowse(userInitiated = false) {
+  if (autobrowseTimer) {
+    clearInterval(autobrowseTimer);
+    autobrowseTimer = null;
+  }
+  uiElements.autobrowseToggle.textContent = 'Start';
+  uiElements.autobrowseStatus.textContent = 'Autobrowse is stopped.';
+  if (userInitiated) {
+    showAutobrowsePopup('Autobrowse stopped. You can restart it anytime using the Start button.');
+  } else {
+    uiElements.autobrowsePopup?.classList.remove('visible');
+  }
+}
+
+function restartAutobrowseCycle() {
+  const interval = parseInt(uiElements.autobrowseInterval.value, 10);
+  if (interval > 0) {
+    startAutobrowse(interval);
+  }
+}
+
+function restoreAutobrowseFromStorage() {
+  if (!window.localStorage) return;
+  const stored = localStorage.getItem(AUTOBROWSE_KEY);
+  if (!stored) return;
+  const parsed = parseInt(stored, 10);
+  if (!Number.isFinite(parsed)) return;
+  uiElements.autobrowseInterval.value = parsed;
+  if (parsed > 0) {
+    startAutobrowse(parsed);
+  }
+}
+
+function initWarningOverlay() {
+  if (!uiElements.warningOverlay) return;
+  const acknowledged = window.localStorage && localStorage.getItem(WARNING_KEY) === 'true';
+  if (!acknowledged) {
+    document.body.classList.add('warning-active');
+    uiElements.warningOverlay.classList.add('active');
+  }
+
+  const closeWarning = (store = false) => {
+    uiElements.warningOverlay.classList.remove('active');
+    document.body.classList.remove('warning-active');
+    if (store && window.localStorage) {
+      localStorage.setItem(WARNING_KEY, 'true');
+    }
+  };
+
+  uiElements.warningAccept.addEventListener('click', () => {
+    closeWarning(true);
+  });
+
+  uiElements.warningDecline.addEventListener('click', () => {
+    window.location.href = 'https://www.google.com/search?q=photosensitive+epilepsy';
+  });
+
+  uiElements.warningLearn.addEventListener('click', (event) => {
+    event.preventDefault();
+    window.open('https://www.epilepsy.com/what-is-epilepsy/seizure-triggers/photosensitivity', '_blank', 'noopener');
+  });
+
+  if (uiElements.warningReopen) {
+    uiElements.warningReopen.addEventListener('click', () => {
+      document.body.classList.add('warning-active');
+      uiElements.warningOverlay.classList.add('active');
+    });
+  }
+}
 
 
 // Animation Engine
@@ -1319,6 +1640,8 @@ if (!loadedFromHash) {
   updateUIFromState();
   encodeState();
 }
+initWarningOverlay();
+restoreAutobrowseFromStorage();
 render();
 
 </script>
