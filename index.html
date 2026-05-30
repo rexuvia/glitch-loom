@@ -141,32 +141,7 @@ select option {
   color: white;
 }
 
-#autobrowse-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
 
-#autobrowse-interval {
-  flex: 1;
-  padding: 4px;
-  background: #111;
-  color: var(--text);
-  border: 1px solid #333;
-  border-radius: 4px;
-}
-
-#autobrowse-controls button {
-  margin-top: 0;
-  white-space: nowrap;
-}
-
-#autobrowse-status {
-  display: block;
-  font-size: 11px;
-  color: #9aa0aa;
-  margin-top: 4px;
-}
 
 .autobrowse-popup {
   position: fixed;
@@ -432,24 +407,20 @@ body.warning-active {
     <button id="btn-autobrowse" class="btn-primary" style="margin-top: 4px;">✨ Auto-Browse</button>
 
     <div class="ctrl-group" id="autobrowse-group" style="margin-top: 4px;">
-      <label for="autobrowse-interval">Autobrowse Interval</label>
-      <div id="autobrowse-controls">
-        <select id="autobrowse-interval">
-          <option value="0">Off</option>
-          <option value="1000">1 second</option>
-          <option value="2000">2 seconds</option>
-          <option value="3000">3 seconds</option>
-          <option value="4000">4 seconds</option>
-          <option value="5000">5 seconds</option>
-          <option value="6000">6 seconds</option>
-          <option value="7000">7 seconds</option>
-          <option value="8000">8 seconds</option>
-          <option value="9000">9 seconds</option>
-          <option value="10000">10 seconds</option>
-        </select>
-        <button id="autobrowse-toggle">Start</button>
-      </div>
-      <span id="autobrowse-status">Autobrowse is stopped.</span>
+      <label for="autobrowse-interval">Interval</label>
+      <select id="autobrowse-interval" style="width:100%; padding:4px; background:#111; color:var(--text); border:1px solid #333; border-radius:4px;">
+        <option value="1000">1 second</option>
+        <option value="2000">2 seconds</option>
+        <option value="3000" selected>3 seconds</option>
+        <option value="4000">4 seconds</option>
+        <option value="5000">5 seconds</option>
+        <option value="6000">6 seconds</option>
+        <option value="7000">7 seconds</option>
+        <option value="8000">8 seconds</option>
+        <option value="9000">9 seconds</option>
+        <option value="10000">10 seconds</option>
+      </select>
+      <span id="autobrowse-status" style="font-size:11px; color:#9aa0aa; margin-top:4px;">Autobrowse is stopped.</span>
     </div>
 
     <div class="ctrl-group" id="autobrowse-history-group" style="margin-top: 4px; display: none;">
@@ -529,9 +500,9 @@ const uiElements = {
   panel: document.getElementById('controls-panel'),
   toggleBtn: document.getElementById('toggle-ui'),
   autobrowseInterval: document.getElementById('autobrowse-interval'),
-  autobrowseToggle: document.getElementById('autobrowse-toggle'),
   autobrowseStatus: document.getElementById('autobrowse-status'),
   autobrowsePopup: document.getElementById('autobrowse-popup'),
+  autobrowseGroup: document.getElementById('autobrowse-group'),
   autobrowseHistory: document.getElementById('autobrowse-history'),
   autobrowseHistoryGroup: document.getElementById('autobrowse-history-group'),
   btnLoadAutobrowseHistory: document.getElementById('btn-load-autobrowse-history'),
@@ -677,7 +648,7 @@ function updateStateFromUI() {
 }
 
 let autobrowseTimer = null;
-let autobrowseStartTime = null;
+let autobrowseActive = false;
 let popupTimeout = null;
 const AUTOPOPUP_DURATION = 2500;
 const AUTOBROWSE_HISTORY_MAX = 5;
@@ -697,21 +668,9 @@ uiElements.autobrowseInterval.addEventListener('change', () => {
   if (window.localStorage) {
     localStorage.setItem(AUTOBROWSE_KEY, interval.toString());
   }
-  if (autobrowseTimer) {
+  // If autobrowse is running, restart with new interval
+  if (autobrowseActive) {
     startAutobrowse(interval);
-  }
-});
-
-uiElements.autobrowseToggle.addEventListener('click', () => {
-  if (autobrowseTimer) {
-    stopAutobrowse(true);
-  } else {
-    const interval = parseInt(uiElements.autobrowseInterval.value, 10) || 0;
-    if (interval > 0) {
-      startAutobrowse(interval, true);
-    } else {
-      showAutobrowsePopup('Select a timespan above to enable autobrowse.');
-    }
   }
 });
 
@@ -728,55 +687,18 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   uiElements.colorIntensity.value = Math.floor(Math.random() * 101);
   uiElements.noiseIntensity.value = Math.floor(Math.random() * 101);
   updateStateFromUI();
-  if (autobrowseTimer) {
+  if (autobrowseActive) {
     restartAutobrowseCycle();
   }
 });
 
-let autoBrowseInterval = null;
-let lastAutoBrowseStart = 0;
-
-function stopAutoBrowse() {
-  if (autoBrowseInterval) {
-    clearInterval(autoBrowseInterval);
-    autoBrowseInterval = null;
-    document.getElementById('ui-layer').style.display = '';
-  }
-}
-
-function handleInteraction(e) {
-  if (Date.now() - lastAutoBrowseStart < 500) return; // Prevent immediate cancel
-  stopAutoBrowse();
-}
-
-window.addEventListener('click', handleInteraction, true);
-window.addEventListener('touchstart', handleInteraction, true);
-window.addEventListener('keydown', handleInteraction, true);
-
 document.getElementById('btn-autobrowse').addEventListener('click', () => {
-  lastAutoBrowseStart = Date.now();
-  document.getElementById('ui-layer').style.display = 'none';
-  
-  const triggerRandom = () => {
-    recordAutobrowseState();
-    uiElements.speed.value = Math.floor(Math.random() * 100) + 1;
-    uiElements.density.value = Math.floor(Math.random() * 190) + 10;
-    uiElements.colorShift.value = Math.floor(Math.random() * 360);
-    uiElements.glitchIntensity.value = Math.floor(Math.random() * 100);
-    uiElements.pattern.value = Math.floor(Math.random() * PATTERN_COUNT);
-    uiElements.scaleMod.value = Math.floor(Math.random() * 100) + 1;
-    uiElements.jitterMod.value = Math.floor(Math.random() * 100);
-    uiElements.varA.value = Math.floor(Math.random() * 101);
-    uiElements.varB.value = Math.floor(Math.random() * 101);
-    uiElements.colorIntensity.value = Math.floor(Math.random() * 101);
-    uiElements.noiseIntensity.value = Math.floor(Math.random() * 101);
-    updateStateFromUI();
-  };
-  
-  triggerRandom(); // Initial hit
-  
-  if (autoBrowseInterval) clearInterval(autoBrowseInterval);
-  autoBrowseInterval = setInterval(triggerRandom, 3000);
+  if (autobrowseActive) {
+    stopAutobrowse(true);
+  } else {
+    const interval = parseInt(uiElements.autobrowseInterval.value, 10) || 3000;
+    startAutobrowse(interval, true);
+  }
 });
 
 document.getElementById('btn-copy-state').addEventListener('click', () => {
@@ -858,7 +780,7 @@ document.getElementById('btn-copy-embed').addEventListener('click', () => {
 
 document.getElementById('btn-load-state').addEventListener('click', () => {
   const loaded = decodeState(uiElements.loadString.value.trim());
-  if (autobrowseTimer && loaded) {
+  if (autobrowseActive && loaded) {
     restartAutobrowseCycle();
   }
 });
@@ -944,8 +866,7 @@ if (uiElements.btnLoadAutobrowseHistory) {
     const val = uiElements.autobrowseHistory.value;
     if (val) {
       // Stop autobrowse if running so user can examine the state
-      if (autobrowseTimer) stopAutobrowse(true);
-      if (autoBrowseInterval) stopAutoBrowse();
+      if (autobrowseActive) stopAutobrowse(true);
       decodeState(val);
     }
   });
@@ -961,23 +882,42 @@ function showAutobrowsePopup(message) {
   }, AUTOPOPUP_DURATION);
 }
 
+function randomizeAll() {
+  recordAutobrowseState();
+  uiElements.speed.value = Math.floor(Math.random() * 100) + 1;
+  uiElements.density.value = Math.floor(Math.random() * 190) + 10;
+  uiElements.colorShift.value = Math.floor(Math.random() * 360);
+  uiElements.glitchIntensity.value = Math.floor(Math.random() * 100);
+  uiElements.pattern.value = Math.floor(Math.random() * PATTERN_COUNT);
+  uiElements.scaleMod.value = Math.floor(Math.random() * 100) + 1;
+  uiElements.jitterMod.value = Math.floor(Math.random() * 100);
+  uiElements.varA.value = Math.floor(Math.random() * 101);
+  uiElements.varB.value = Math.floor(Math.random() * 101);
+  uiElements.colorIntensity.value = Math.floor(Math.random() * 101);
+  uiElements.noiseIntensity.value = Math.floor(Math.random() * 101);
+  updateStateFromUI();
+}
+
 function startAutobrowse(interval, showMessage = false) {
   stopAutobrowse();
   if (!interval || interval <= 0) return;
 
+  // Do an initial randomize immediately
+  randomizeAll();
+
   autobrowseTimer = setInterval(() => {
-    recordAutobrowseState();
-    const nextPattern = Math.floor(Math.random() * PATTERN_COUNT);
-    uiElements.pattern.value = nextPattern;
-    updateStateFromUI();
-    encodeState();
+    randomizeAll();
   }, interval);
-  autobrowseStartTime = performance.now();
-  uiElements.autobrowseToggle.textContent = 'Stop';
-  uiElements.autobrowseStatus.textContent = `Autobrowse running every ${(interval / 1000).toFixed(1)}s.`;
+  autobrowseActive = true;
+
+  // Update button to show active state
+  const btn = document.getElementById('btn-autobrowse');
+  btn.textContent = '⏹ Stop Auto-Browse';
+  btn.style.background = 'linear-gradient(90deg, #ff4444, #ff00aa)';
+  uiElements.autobrowseStatus.textContent = `Running every ${(interval / 1000).toFixed(0)}s`;
 
   if (showMessage) {
-    showAutobrowsePopup(`Autobrowse is cycling patterns every ${(interval / 1000).toFixed(1)} seconds. Use the "Stop" button or set the interval to "Off" to end autobrowse.`);
+    showAutobrowsePopup(`Auto-browsing every ${(interval / 1000).toFixed(0)}s. Click ⏹ Stop to end.`);
   }
 }
 
@@ -986,10 +926,16 @@ function stopAutobrowse(userInitiated = false) {
     clearInterval(autobrowseTimer);
     autobrowseTimer = null;
   }
-  uiElements.autobrowseToggle.textContent = 'Start';
+  autobrowseActive = false;
+
+  // Restore button
+  const btn = document.getElementById('btn-autobrowse');
+  btn.textContent = '✨ Auto-Browse';
+  btn.style.background = '';
   uiElements.autobrowseStatus.textContent = 'Autobrowse is stopped.';
+
   if (userInitiated) {
-    showAutobrowsePopup('Autobrowse stopped. You can restart it anytime using the Start button.');
+    showAutobrowsePopup('Autobrowse stopped.');
   } else {
     uiElements.autobrowsePopup?.classList.remove('visible');
   }
@@ -1007,11 +953,9 @@ function restoreAutobrowseFromStorage() {
   const stored = localStorage.getItem(AUTOBROWSE_KEY);
   if (!stored) return;
   const parsed = parseInt(stored, 10);
-  if (!Number.isFinite(parsed)) return;
+  if (!Number.isFinite(parsed) || parsed <= 0) return;
   uiElements.autobrowseInterval.value = parsed;
-  if (parsed > 0) {
-    startAutobrowse(parsed);
-  }
+  // Don't auto-start on page load — just restore the interval preference
 }
 
 function initWarningOverlay() {
