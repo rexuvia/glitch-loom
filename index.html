@@ -367,7 +367,7 @@ body.warning-active {
           <option value="20">Mandelbrot Zoom</option>
           <option value="21">Newton Basin</option>
         </optgroup>
-        <optgroup label="── New: Geometric ──">
+        <optgroup label="── Geometric ──">
           <option value="22">Voronoi</option>
           <option value="23">Diamond Lattice</option>
           <option value="24">Hypnotic Rings</option>
@@ -375,30 +375,36 @@ body.warning-active {
           <option value="26">Starfield</option>
           <option value="27">Tunnel</option>
         </optgroup>
-        <optgroup label="── New: Organic ──">
+        <optgroup label="── Organic ──">
           <option value="28">Reaction Diffusion</option>
           <option value="29">Moire</option>
           <option value="30">Lissajous Web</option>
           <option value="31">Plasma</option>
           <option value="32">Lightning</option>
         </optgroup>
-        <optgroup label="── New: Digital ──">
+        <optgroup label="── Digital ──">
           <option value="33">Data Stream</option>
           <option value="34">Glitch Bars</option>
           <option value="35">Bit Shift</option>
           <option value="36">Scanlines</option>
           <option value="37">Pixel Sort</option>
         </optgroup>
-        <optgroup label="── New: Mathematical ──">
+        <optgroup label="── Mathematical ──">
           <option value="38">Lemniscate</option>
           <option value="39">Hyperbolic Tiling</option>
           <option value="40">Strange Attractor</option>
           <option value="41">Clifford Attractor</option>
         </optgroup>
-        <optgroup label="── New: Space ──">
+        <optgroup label="── Space ──">
           <option value="42">Nebula</option>
           <option value="43">Aurora</option>
           <option value="44">Event Horizon</option>
+        </optgroup>
+        <optgroup label="── Botanical &amp; Quantum ──">
+          <option value="45">Phyllotaxis</option>
+          <option value="46">Ripple Field</option>
+          <option value="47">Quantum Foam</option>
+          <option value="48">Truchet Tiles</option>
         </optgroup>
       </select>
     </div>
@@ -463,7 +469,7 @@ body.warning-active {
 <div id="autobrowse-popup" class="autobrowse-popup" role="status" aria-live="polite"></div>
 
 <script>
-const PATTERN_COUNT = 45;
+const PATTERN_COUNT = 49;
 
 // Compact state representation
 const state = {
@@ -654,7 +660,8 @@ const AUTOPOPUP_DURATION = 2500;
 const AUTOBROWSE_HISTORY_MAX = 5;
 let autobrowseHistory = [];
 const WARNING_KEY = 'glitchLoomWarningAcknowledged';
-const AUTOBROWSE_KEY = 'glitchLoomAutobrowseInterval';
+// Note: Autobrowse interval/state is intentionally NOT persisted to storage.
+// Autobrowse always defaults to OFF on every page load (see issue #18).
 
 // Event Listeners
 ['speed', 'density', 'colorShift', 'glitchIntensity', 'pattern', 'scaleMod', 'jitterMod', 'varA', 'varB', 'colorIntensity', 'noiseIntensity'].forEach(key => {
@@ -665,9 +672,7 @@ uiElements.pattern.addEventListener('change', updateVarDescriptions);
 
 uiElements.autobrowseInterval.addEventListener('change', () => {
   const interval = parseInt(uiElements.autobrowseInterval.value, 10);
-  if (window.localStorage) {
-    localStorage.setItem(AUTOBROWSE_KEY, interval.toString());
-  }
+  // Interval is intentionally not persisted; autobrowse state is never saved.
   // If autobrowse is running, restart with new interval
   if (autobrowseActive) {
     startAutobrowse(interval);
@@ -948,15 +953,6 @@ function restartAutobrowseCycle() {
   }
 }
 
-function restoreAutobrowseFromStorage() {
-  if (!window.localStorage) return;
-  const stored = localStorage.getItem(AUTOBROWSE_KEY);
-  if (!stored) return;
-  const parsed = parseInt(stored, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) return;
-  uiElements.autobrowseInterval.value = parsed;
-  // Don't auto-start on page load — just restore the interval preference
-}
 
 function initWarningOverlay() {
   if (!uiElements.warningOverlay) return;
@@ -1105,7 +1101,11 @@ const VAR_DESCS = {
   41: ['Param A',        'Param B'],
   42: ['Cloud Density',  'Threshold'],
   43: ['Band Freq',      'Shimmer'],
-  44: ['Warp Strength',  'Accretion Arms']
+  44: ['Warp Strength',  'Accretion Arms'],
+  45: ['Seed Count',     'Spiral Tightness'],
+  46: ['Source Count',   'Ripple Speed'],
+  47: ['Bubble Scale',   'Churn Speed'],
+  48: ['Tile Density',   'Curl Speed']
 };
 
 function updateVarDescriptions() {
@@ -1314,7 +1314,7 @@ function computePattern(px, py, pattern, t) {
       return Math.sin(root * Math.PI * 6) * (iter / maxIter);
     }
 
-    // ── New: Geometric ──
+    // ── Geometric ──
     case 22: { // Voronoi — vA: seed count (3-12), vB: edge sharpness (30-150)
       let seedCnt = 3 + Math.floor(vA * 9);
       let sharpness = 30 + vB * 120;
@@ -1375,7 +1375,7 @@ function computePattern(px, py, pattern, t) {
       return Math.sin(u * twistR + t * 2) * Math.cos((v + t) * depthSpd);
     }
 
-    // ── New: Organic ──
+    // ── Organic ──
     case 28: { // Reaction Diffusion — vA/vB handled in render() for feed/kill rates
       return 0;
     }
@@ -1413,7 +1413,7 @@ function computePattern(px, py, pattern, t) {
       return branch < bWidth ? 1 : Math.sin(branch * 300 - t * 10) * (1 - fy);
     }
 
-    // ── New: Digital ──
+    // ── Digital ──
     case 33: { // Data Stream — vA: column count (10-40), vB: drop length (0.05-0.3)
       let colCnt = 10 + Math.floor(vA * 30);
       let dropLen = 0.05 + vB * 0.25;
@@ -1456,7 +1456,7 @@ function computePattern(px, py, pattern, t) {
       return Math.sin(sortedRow * 0.7 + col2 * 1.3 + t);
     }
 
-    // ── New: Mathematical ──
+    // ── Mathematical ──
     case 38: { // Lemniscate — vA: field size (0.05-0.3), vB: wave speed (1-6)
       let cx = px - 0.5, cy = py - 0.5;
       let fieldSz = 0.05 + vA * 0.25;
@@ -1498,7 +1498,7 @@ function computePattern(px, py, pattern, t) {
       return Math.sin(nx * 5 + ny * 5 + t);
     }
 
-    // ── New: Space ──
+    // ── Space ──
     case 42: { // Nebula — vA: cloud density (10-35), vB: visibility threshold (-0.2 to 0.4)
       let cloudD = 10 + vA * 25;
       let thresh = -0.2 + vB * 0.6;
@@ -1526,6 +1526,57 @@ function computePattern(px, py, pattern, t) {
       let frame = angle + warp * warpStr + t * 0.5;
       let accretion = Math.sin(frame * accArms) * warp;
       return dist < 0.08 ? -1 : accretion + Math.sin(dist * 50 - t * 4) * (1 - warp) * 0.3;
+    }
+
+    // ── Botanical & Quantum ──
+    case 45: { // Phyllotaxis — vA: seed count (40-260), vB: spiral tightness (golden-angle detune)
+      let seeds = 40 + Math.floor(vA * 220);
+      let tightness = 2.0 + vB * 1.2; // ~golden angle in radians, slightly tunable
+      let dx = px - 0.5, dy = py - 0.5;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let ang = Math.atan2(dy, dx);
+      // Sunflower/floret packing: nearest seed ring modulated over time
+      let r = dist * Math.sqrt(seeds);
+      let phi = ang + r * tightness - t * 0.4;
+      return Math.cos(phi * 1.0) * Math.sin(r * Math.PI * 1.5 - t);
+    }
+    case 46: { // Ripple Field — vA: source count (1-6), vB: ripple speed (1-9)
+      let sources = 1 + Math.floor(vA * 5);
+      let rippleSpd = 1 + vB * 8;
+      let acc = 0;
+      for (let i = 0; i < sources; i++) {
+        let phase = (i / sources) * Math.PI * 2;
+        let sx = 0.5 + Math.cos(phase + t * 0.2) * 0.35;
+        let sy = 0.5 + Math.sin(phase * 1.3 + t * 0.17) * 0.35;
+        let d = Math.sqrt((px - sx)*(px - sx) + (py - sy)*(py - sy));
+        acc += Math.sin(d * 40 - t * rippleSpd);
+      }
+      return acc / sources;
+    }
+    case 47: { // Quantum Foam — vA: bubble scale (6-30), vB: churn speed (0.2-4)
+      let scale = 6 + vA * 24;
+      let churn = 0.2 + vB * 3.8;
+      // Layered interfering cells that bubble and pop
+      let a = Math.sin(px * scale + Math.cos(py * scale + t * churn));
+      let b = Math.cos(py * scale * 1.3 - Math.sin(px * scale * 0.7 + t * churn * 0.8));
+      let c = Math.sin((px + py) * scale * 0.5 + t * churn * 1.2);
+      let foam = (a * b + c) * 0.5;
+      // Sharpen into bubble-like edges
+      return Math.sin(foam * Math.PI);
+    }
+    case 48: { // Truchet Tiles — vA: tile density (4-20), vB: curl speed (0.2-4)
+      let dens = 4 + Math.floor(vA * 16);
+      let curl = 0.2 + vB * 3.8;
+      let gx = px * dens, gy = py * dens;
+      let cx = Math.floor(gx), cy = Math.floor(gy);
+      let fx = gx - cx, fy = gy - cy;
+      // Per-tile orientation flips based on parity + time
+      let flip = ((cx + cy) & 1) ^ (Math.sin(cx * 12.9898 + cy * 78.233 + t * curl) > 0 ? 1 : 0);
+      // Distance to the two arc centers of a Truchet tile
+      let d1 = Math.sqrt(fx*fx + fy*fy);
+      let d2 = Math.sqrt((1-fx)*(1-fx) + (1-fy)*(1-fy));
+      let d = flip ? Math.min(d1, d2) : Math.min(Math.sqrt((1-fx)*(1-fx)+fy*fy), Math.sqrt(fx*fx+(1-fy)*(1-fy)));
+      return Math.sin((d - 0.5) * Math.PI * 4 + t * curl);
     }
 
     default:
@@ -1641,7 +1692,11 @@ if (!loadedFromHash) {
   encodeState();
 }
 initWarningOverlay();
-restoreAutobrowseFromStorage();
+// Autobrowse always starts OFF on page load and its state is never persisted (issue #18).
+// Clean up any legacy persisted interval key from older versions.
+if (window.localStorage) {
+  try { localStorage.removeItem('glitchLoomAutobrowseInterval'); } catch (e) {}
+}
 render();
 
 </script>
