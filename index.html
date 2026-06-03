@@ -544,6 +544,100 @@ function encodeState() {
   return str;
 }
 
+// Pure decoder: parse an encoded state string into a plain object WITHOUT
+// touching the global `state`. Returns null if the string is unrecognized.
+// Supports all legacy/current formats by reusing decodeState on a temp object.
+function parseStateString(str) {
+  const fields = ['speed','density','colorShift','glitchIntensity','pattern',
+    'scaleMod','jitterMod','varA','varB','colorIntensity','noiseIntensity'];
+  // Temporarily redirect mutations: snapshot global state, decode, capture, restore.
+  const snapshot = {};
+  fields.forEach(f => snapshot[f] = state[f]);
+  let ok = false;
+  try {
+    ok = decodeStateInto(state, str);
+  } catch (e) {
+    ok = false;
+  }
+  let result = null;
+  if (ok) {
+    result = {};
+    fields.forEach(f => result[f] = state[f]);
+  }
+  // restore
+  fields.forEach(f => state[f] = snapshot[f]);
+  return result;
+}
+
+// Core decode that writes parsed values into the provided target object.
+// Returns true on success. Does NOT update the UI (caller decides).
+function decodeStateInto(target, str) {
+  if (str.length === 22) {
+    target.speed          = parseInt(str.substr(0, 2), 36);
+    target.density        = parseInt(str.substr(2, 2), 36);
+    target.colorShift     = parseInt(str.substr(4, 2), 36);
+    target.glitchIntensity= parseInt(str.substr(6, 2), 36);
+    target.pattern        = parseInt(str.substr(8, 2), 36);
+    target.scaleMod       = parseInt(str.substr(10, 2), 36);
+    target.jitterMod      = parseInt(str.substr(12, 2), 36);
+    target.varA           = parseInt(str.substr(14, 2), 36);
+    target.varB           = parseInt(str.substr(16, 2), 36);
+    target.colorIntensity = parseInt(str.substr(18, 2), 36);
+    target.noiseIntensity = parseInt(str.substr(20, 2), 36);
+  } else if (str.length === 18) {
+    target.speed          = parseInt(str.substr(0, 2), 36);
+    target.density        = parseInt(str.substr(2, 2), 36);
+    target.colorShift     = parseInt(str.substr(4, 2), 36);
+    target.glitchIntensity= parseInt(str.substr(6, 2), 36);
+    target.pattern        = parseInt(str.substr(8, 2), 36);
+    target.scaleMod       = parseInt(str.substr(10, 2), 36);
+    target.jitterMod      = parseInt(str.substr(12, 2), 36);
+    target.varA           = parseInt(str.substr(14, 2), 36);
+    target.varB           = parseInt(str.substr(16, 2), 36);
+    target.colorIntensity = 100;
+    target.noiseIntensity = 0;
+  } else if (str.length === 14) {
+    target.speed          = parseInt(str.substr(0, 2), 36);
+    target.density        = parseInt(str.substr(2, 2), 36);
+    target.colorShift     = parseInt(str.substr(4, 2), 36);
+    target.glitchIntensity= parseInt(str.substr(6, 2), 36);
+    target.pattern        = parseInt(str.substr(8, 2), 36);
+    target.scaleMod       = parseInt(str.substr(10, 2), 36);
+    target.jitterMod      = parseInt(str.substr(12, 2), 36);
+    target.varA           = 50;
+    target.varB           = 50;
+    target.colorIntensity = 100;
+    target.noiseIntensity = 0;
+  } else if (str.length === 13) {
+    target.speed          = parseInt(str.substr(0, 2), 36);
+    target.density        = parseInt(str.substr(2, 2), 36);
+    target.colorShift     = parseInt(str.substr(4, 2), 36);
+    target.glitchIntensity= parseInt(str.substr(6, 2), 36);
+    target.pattern        = parseInt(str.substr(8, 1), 36);
+    target.scaleMod       = parseInt(str.substr(9, 2), 36);
+    target.jitterMod      = parseInt(str.substr(11, 2), 36);
+    target.varA           = 50;
+    target.varB           = 50;
+    target.colorIntensity = 100;
+    target.noiseIntensity = 0;
+  } else if (str.length === 9) {
+    target.speed          = parseInt(str.substr(0, 2), 36);
+    target.density        = parseInt(str.substr(2, 2), 36);
+    target.colorShift     = parseInt(str.substr(4, 2), 36);
+    target.glitchIntensity= parseInt(str.substr(6, 2), 36);
+    target.pattern        = parseInt(str.substr(8, 1), 36);
+    target.scaleMod       = 50;
+    target.jitterMod      = 0;
+    target.varA           = 50;
+    target.varB           = 50;
+    target.colorIntensity = 100;
+    target.noiseIntensity = 0;
+  } else {
+    return false;
+  }
+  return true;
+}
+
 // Decode state from string
 // Supports legacy 9/13-char formats (single-char pattern) and new 14-char format
 function decodeState(str) {
@@ -714,27 +808,31 @@ document.getElementById('btn-spawn').addEventListener('click', () => {
     idx2 = Math.floor(Math.random() * keys.length);
   }
   
-  const parent1 = states[keys[idx1]];
-  const parent2 = states[keys[idx2]];
-  
-  // Combine traits
-  uiElements.speed.value = Math.random() > 0.5 ? parent1.speed : parent2.speed;
-  uiElements.density.value = Math.random() > 0.5 ? parent1.density : parent2.density;
-  uiElements.colorShift.value = Math.random() > 0.5 ? parent1.colorShift : parent2.colorShift;
-  uiElements.glitchIntensity.value = Math.random() > 0.5 ? parent1.glitchIntensity : parent2.glitchIntensity;
-  uiElements.pattern.value = Math.random() > 0.5 ? parent1.pattern : parent2.pattern;
-  uiElements.scaleMod.value = Math.random() > 0.5 ? parent1.scaleMod : parent2.scaleMod;
-  uiElements.jitterMod.value = Math.random() > 0.5 ? parent1.jitterMod : parent2.jitterMod;
-  uiElements.varA.value = Math.random() > 0.5 ? parent1.varA : parent2.varA;
-  uiElements.varB.value = Math.random() > 0.5 ? parent1.varB : parent2.varB;
-  uiElements.colorIntensity.value = Math.random() > 0.5 ? parent1.colorIntensity : parent2.colorIntensity;
-  uiElements.noiseIntensity.value = Math.random() > 0.5 ? parent1.noiseIntensity : parent2.noiseIntensity;
-  
+  // Saved states are stored as ENCODED STRINGS, so decode each parent into a
+  // plain {field: value} object before performing genetic crossover.
+  const parent1 = parseStateString(states[keys[idx1]]);
+  const parent2 = parseStateString(states[keys[idx2]]);
+
+  if (!parent1 || !parent2) {
+    showAutobrowsePopup("Couldn't decode one of the parent states");
+    return;
+  }
+
+  // Genetic crossover: for each gene (parameter), independently inherit the
+  // value from either Parent A or Parent B at random (uniform crossover).
+  // The offspring is a mosaic combination of both parents' characteristics.
+  const genes = ['speed','density','colorShift','glitchIntensity','pattern',
+    'scaleMod','jitterMod','varA','varB','colorIntensity','noiseIntensity'];
+  genes.forEach(gene => {
+    const inheritFromParent1 = Math.random() < 0.5;
+    uiElements[gene].value = inheritFromParent1 ? parent1[gene] : parent2[gene];
+  });
+
   updateStateFromUI();
   if (autobrowseActive) {
     restartAutobrowseCycle();
   }
-  showAutobrowsePopup(`Spawned from "${keys[idx1]}" and "${keys[idx2]}"!`);
+  showAutobrowsePopup(`🧬 Spawned offspring from "${keys[idx1]}" × "${keys[idx2]}"!`);
 });
 
 document.getElementById('btn-autobrowse').addEventListener('click', () => {
