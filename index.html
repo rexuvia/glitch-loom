@@ -410,6 +410,7 @@ body.warning-active {
     </div>
 
     <button id="btn-randomize" class="btn-primary">Randomize</button>
+    <button id="btn-spawn" class="btn-primary" style="margin-top: 4px;">🧬 Spawn (Combine)</button>
     <button id="btn-autobrowse" class="btn-primary" style="margin-top: 4px;">✨ Auto-Browse</button>
 
     <div class="ctrl-group" id="autobrowse-group" style="margin-top: 4px;">
@@ -696,6 +697,44 @@ document.getElementById('btn-randomize').addEventListener('click', () => {
   if (autobrowseActive) {
     restartAutobrowseCycle();
   }
+});
+
+document.getElementById('btn-spawn').addEventListener('click', () => {
+  const states = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  const keys = Object.keys(states);
+  if (keys.length < 2) {
+    showAutobrowsePopup("Need at least 2 saved states to spawn");
+    return;
+  }
+  
+  // Pick two random distinct states
+  const idx1 = Math.floor(Math.random() * keys.length);
+  let idx2 = Math.floor(Math.random() * keys.length);
+  while (idx2 === idx1) {
+    idx2 = Math.floor(Math.random() * keys.length);
+  }
+  
+  const parent1 = states[keys[idx1]];
+  const parent2 = states[keys[idx2]];
+  
+  // Combine traits
+  uiElements.speed.value = Math.random() > 0.5 ? parent1.speed : parent2.speed;
+  uiElements.density.value = Math.random() > 0.5 ? parent1.density : parent2.density;
+  uiElements.colorShift.value = Math.random() > 0.5 ? parent1.colorShift : parent2.colorShift;
+  uiElements.glitchIntensity.value = Math.random() > 0.5 ? parent1.glitchIntensity : parent2.glitchIntensity;
+  uiElements.pattern.value = Math.random() > 0.5 ? parent1.pattern : parent2.pattern;
+  uiElements.scaleMod.value = Math.random() > 0.5 ? parent1.scaleMod : parent2.scaleMod;
+  uiElements.jitterMod.value = Math.random() > 0.5 ? parent1.jitterMod : parent2.jitterMod;
+  uiElements.varA.value = Math.random() > 0.5 ? parent1.varA : parent2.varA;
+  uiElements.varB.value = Math.random() > 0.5 ? parent1.varB : parent2.varB;
+  uiElements.colorIntensity.value = Math.random() > 0.5 ? parent1.colorIntensity : parent2.colorIntensity;
+  uiElements.noiseIntensity.value = Math.random() > 0.5 ? parent1.noiseIntensity : parent2.noiseIntensity;
+  
+  updateStateFromUI();
+  if (autobrowseActive) {
+    restartAutobrowseCycle();
+  }
+  showAutobrowsePopup(`Spawned from "${keys[idx1]}" and "${keys[idx2]}"!`);
 });
 
 document.getElementById('btn-autobrowse').addEventListener('click', () => {
