@@ -818,17 +818,46 @@ document.getElementById('btn-spawn').addEventListener('click', () => {
     return;
   }
 
-  // Genetic crossover: for each gene (parameter), independently inherit the
-  // value from either Parent A or Parent B at random (uniform crossover).
-  // The offspring is a mosaic combination of both parents' characteristics.
+  // Genetic crossover (uniform crossover): for each gene (parameter),
+  // independently inherit the value from either Parent A or Parent B at
+  // random. Every gene value in the offspring is therefore a discrete value
+  // taken strictly from one of the two parents — never an average, a default,
+  // or a slider reset. The result is a true mosaic of both parents.
+  //
+  // All genes here are discrete numeric parameters (sliders) or the `pattern`
+  // select; there are no boolean genes, so a single per-gene coin flip is the
+  // correct crossover operator for every parameter.
   const genes = ['speed','density','colorShift','glitchIntensity','pattern',
     'scaleMod','jitterMod','varA','varB','colorIntensity','noiseIntensity'];
+
+  // Build the offspring genome, recording which parent each gene came from.
+  const offspring = {};
+  const inheritedFrom = {};
   genes.forEach(gene => {
-    const inheritFromParent1 = Math.random() < 0.5;
-    uiElements[gene].value = inheritFromParent1 ? parent1[gene] : parent2[gene];
+    const fromParent1 = Math.random() < 0.5;
+    offspring[gene] = fromParent1 ? parent1[gene] : parent2[gene];
+    inheritedFrom[gene] = fromParent1 ? 1 : 2;
   });
 
-  updateStateFromUI();
+  // If the parents differ on at least one gene, guarantee the offspring is an
+  // actual blend rather than an accidental exact clone of a single parent.
+  // (Uniform crossover can, by chance, draw every gene from the same parent.)
+  const differingGenes = genes.filter(g => parent1[g] !== parent2[g]);
+  if (differingGenes.length > 0) {
+    const allFrom1 = differingGenes.every(g => inheritedFrom[g] === 1);
+    const allFrom2 = differingGenes.every(g => inheritedFrom[g] === 2);
+    if (allFrom1 || allFrom2) {
+      // Flip one differing gene to the other parent so both contribute.
+      const flip = differingGenes[Math.floor(Math.random() * differingGenes.length)];
+      offspring[flip] = (inheritedFrom[flip] === 1) ? parent2[flip] : parent1[flip];
+      inheritedFrom[flip] = inheritedFrom[flip] === 1 ? 2 : 1;
+    }
+  }
+
+  // Apply the offspring genome to the live state, then render it to the UI so
+  // the sliders/select reflect the newly combined characteristics.
+  genes.forEach(gene => { state[gene] = offspring[gene]; });
+  updateUIFromState();
   if (autobrowseActive) {
     restartAutobrowseCycle();
   }
