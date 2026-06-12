@@ -406,6 +406,26 @@ body.warning-active {
           <option value="47">Quantum Foam</option>
           <option value="48">Truchet Tiles</option>
         </optgroup>
+        <optgroup label="── Flow &amp; Field ──">
+          <option value="49">Curl Flow</option>
+          <option value="50">Magnetic Field</option>
+          <option value="51">Domain Warp</option>
+          <option value="52">Worley Cells</option>
+        </optgroup>
+        <optgroup label="── Crystalline ──">
+          <option value="53">Penrose Weave</option>
+          <option value="54">Gyroid Slice</option>
+          <option value="55">Interference Mesh</option>
+        </optgroup>
+        <optgroup label="── Retro &amp; Optical ──">
+          <option value="56">Op-Art Bands</option>
+          <option value="57">CRT Bloom</option>
+          <option value="58">Halftone Dots</option>
+        </optgroup>
+        <optgroup label="── Celestial ──">
+          <option value="59">Pulsar Sweep</option>
+          <option value="60">Solar Flare</option>
+        </optgroup>
       </select>
     </div>
 
@@ -470,7 +490,7 @@ body.warning-active {
 <div id="autobrowse-popup" class="autobrowse-popup" role="status" aria-live="polite"></div>
 
 <script>
-const PATTERN_COUNT = 49;
+const PATTERN_COUNT = 61;
 
 // Compact state representation
 const state = {
@@ -1272,7 +1292,19 @@ const VAR_DESCS = {
   45: ['Seed Count',     'Spiral Tightness'],
   46: ['Source Count',   'Ripple Speed'],
   47: ['Bubble Scale',   'Churn Speed'],
-  48: ['Tile Density',   'Curl Speed']
+  48: ['Tile Density',   'Curl Speed'],
+  49: ['Field Scale',    'Flow Speed'],
+  50: ['Pole Count',     'Field Strength'],
+  51: ['Warp Amount',    'Detail Freq'],
+  52: ['Cell Count',     'Edge Sharpness'],
+  53: ['Symmetry',       'Wave Freq'],
+  54: ['Scale',          'Slice Depth'],
+  55: ['Frequency A',    'Detune'],
+  56: ['Band Count',     'Bend'],
+  57: ['Scan Density',   'Roll Speed'],
+  58: ['Dot Grid',       'Pulse'],
+  59: ['Beam Count',     'Sweep Speed'],
+  60: ['Turbulence',     'Flare Speed']
 };
 
 function updateVarDescriptions() {
@@ -1749,6 +1781,141 @@ function computePattern(px, py, pattern, t) {
       return Math.sin((d - 0.5) * Math.PI * 4 + t * curl);
     }
 
+    // ── Flow & Field ──
+    case 49: { // Curl Flow — vA: field scale (3-15), vB: flow speed (0.5-5)
+      let scale = 3 + vA * 12;
+      let flowSpd = 0.5 + vB * 4.5;
+      // Approximate a divergence-free (curl) field by differentiating a potential
+      let pot = Math.sin(px * scale + t * 0.3) * Math.cos(py * scale - t * 0.2);
+      let cx = Math.cos(py * scale + t * 0.5);  // ~d/dy
+      let cy = -Math.sin(px * scale - t * 0.4); // ~-d/dx
+      let ang = Math.atan2(cy, cx);
+      return Math.sin(ang * 2 + pot * 3 + t * flowSpd);
+    }
+    case 50: { // Magnetic Field — vA: pole count (2-8), vB: field strength (10-50)
+      let poles = 2 + Math.floor(vA * 6);
+      let strength = 10 + vB * 40;
+      let acc = 0;
+      for (let i = 0; i < poles; i++) {
+        let phase = (i / poles) * Math.PI * 2;
+        let sx = 0.5 + Math.cos(phase + t * 0.15) * 0.32;
+        let sy = 0.5 + Math.sin(phase + t * 0.15) * 0.32;
+        let dx = px - sx, dy = py - sy;
+        let d = Math.sqrt(dx*dx + dy*dy) + 0.02;
+        // Alternating poles attract/repel the field lines
+        acc += ((i % 2) ? 1 : -1) * Math.sin(d * strength - t * 2) / (d * 3 + 0.5);
+      }
+      return Math.sin(acc);
+    }
+    case 51: { // Domain Warp — vA: warp amount (0.2-2.5), vB: detail freq (4-18)
+      let warp = 0.2 + vA * 2.3;
+      let freq = 4 + vB * 14;
+      // Feed the pattern back into itself to fold the coordinate space
+      let qx = Math.sin(px * freq + t * 0.4) * warp;
+      let qy = Math.cos(py * freq - t * 0.35) * warp;
+      let rx = Math.sin((px + qx) * freq * 0.7 + t * 0.2);
+      let ry = Math.cos((py + qy) * freq * 0.7 - t * 0.25);
+      return Math.sin((rx + ry) * Math.PI + t);
+    }
+    case 52: { // Worley Cells — vA: cell count (3-14), vB: edge sharpness (1-8)
+      let dens = 3 + Math.floor(vA * 11);
+      let sharp = 1 + vB * 7;
+      let gx = px * dens, gy = py * dens;
+      let cx = Math.floor(gx), cy = Math.floor(gy);
+      let minD = 99;
+      // Search the 3x3 neighbourhood for the nearest jittered feature point
+      for (let oy = -1; oy <= 1; oy++) {
+        for (let ox = -1; ox <= 1; ox++) {
+          let nx = cx + ox, ny = cy + oy;
+          let rnd = Math.sin(nx * 127.1 + ny * 311.7) * 43758.5453;
+          let fx = nx + 0.5 + 0.5 * Math.sin(t * 0.6 + (rnd - Math.floor(rnd)) * 6.28);
+          let fy = ny + 0.5 + 0.5 * Math.cos(t * 0.5 + (rnd - Math.floor(rnd)) * 6.28);
+          let d = Math.sqrt((gx - fx)*(gx - fx) + (gy - fy)*(gy - fy));
+          if (d < minD) minD = d;
+        }
+      }
+      return Math.sin(minD * sharp - t);
+    }
+
+    // ── Crystalline ──
+    case 53: { // Penrose Weave — vA: symmetry (5-11), vB: wave freq (10-40)
+      let sym = 5 + Math.floor(vA * 6);
+      let freq = 10 + vB * 30;
+      let dx = px - 0.5, dy = py - 0.5;
+      let acc = 0;
+      // Sum of plane waves at evenly spaced angles -> quasicrystal interference
+      for (let i = 0; i < sym; i++) {
+        let a = (i / sym) * Math.PI * 2;
+        acc += Math.cos((dx * Math.cos(a) + dy * Math.sin(a)) * freq - t);
+      }
+      return acc / sym;
+    }
+    case 54: { // Gyroid Slice — vA: scale (4-16), vB: slice depth (-1 to 1)
+      let scale = 4 + vA * 12;
+      let zSlice = (vB * 2 - 1) * 3 + t * 0.3;
+      let X = px * scale, Y = py * scale, Z = zSlice;
+      // Gyroid implicit surface sampled on a moving Z-plane
+      let g = Math.sin(X)*Math.cos(Y) + Math.sin(Y)*Math.cos(Z) + Math.sin(Z)*Math.cos(X);
+      return Math.sin(g * Math.PI);
+    }
+    case 55: { // Interference Mesh — vA: freq A (8-30), vB: freq B detune (0-12)
+      let fA = 8 + vA * 22;
+      let fB = fA + vB * 12;
+      let m1 = Math.sin(px * fA + t) * Math.sin(py * fA - t);
+      let m2 = Math.sin(px * fB - t * 0.7) * Math.sin(py * fB + t * 0.7);
+      return (m1 + m2) * 0.5;
+    }
+
+    // ── Retro & Optical ──
+    case 56: { // Op-Art Bands — vA: band count (6-40), vB: bend (0-1)
+      let bands = 6 + vA * 34;
+      let bend = vB;
+      // Concentric / bent bands that pop like classic op-art
+      let warp = Math.sin(px * 6 + t) * bend * 0.3;
+      return Math.sin((py + warp) * bands + Math.sin(px * 4 - t) * bend * 2);
+    }
+    case 57: { // CRT Bloom — vA: scan density (40-160), vB: roll speed (1-8)
+      let dens = 40 + vA * 120;
+      let roll = 1 + vB * 7;
+      let scan = Math.sin(py * dens - t * roll);
+      let phosphor = Math.sin(px * dens * 0.5 + t) * 0.5 + 0.5;
+      // Bright scanline crests with a soft phosphor glow between them
+      return scan * 0.7 + (phosphor - 0.5) * 0.6;
+    }
+    case 58: { // Halftone Dots — vA: dot grid (8-40), vB: pulse (0.5-5)
+      let grid = 8 + Math.floor(vA * 32);
+      let pulse = 0.5 + vB * 4.5;
+      let gx = (px * grid) % 1 - 0.5;
+      let gy = (py * grid) % 1 - 0.5;
+      let d = Math.sqrt(gx*gx + gy*gy);
+      // Dot radius modulated by a moving wave -> classic halftone shading
+      let radius = 0.35 + 0.15 * Math.sin(px * 5 + py * 5 + t * pulse);
+      return Math.sin((radius - d) * Math.PI * 3);
+    }
+
+    // ── Celestial ──
+    case 59: { // Pulsar Sweep — vA: beam count (1-6), vB: sweep speed (1-8)
+      let beams = 1 + Math.floor(vA * 5);
+      let sweepSpd = 1 + vB * 7;
+      let dx = px - 0.5, dy = py - 0.5;
+      let ang = Math.atan2(dy, dx);
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      // Rotating lighthouse-style beams fading with radius
+      let beam = Math.cos(ang * beams - t * sweepSpd);
+      return Math.sin(beam * 4 + dist * 20 - t) * (1 - dist);
+    }
+    case 60: { // Solar Flare — vA: turbulence (4-20), vB: flare speed (0.5-5)
+      let turb = 4 + vA * 16;
+      let flareSpd = 0.5 + vB * 4.5;
+      let dx = px - 0.5, dy = py - 0.5;
+      let dist = Math.sqrt(dx*dx + dy*dy);
+      let ang = Math.atan2(dy, dx);
+      // Roiling corona: noisy radial filaments licking outward
+      let flame = Math.sin(ang * turb + Math.sin(dist * turb - t * flareSpd) * 2);
+      let core = Math.sin(dist * 18 - t * flareSpd * 1.5);
+      return (flame * 0.6 + core * 0.6) * (1.2 - dist);
+    }
+
     default:
       return 0;
   }
@@ -1778,7 +1945,19 @@ const PALETTES = [
   { name: 'Arctic',      colors: [[200,40,72],[210,55,60],[185,45,68],[225,35,78],[195,50,55]] },
   { name: 'Neon Jungle', colors: [[140,90,52],[ 90,95,55],[170,85,50],[ 55,90,58],[110,80,48]] },
   { name: 'Royal',       colors: [[265,70,42],[280,60,52],[230,65,46],[300,55,48],[250,75,38]] },
-  { name: 'Coral Reef',  colors: [[ 10,85,62],[180,70,55],[ 35,90,65],[330,75,66],[160,65,52]] }
+  { name: 'Coral Reef',  colors: [[ 10,85,62],[180,70,55],[ 35,90,65],[330,75,66],[160,65,52]] },
+  { name: 'Bioluminescent', colors: [[170,90,55],[190,95,60],[150,85,48],[210,80,58],[160,95,52]] },
+  { name: 'Desert Dusk', colors: [[ 30,75,55],[ 18,70,48],[345,55,52],[ 45,65,58],[280,40,45]] },
+  { name: 'Ultraviolet', colors: [[275,90,55],[255,85,48],[300,80,58],[230,90,52],[285,95,62]] },
+  { name: 'Toxic',       colors: [[ 80,95,52],[100,90,48],[ 60,95,55],[120,85,45],[ 90,98,58]] },
+  { name: 'Sakura',      colors: [[340,75,80],[350,65,72],[320,60,82],[  5,70,78],[330,80,86]] },
+  { name: 'Copper',      colors: [[ 22,75,48],[ 18,65,42],[ 35,70,52],[ 10,60,38],[ 28,80,55]] },
+  { name: 'Glacier',     colors: [[195,55,72],[210,60,64],[180,50,76],[225,45,68],[200,65,58]] },
+  { name: 'Magma',       colors: [[  5,95,48],[ 18,98,52],[ 35,95,55],[350,85,40],[ 28,90,45]] },
+  { name: 'Mono Cyan',   colors: [[185,80,55],[185,60,68],[190,90,46],[180,50,76],[188,70,60]] },
+  { name: 'Twilight',    colors: [[250,55,42],[290,50,48],[320,55,52],[210,60,38],[270,65,46]] },
+  { name: 'Citrus',      colors: [[ 45,95,58],[ 60,90,55],[ 30,92,60],[ 80,85,52],[ 50,98,62]] },
+  { name: 'Grayscale',   colors: [[  0, 0,85],[  0, 0,55],[  0, 0,95],[  0, 0,35],[  0, 0,70]] }
 ];
 
 // Hermite-ish smooth blend between two hues taking the shorter way around.
