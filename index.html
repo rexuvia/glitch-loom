@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Glitch Loom - Canvas Rewrite</title>
+<title>Glitch Loom</title>
 <style>
 :root {
   --bg: #000;
@@ -253,6 +253,69 @@ body.warning-active {
   overflow: hidden;
 }
 
+/* Keyboard shortcuts help overlay */
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 2, 8, 0.88);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 90;
+  padding: 20px;
+}
+.shortcuts-overlay.active { display: flex; }
+.shortcuts-content {
+  max-width: 400px;
+  width: 100%;
+  background: rgba(14, 20, 36, 0.95);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+.shortcuts-content h2 {
+  color: var(--cyan);
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+.shortcut-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.shortcut-row:last-child { border-bottom: none; }
+.shortcut-key {
+  display: inline-block;
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: monospace;
+  font-size: 13px;
+  min-width: 28px;
+  text-align: center;
+}
+.shortcut-desc {
+  color: var(--text);
+  font-size: 13px;
+}
+.shortcuts-close {
+  margin-top: 16px;
+  width: 100%;
+  background: #222;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.shortcuts-close:hover { border-color: var(--cyan); }
+
 </style>
 </head>
 <body>
@@ -432,6 +495,11 @@ body.warning-active {
     <button id="btn-randomize" class="btn-primary">Randomize</button>
     <button id="btn-spawn" class="btn-primary" style="margin-top: 4px;">🧬 Spawn (Combine)</button>
     <button id="btn-autobrowse" class="btn-primary" style="margin-top: 4px;">✨ Auto-Browse</button>
+    <div style="display: flex; gap: 6px; margin-top: 4px;">
+      <button id="btn-screenshot" style="flex:1;">📸 Screenshot</button>
+      <button id="btn-fullscreen" style="flex:1;">⛶ Fullscreen</button>
+      <button id="btn-shortcuts" style="flex:1;">⌨ Keys</button>
+    </div>
 
     <div class="ctrl-group" id="autobrowse-group" style="margin-top: 4px;">
       <label for="autobrowse-interval">Interval</label>
@@ -488,6 +556,20 @@ body.warning-active {
 
 <button id="toggle-ui" class="toggle-ui-btn">Hide UI</button>
 <div id="autobrowse-popup" class="autobrowse-popup" role="status" aria-live="polite"></div>
+
+<div id="shortcuts-overlay" class="shortcuts-overlay">
+  <div class="shortcuts-content">
+    <h2>⌨ Keyboard Shortcuts</h2>
+    <div class="shortcut-row"><span class="shortcut-key">R</span><span class="shortcut-desc">Randomize</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">Space</span><span class="shortcut-desc">Toggle Auto-Browse</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">H</span><span class="shortcut-desc">Toggle UI Panel</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">S</span><span class="shortcut-desc">Download Screenshot (PNG)</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">F</span><span class="shortcut-desc">Toggle Fullscreen</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">G</span><span class="shortcut-desc">Spawn (Combine)</span></div>
+    <div class="shortcut-row"><span class="shortcut-key">?</span><span class="shortcut-desc">Show / Hide This Help</span></div>
+    <button class="shortcuts-close" id="shortcuts-close">Close</button>
+  </div>
+</div>
 
 <script>
 const PATTERN_COUNT = 61;
@@ -2094,6 +2176,98 @@ function loadFromURL() {
 
 window.addEventListener('hashchange', () => {
   loadFromURL();
+});
+
+// ── Screenshot Export ──
+function downloadScreenshot() {
+  const stateStr = encodeState();
+  canvas.toBlob(function(blob) {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'glitch-loom-' + stateStr + '.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+  }, 'image/png');
+  showAutobrowsePopup('📸 Screenshot saved!');
+}
+
+document.getElementById('btn-screenshot').addEventListener('click', downloadScreenshot);
+
+// ── Fullscreen Toggle ──
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.getElementById('btn-fullscreen').addEventListener('click', toggleFullscreen);
+
+// Update fullscreen button text on change
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('btn-fullscreen');
+  btn.textContent = document.fullscreenElement ? '⛶ Exit FS' : '⛶ Fullscreen';
+});
+
+// ── Keyboard Shortcuts Help Overlay ──
+const shortcutsOverlay = document.getElementById('shortcuts-overlay');
+
+function toggleShortcutsOverlay() {
+  shortcutsOverlay.classList.toggle('active');
+}
+
+document.getElementById('btn-shortcuts').addEventListener('click', toggleShortcutsOverlay);
+document.getElementById('shortcuts-close').addEventListener('click', () => {
+  shortcutsOverlay.classList.remove('active');
+});
+shortcutsOverlay.addEventListener('click', (e) => {
+  if (e.target === shortcutsOverlay) shortcutsOverlay.classList.remove('active');
+});
+
+// ── Keyboard Shortcuts ──
+document.addEventListener('keydown', (e) => {
+  // Don't fire shortcuts when typing in input fields
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  // Don't fire if the epilepsy warning is active
+  if (uiElements.warningOverlay && uiElements.warningOverlay.classList.contains('active')) return;
+
+  const key = e.key.toLowerCase();
+
+  if (key === 'r') {
+    e.preventDefault();
+    document.getElementById('btn-randomize').click();
+  } else if (key === ' ') {
+    e.preventDefault();
+    document.getElementById('btn-autobrowse').click();
+  } else if (key === 'h') {
+    e.preventDefault();
+    uiElements.panel.classList.toggle('hidden');
+    uiElements.toggleBtn.textContent = uiElements.panel.classList.contains('hidden') ? 'Show UI' : 'Hide UI';
+  } else if (key === 's') {
+    e.preventDefault();
+    downloadScreenshot();
+  } else if (key === 'f') {
+    e.preventDefault();
+    toggleFullscreen();
+  } else if (key === 'g') {
+    e.preventDefault();
+    document.getElementById('btn-spawn').click();
+  } else if (key === '?' || (e.shiftKey && key === '/')) {
+    e.preventDefault();
+    toggleShortcutsOverlay();
+  } else if (key === 'escape') {
+    if (shortcutsOverlay.classList.contains('active')) {
+      shortcutsOverlay.classList.remove('active');
+      e.preventDefault();
+    }
+  }
 });
 
 // Init
